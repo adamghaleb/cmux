@@ -12,6 +12,23 @@ final class LifecycleManager: ObservableObject {
     /// Closure to read terminal content — set by FadiCodeOverlaySystem.
     var readContent: (() -> String)?
 
+    /// Deterministic gate: is a real agent process alive and bound to this
+    /// surface? Set by FadiCodeOverlayHost once `surfaceId` is known.
+    ///
+    /// Everything below used to be inferred from terminal TEXT alone, which
+    /// fired on ordinary shell output (any large paste, `ls`, a scroll) and then
+    /// stuck in `.active` until the 5-minute safety timeout. That is what made
+    /// the pixel pet flicker and lie. When this returns false we refuse to enter
+    /// `.active` at all, and we leave `.active` as soon as the agent exits.
+    ///
+    /// nil means "unknown" and is treated as permissive, so surfaces that never
+    /// got a binding key behave exactly as they did before.
+    /// upstream: PR#6798
+    var agentPresent: (() -> Bool)?
+
+    /// True when we have no binding information (permissive) or an agent is live.
+    private var isAgentPresent: Bool { agentPresent?() ?? true }
+
     // Content hashing for change detection
     private var lastContentHash: Int = 0
     private var lastRawContentHash: Int = 0
@@ -179,6 +196,11 @@ final class LifecycleManager: ObservableObject {
     // MARK: - Poll Handlers
 
     private func pollIdle(content: String, hash: Int, isSpinnerChange: Bool, isContentChange: Bool) {
+        // Deterministic gate. No live agent bound to this surface means none of
+        // the text heuristics below are allowed to claim one is working.
+        // upstream: PR#6798
+        guard isAgentPresent else { return }
+
         // Spinner change always takes priority — definitive signal Claude is working
         if isSpinnerChange {
             if ContentDetection.isClaudeCodePresent(in: content) {
@@ -219,6 +241,16 @@ final class LifecycleManager: ObservableObject {
     }
 
     private func pollActive(content: String, hash: Int, isContentChange: Bool) {
+        // Agent-exit backstop. Previously the only ways out of `.active` were an
+        // OSC 7777 completion signal or the 5-minute safety timeout, so a session
+        // that ended without emitting 7777 (crash, Ctrl-C, `/exit`, weekly limit)
+        // left the pet "working" for five minutes. Process exit is deterministic.
+        // upstream: PR#6798 — process exit is an authoritative `.ended` backstop.
+        if !isAgentPresent {
+            forceReset()
+            return
+        }
+
         // Check for questions while active
         if isContentChange {
             detectQuestion(content)

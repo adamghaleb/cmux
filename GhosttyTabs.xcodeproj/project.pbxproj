@@ -116,6 +116,7 @@
 		FC00001B /* PixelPetController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC10001B /* PixelPetController.swift */; };
 		FAD1AA03 /* NetworkRetry.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAD1AA04 /* NetworkRetry.swift */; };
 		FC00001C /* ShaderDirector.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC10001C /* ShaderDirector.swift */; };
+		FC0000F1 /* AgentPresence.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC1000F1 /* AgentPresence.swift */; };
 		FC000020 /* PixelPetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100020 /* PixelPetView.swift */; };
 		FC000021 /* PetAnimator.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100021 /* PetAnimator.swift */; };
 		FC000022 /* PetAnimation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100022 /* PetAnimation.swift */; };
@@ -368,6 +369,7 @@
 		FC10001B /* PixelPetController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelPetController.swift; sourceTree = "<group>"; };
 		FAD1AA04 /* NetworkRetry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkRetry.swift; sourceTree = "<group>"; };
 		FC10001C /* ShaderDirector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShaderDirector.swift; sourceTree = "<group>"; };
+		FC1000F1 /* AgentPresence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentPresence.swift; sourceTree = "<group>"; };
 		FC100020 /* PixelPetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelPetView.swift; sourceTree = "<group>"; };
 		FC100021 /* PetAnimator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetAnimator.swift; sourceTree = "<group>"; };
 		FC100022 /* PetAnimation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetAnimation.swift; sourceTree = "<group>"; };
@@ -731,6 +733,7 @@
 				FC10001A /* QuestionDetectionController.swift */,
 				FC10001B /* PixelPetController.swift */,
 				FC10001C /* ShaderDirector.swift */,
+				FC1000F1 /* AgentPresence.swift */,
 			);
 			path = Overlay;
 			sourceTree = "<group>";
@@ -1068,6 +1071,7 @@
 				FC00001B /* PixelPetController.swift in Sources */,
 				FAD1AA03 /* NetworkRetry.swift in Sources */,
 				FC00001C /* ShaderDirector.swift in Sources */,
+				FC0000F1 /* AgentPresence.swift in Sources */,
 				FC000020 /* PixelPetView.swift in Sources */,
 				FC000021 /* PetAnimator.swift in Sources */,
 				FC000022 /* PetAnimation.swift in Sources */,

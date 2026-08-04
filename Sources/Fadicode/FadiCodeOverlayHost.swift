@@ -53,7 +53,22 @@ final class FadiCodeOverlayHost: NSView {
     private let projectBadgeState = ProjectBadgeState()
 
     /// The surface ID this overlay host is attached to (for scoped notifications).
-    var surfaceId: UUID?
+    ///
+    /// This is also the deterministic agent-binding key: the same UUID is
+    /// injected into every shell this surface spawns as `CMUX_SURFACE_ID`
+    /// (GhosttyTerminalView.swift), so any `claude` running here inherits it.
+    /// upstream: PR#6798
+    var surfaceId: UUID? {
+        didSet {
+            guard let surfaceId else {
+                overlaySystem.lifecycle.agentPresent = nil
+                return
+            }
+            overlaySystem.lifecycle.agentPresent = {
+                AgentPresence.shared.isAgentLive(surfaceID: surfaceId)
+            }
+        }
+    }
 
     /// Closure to read terminal content for the lifecycle manager's content polling.
     var readTerminalContent: (() -> String)? {
