@@ -1387,6 +1387,13 @@ class TerminalController {
         case "simulate_app_active":
             return simulateAppDidBecomeActive()
 
+        // Agent hook ingest — the ONLY authoritative source of agent session
+        // state. Decoded and applied off the main actor per the socket
+        // threading policy; see AgentHookIngest.
+        // upstream: PR#6798
+        case "agent_hook":
+            return AgentHookIngest.handle(payload: args)
+
         case "set_status":
             return setStatus(args)
 
