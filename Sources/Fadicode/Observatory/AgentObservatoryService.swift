@@ -16,13 +16,19 @@ private struct PanelRegistration {
     var lastState: LifecycleState = .idle
     var lastLine: String?
     var activitySummary: String?
-    var isQuestion: Bool = false
     var activeSince: Date?
 }
 
 /// Singleton service that aggregates agent state from all open terminals.
-/// Subscribes to each terminal's LifecycleManager via Combine and publishes
-/// a unified array of AgentSnapshots.
+///
+/// # Gate 2 (upstream: PR#6798)
+///
+/// The observatory's per-agent state used to be a blend of the overlay's
+/// text-derived lifecycle phase and an `isQuestion` flag set by scraping the
+/// screen for "Enter to select". Both are gone. `AgentSessionRegistry` is the
+/// authority: `working` / `needsInput` / `idle` / `ended` come straight from
+/// it, and only the completion CELEBRATION phase (a fork-specific visual) is
+/// still read off the overlay lifecycle.
 @MainActor
 final class AgentObservatoryService: ObservableObject {
     static let shared = AgentObservatoryService()
@@ -36,7 +42,17 @@ final class AgentObservatoryService: ObservableObject {
     /// Registrations keyed by panel UUID.
     private var registrations: [UUID: PanelRegistration] = [:]
 
-    private init() {}
+    /// Subscription to the deterministic session authority.
+    /// upstream: PR#6798
+    private var registryCancellable: AnyCancellable?
+
+    private init() {
+        registryCancellable = AgentSessionRegistry.shared.$stateBySurfaceID
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.rebuildSnapshots()
+            }
+    }
 
     // MARK: - Registration
 
@@ -69,18 +85,9 @@ final class AgentObservatoryService: ObservableObject {
             }
             .store(in: &reg.cancellables)
 
-        // Subscribe to question events
-        lifecycleManager.bus.onQuestionDetected()
-            .sink { [weak self] _ in
-                self?.handleQuestionDetected(panelId: panelId)
-            }
-            .store(in: &reg.cancellables)
-
-        lifecycleManager.bus.onQuestionDismissed()
-            .sink { [weak self] in
-                self?.handleQuestionDismissed(panelId: panelId)
-            }
-            .store(in: &reg.cancellables)
+        // Question events no longer feed STATE — `needsInput` is a session
+        // state owned by AgentSessionRegistry, and the pill is presentation.
+        // upstream: PR#6798
 
         // Subscribe to activity updates
         lifecycleManager.bus.onActivityUpdate()
@@ -120,7 +127,6 @@ final class AgentObservatoryService: ObservableObject {
                 lastState: reg.lastState,
                 lastLine: reg.lastLine,
                 activitySummary: reg.activitySummary,
-                isQuestion: reg.isQuestion,
                 activeSince: reg.activeSince
             )
             registrations[panelId] = reg
@@ -166,16 +172,6 @@ final class AgentObservatoryService: ObservableObject {
         rebuildSnapshots()
     }
 
-    private func handleQuestionDetected(panelId: UUID) {
-        registrations[panelId]?.isQuestion = true
-        rebuildSnapshots()
-    }
-
-    private func handleQuestionDismissed(panelId: UUID) {
-        registrations[panelId]?.isQuestion = false
-        rebuildSnapshots()
-    }
-
     private func handleActivityUpdate(panelId: UUID, summary: String?) {
         registrations[panelId]?.activitySummary = summary
         rebuildSnapshots()
@@ -186,22 +182,28 @@ final class AgentObservatoryService: ObservableObject {
     private func rebuildSnapshots() {
         var newAgents: [AgentSnapshot] = []
 
+        let registry = AgentSessionRegistry.shared
+
         for (_, reg) in registrations {
-            let agentType: AgentType
-            if let readContent = reg.readContent {
-                agentType = AgentDetector.detectFromContent(readContent())
-            } else {
-                agentType = .none
-            }
+            // Identity and state both come from the deterministic binding.
+            // upstream: PR#6798
+            let agentType = AgentDetector.detect(surfaceID: reg.panelId)
+            let sessionState = registry.state(surfaceID: reg.panelId)
 
             let agentState: AgentState
-            switch reg.lastState {
-            case .idle:
-                agentState = reg.isQuestion ? .waitingForInput : .idle
-            case .active(let since):
-                agentState = reg.isQuestion ? .waitingForInput : .active(since: since)
-            case .completing(let tier, let since):
+            if case .completing(let tier, let since) = reg.lastState {
+                // The celebration window is a fork visual, not a session state,
+                // and it outlives the session's return to idle by design.
                 agentState = .completing(tier: tier, since: since)
+            } else {
+                switch sessionState {
+                case .needsInput:
+                    agentState = .waitingForInput
+                case .working(let since):
+                    agentState = .active(since: since)
+                case .idle, .ended, nil:
+                    agentState = .idle
+                }
             }
 
             let projectName = (reg.projectDirectory as NSString).lastPathComponent
@@ -218,7 +220,7 @@ final class AgentObservatoryService: ObservableObject {
                 activeSince: reg.activeSince,
                 lastLine: reg.lastLine,
                 activitySummary: reg.activitySummary,
-                isQuestion: reg.isQuestion
+                isQuestion: sessionState?.needsAttention ?? false
             )
             newAgents.append(snapshot)
         }
