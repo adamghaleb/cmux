@@ -28,10 +28,12 @@ import Darwin
 //     hand inside that shell carries the same token. Matching env directly on
 //     agent-shaped processes is equivalent for the presence question and costs
 //     one sysctl per candidate instead of one per process on the machine.
-//   * Upstream's hook-driven busy/idle/needsInput state machine and transcript
-//     corroboration. Those stay as future work — see MORNING.md. This file only
-//     answers PRESENCE ("is a real agent alive bound to this surface"), which is
-//     the gate the old content-hash heuristic got wrong.
+//   * (Gate 2 update) The hook-driven busy/idle/needsInput state machine and
+//     transcript corroboration now live in Sources/Fadicode/Session/. This file
+//     stays the PRESENCE layer and additionally acts as upstream's OBSERVE
+//     FLOOR: every scan publishes `[ObservedAgentSession]` so an agent running
+//     without hooks is still bound to its surface. Presence proves presence,
+//     never idleness — see AgentSessionRecord.hasHookLifecycleState.
 
 // MARK: - Process arguments / environment
 
@@ -215,6 +217,9 @@ final class AgentPresence {
         let isAgent: Bool
         let startTimeKey: UInt64
         let probedAt: Date
+        /// The observe-floor row this probe produced, when it produced one.
+        /// upstream: PR#6798 — ObservedAgentSession
+        let observed: ObservedAgentSession?
     }
 
     private let lock = NSLock()
@@ -223,6 +228,16 @@ final class AgentPresence {
     private var lastScan: Date = .distantPast
     /// Guards against piling up overlapping background scans.
     private var scanInFlight = false
+
+    /// Last completed scan's observe-floor rows.
+    /// upstream: PR#6798 — AgentChatSessionRegistry+ObserveScan
+    private var lastObserved: [ObservedAgentSession] = []
+
+    /// Called on the scan's background queue after every completed scan, with
+    /// the full observe-floor snapshot. The session registry subscribes to this
+    /// so an agent with no hooks installed is still bound to its surface.
+    /// upstream: PR#6798 — observe-floor detection
+    var onObservedSessions: (([ObservedAgentSession]) -> Void)?
 
     private init() {}
 
@@ -281,6 +296,7 @@ final class AgentPresence {
 
         var alivePIDs = Set<Int32>()
         var found = Set<String>()
+        var observed: [ObservedAgentSession] = []
 
         for row in rows {
             alivePIDs.insert(row.pid)
@@ -298,6 +314,7 @@ final class AgentPresence {
                 let expired = !cached.isAgent && now.timeIntervalSince(cached.probedAt) > negativeTTL
                 if !expired {
                     if cached.isAgent, let sid = cached.surfaceID { found.insert(sid) }
+                    if let row = cached.observed { observed.append(row.resampled(at: now)) }
                     continue
                 }
             }
@@ -305,11 +322,30 @@ final class AgentPresence {
             // Probe: one sysctl gives both argv and env.
             var surfaceID: String? = nil
             var isAgent = false
+            var observation: ObservedAgentSession? = nil
             if let info = FadiProcArgs.read(pid: row.pid) {
                 isAgent = classify(basename: basename, argv: info.argv)
                 if isAgent {
                     surfaceID = (info.environment["CMUX_SURFACE_ID"]
                                  ?? info.environment["CMUX_PANEL_ID"])?.uppercased()
+                    if let surfaceID {
+                        // Identity from the agent's OWN argv, the way upstream
+                        // resolves an untracked claude: `--session-id <uuid>`
+                        // or `--resume <uuid>`. Absent either, the registry
+                        // mints a pending id that the first hook retires.
+                        // upstream: PR#6798 — observe-floor identity resolution
+                        observation = ObservedAgentSession(
+                            sessionID: Self.sessionID(fromArgv: info.argv),
+                            agentKind: AgentKind(source: "claude"),
+                            surfaceID: surfaceID,
+                            workspaceID: (info.environment["CMUX_WORKSPACE_ID"]
+                                          ?? info.environment["CMUX_TAB_ID"])?.uppercased(),
+                            pid: Int(row.pid),
+                            workingDirectory: info.environment["PWD"],
+                            transcriptPath: nil,
+                            sampledAt: now
+                        )
+                    }
                 }
             }
 
@@ -317,17 +353,79 @@ final class AgentPresence {
             scopeCache[row.pid] = ScopeEntry(surfaceID: surfaceID,
                                              isAgent: isAgent,
                                              startTimeKey: row.startTimeKey,
-                                             probedAt: now)
+                                             probedAt: now,
+                                             observed: observation)
             lock.unlock()
 
             if isAgent, let surfaceID { found.insert(surfaceID) }
+            if let observation { observed.append(observation) }
         }
 
         lock.lock()
         // Drop cache entries for dead PIDs so the map can't grow without bound.
         scopeCache = scopeCache.filter { alivePIDs.contains($0.key) }
         liveSurfaceIDs = found
+        lastObserved = observed
+        let sink = onObservedSessions
         lock.unlock()
+
+        sink?(observed)
+    }
+
+    /// The observe-floor snapshot from the last completed scan.
+    /// upstream: PR#6798
+    func observedSessions() -> [ObservedAgentSession] {
+        lock.lock()
+        defer { lock.unlock() }
+        return lastObserved
+    }
+
+    /// Tree-aware liveness probe: is ANY agent process still alive under this
+    /// surface? Used by the exit watcher, which must not end a session when the
+    /// pid that died was a launcher or shim (`node`, a subrouter) rather than
+    /// the agent itself.
+    ///
+    /// Scans directly rather than reading the cached snapshot: this is called
+    /// exactly once per process death, already off the main actor, and a stale
+    /// answer here would end a live session.
+    /// upstream: PR#6798 — AgentChatSessionRegistry+LiveAgentPID.liveAgentPID
+    ///
+    /// - Parameter surfaceKey: Uppercased surface UUID string.
+    /// - Returns: A live agent pid bound to the surface, or nil.
+    func liveAgentPID(surfaceKey: String) -> Int? {
+        let key = surfaceKey.uppercased()
+        for row in FadiProcessTable.snapshot() {
+            let basename = (row.name as NSString).lastPathComponent.lowercased()
+            guard agentBasenames.contains(basename) || scriptHosts.contains(basename) else { continue }
+            guard let info = FadiProcArgs.read(pid: row.pid),
+                  classify(basename: basename, argv: info.argv) else { continue }
+            let bound = (info.environment["CMUX_SURFACE_ID"]
+                         ?? info.environment["CMUX_PANEL_ID"])?.uppercased()
+            if bound == key { return Int(row.pid) }
+        }
+        return nil
+    }
+
+    /// Pulls a session id out of an agent's own argv.
+    /// upstream: PR#6798 — "claude via `--session-id`/`--resume` argv"
+    static func sessionID(fromArgv argv: [String]) -> String? {
+        var index = 0
+        while index < argv.count {
+            let arg = argv[index]
+            if arg == "--session-id" || arg == "--resume" || arg == "-r" {
+                let next = index + 1
+                if next < argv.count, !argv[next].hasPrefix("-"),
+                   UUID(uuidString: argv[next]) != nil {
+                    return argv[next].lowercased()
+                }
+            } else if let eq = arg.range(of: "="),
+                      ["--session-id", "--resume"].contains(String(arg[arg.startIndex..<eq.lowerBound])) {
+                let value = String(arg[eq.upperBound...])
+                if UUID(uuidString: value) != nil { return value.lowercased() }
+            }
+            index += 1
+        }
+        return nil
     }
 
     /// Basename first; argv needles only for known script hosts.
