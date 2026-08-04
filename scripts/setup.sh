@@ -9,13 +9,6 @@ cd "$PROJECT_DIR"
 echo "==> Initializing submodules..."
 git submodule update --init --recursive
 
-echo "==> Checking for zig..."
-if ! command -v zig &> /dev/null; then
-    echo "Error: zig is not installed."
-    echo "Install via: brew install zig"
-    exit 1
-fi
-
 GHOSTTY_SHA="$(git -C ghostty rev-parse HEAD)"
 CACHE_ROOT="${CMUX_GHOSTTYKIT_CACHE_DIR:-$HOME/.cache/cmux/ghosttykit}"
 CACHE_DIR="$CACHE_ROOT/$GHOSTTY_SHA"
@@ -54,8 +47,21 @@ else
 
     if [ -d "$LOCAL_XCFRAMEWORK" ] && [ "$LOCAL_SHA" = "$GHOSTTY_SHA" ]; then
         echo "==> Seeding cache from existing local GhosttyKit.xcframework (SHA matches)"
+    elif [ "${CMUX_FORCE_GHOSTTY_BUILD:-0}" != "1" ] && \
+         "$SCRIPT_DIR/download-xcframework.sh" \
+             --ghostty-dir "$PROJECT_DIR/ghostty" \
+             --output-dir "$PROJECT_DIR/ghostty/macos"; then
+        # Preferred path: fetch the pinned, SHA-256-verified prebuilt. No zig
+        # toolchain required, and every machine gets a byte-identical artifact.
+        echo "==> Downloaded pinned GhosttyKit.xcframework for $GHOSTTY_SHA"
     else
-        echo "==> Building GhosttyKit.xcframework (this may take a few minutes)..."
+        # Fallback: build from source. Requires zig.
+        if ! command -v zig &> /dev/null; then
+            echo "Error: no pinned xcframework available and zig is not installed."
+            echo "Install via: brew install zig   (or publish a release for $GHOSTTY_SHA — see HERMETIC.md)"
+            exit 1
+        fi
+        echo "==> Building GhosttyKit.xcframework from source (this may take a few minutes)..."
         (
             cd ghostty
             zig build -Demit-xcframework=true -Doptimize=ReleaseFast

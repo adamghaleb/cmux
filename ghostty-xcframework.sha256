@@ -1,0 +1,5 @@
+# SHA-256 checksums for the pinned GhosttyKit.xcframework release artifacts.
+# Format: <sha256>  <ghostty-submodule-sha>
+# Artifact: https://github.com/adamghaleb/ghostty/releases/download/xcframework-<ghostty-sha>/GhosttyKit.xcframework.tar.gz
+# Verified by scripts/download-xcframework.sh. See HERMETIC.md.
+c0bfe870cebf9286cef6d3efbedfda18b0b3c3e9d928ccdc7fcf727c75f563cf  fb45122e7951c4585d76ab9b2084479b6cc85edc
