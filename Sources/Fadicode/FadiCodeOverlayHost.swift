@@ -544,13 +544,17 @@ private struct FadiCodeOverlayView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
             .padding(.bottom, 8)
 
-            // Debug overlay (toggled with Cmd+Shift+D)
+            // Debug overlay (toggled with Cmd+Shift+D).
+            // DebugStateOverlay.swift is entirely `#if DEBUG`, so the call site
+            // must be guarded too or Release builds fail to compile.
+            #if DEBUG
             if projectBadgeState.debugOverlayVisible {
                 DebugStateOverlay(
                     overlaySystem: system,
                     onClose: { projectBadgeState.debugOverlayVisible = false }
                 )
             }
+            #endif
 
             // Terminal inspector (toggled via right-click menu)
             if projectBadgeState.inspectorVisible {
