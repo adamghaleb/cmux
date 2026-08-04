@@ -102,8 +102,13 @@ final class CompletionPopupController: ObservableObject, VisualController {
         // Cancel any existing streaming task
         cancelStreaming()
 
-        // Stream from Haiku
-        activeStreamingTask = ClaudeActivitySummary.shared.summarizeCompletionStreaming(
+        // Stream from Haiku. ClaudeActivitySummary is @MainActor; hop onto the
+        // main actor explicitly so this compiles under the stricter isolation
+        // checking of newer Swift toolchains (behavior unchanged: EffectBus
+        // events already arrive on the main thread).
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            self.activeStreamingTask = ClaudeActivitySummary.shared.summarizeCompletionStreaming(
             terminalContent: tail,
             onPartial: { [weak self] partial in
                 DispatchQueue.main.async {
@@ -129,7 +134,8 @@ final class CompletionPopupController: ObservableObject, VisualController {
                     }
                 }
             }
-        )
+            )
+        }
     }
 
     // MARK: - Internal

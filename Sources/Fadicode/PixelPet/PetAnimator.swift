@@ -67,7 +67,11 @@ public class PetAnimator: ObservableObject {
     // MARK: - Display Link
 
     private func setupDisplayLink() {
-        let link = CADisplayLink(target: self, selector: #selector(displayLinkFired(_:)))
+        // CADisplayLink(target:selector:) is iOS-only in newer macOS SDKs;
+        // NSScreen.displayLink(target:selector:) is the macOS 14+ equivalent.
+        guard let link = NSScreen.main?.displayLink(target: self, selector: #selector(displayLinkFired(_:))) else {
+            return
+        }
         // Pet animations are 2-8 fps; cap the display link at 15 fps to save energy.
         // The accumulator still governs actual frame advances at the animation's fps.
         link.preferredFrameRateRange = CAFrameRateRange(minimum: 2, maximum: 15, preferred: 8)

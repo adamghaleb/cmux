@@ -60,7 +60,7 @@ struct ProjectPickerOverlay: View {
                         .accessibilityAddTraits(.isSearchField)
                         .accessibilityValue(searchText.isEmpty
                             ? String(localized: "projectPicker.a11y.searchEmpty", defaultValue: "No filter applied")
-                            : String(localized: "projectPicker.a11y.searchActive \(filteredProjects.count)", defaultValue: "\(filteredProjects.count) results for \(searchText)"))
+                            : String(localized: "projectPicker.a11y.searchActive", defaultValue: "\(filteredProjects.count) results for \(searchText)"))
                 }
                 .padding(10)
                 .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 8))
@@ -111,7 +111,7 @@ struct ProjectPickerOverlay: View {
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(.primary)
                             .padding(.top, 6)
-                        Text(String(localized: "projectPicker.empty.subtitle \(currentPath)", defaultValue: "No items in \(currentPath)"))
+                        Text(String(localized: "projectPicker.empty.subtitle", defaultValue: "No items in \(currentPath)"))
                             .font(.system(size: 11))
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
@@ -122,7 +122,7 @@ struct ProjectPickerOverlay: View {
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(.primary)
                             .padding(.top, 6)
-                        Text(String(localized: "projectPicker.empty.noResultsHint \(searchText)", defaultValue: "No results for \"\(searchText)\""))
+                        Text(String(localized: "projectPicker.empty.noResultsHint", defaultValue: "No results for \"\(searchText)\""))
                             .font(.system(size: 11))
                             .foregroundColor(.secondary)
                             .padding(.top, 2)
@@ -264,7 +264,7 @@ struct ProjectPickerOverlay: View {
                 .buttonStyle(.plain)
                 .font(.system(size: 12, weight: index == components.count - 1 ? .semibold : .regular))
                 .foregroundColor(index == components.count - 1 ? .primary : .secondary)
-                .accessibilityLabel(String(localized: "projectPicker.a11y.breadcrumb \(component.name)", defaultValue: "Navigate to \(component.name)"))
+                .accessibilityLabel(String(localized: "projectPicker.a11y.breadcrumb", defaultValue: "Navigate to \(component.name)"))
                 .accessibilityAddTraits(index == components.count - 1 ? .isSelected : [])
             }
             Spacer()

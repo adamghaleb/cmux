@@ -133,11 +133,15 @@ final class FadiCodeOverlaySystem: ObservableObject {
         let tail = lines.suffix(80).joined(separator: "\n")
         guard !tail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
 
-        ClaudeActivitySummary.shared.summarize(terminalContent: tail) { [weak self] summary in
-            DispatchQueue.main.async {
-                guard let self else { return }
-                if let summary {
-                    self.lifecycle.onActivityUpdate(summary: summary)
+        // ClaudeActivitySummary is @MainActor; hop explicitly so this compiles
+        // under stricter isolation checking (the timer already fires on main).
+        Task { @MainActor [weak self] in
+            ClaudeActivitySummary.shared.summarize(terminalContent: tail) { summary in
+                DispatchQueue.main.async {
+                    guard let self else { return }
+                    if let summary {
+                        self.lifecycle.onActivityUpdate(summary: summary)
+                    }
                 }
             }
         }

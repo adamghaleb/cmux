@@ -16,8 +16,10 @@ struct CompletionHistoryEntry: Identifiable {
     var relativeTime: String {
         let interval = Date().timeIntervalSince(timestamp)
         if interval < 60 { return String(localized: "activity.relativeTime.justNow", defaultValue: "just now") }
-        if interval < 3600 { return String(localized: "activity.relativeTime.minutesAgo \(Int(interval / 60))", defaultValue: "\(Int(interval / 60))m ago") }
-        return String(localized: "activity.relativeTime.hoursAgo \(Int(interval / 3600))", defaultValue: "\(Int(interval / 3600))h ago")
+        // Interpolation is only valid in the defaultValue (String.LocalizationValue);
+        // the key must be a static string on newer Swift toolchains.
+        if interval < 3600 { return String(localized: "activity.relativeTime.minutesAgo", defaultValue: "\(Int(interval / 60))m ago") }
+        return String(localized: "activity.relativeTime.hoursAgo", defaultValue: "\(Int(interval / 3600))h ago")
     }
 }
 
@@ -185,7 +187,9 @@ class ClaudeActivitySummary {
 
     /// Instant heuristic summary based on keyword matching. No network call.
     /// Delegates to `ActivityCategory.classify(_:)` for the single shared implementation.
-    func heuristicSummary(_ content: String) -> String? {
+    /// Pure function — nonisolated so non-main-actor callers (LifecycleManager)
+    /// can use it without an actor hop.
+    nonisolated func heuristicSummary(_ content: String) -> String? {
         ActivityCategory.classify(content).summary
     }
 }

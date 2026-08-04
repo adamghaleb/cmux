@@ -159,7 +159,7 @@ struct QuickLaunchBar: View {
         .accessibilityLabel(label)
         .accessibilityHint(
             String(
-                localized: "quicklaunch.shortcutHint.\(id)",
+                localized: "quicklaunch.shortcutHint",
                 defaultValue: "Keyboard shortcut: \(shortcutHint)"
             )
         )
