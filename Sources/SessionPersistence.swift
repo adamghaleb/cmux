@@ -244,6 +244,8 @@ struct SessionPanelSnapshot: Codable, Sendable {
     var type: PanelType
     var title: String?
     var customTitle: String?
+    /// Provenance of `customTitle`; absent = `.user`. upstream: PR #5547
+    var customTitleSource: Workspace.CustomTitleSource? = nil
     var directory: String?
     var isPinned: Bool
     var isManuallyUnread: Bool
@@ -329,6 +331,12 @@ indirect enum SessionWorkspaceLayoutSnapshot: Codable, Sendable {
 struct SessionWorkspaceSnapshot: Codable, Sendable {
     var processTitle: String
     var customTitle: String?
+    /// Provenance of `customTitle` (user rename vs daemon/AI semantic label).
+    /// Optional so pre-provenance snapshots keep decoding; absent = `.user`.
+    /// upstream: PR #5547
+    var customTitleSource: Workspace.CustomTitleSource? = nil
+    /// upstream: PR #2475
+    var customDescription: String? = nil
     var customColor: String?
     var isPinned: Bool
     var currentDirectory: String

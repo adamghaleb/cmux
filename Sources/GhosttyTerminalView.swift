@@ -1441,6 +1441,24 @@ class GhosttyApp {
         return Unmanaged<GhosttySurfaceCallbackContext>.fromOpaque(userdata).takeUnretainedValue()
     }
 
+    /// Ghostty's configured threshold (ms) under which a command exit is
+    /// classified as abnormal (startup failure). upstream: PR #8681
+    private func abnormalCommandExitRuntimeMilliseconds() -> UInt32 {
+        let defaultValue: UInt32 = 250
+        guard let config else { return defaultValue }
+        var value = defaultValue
+        let key = "abnormal-command-exit-runtime"
+        guard ghostty_config_get(
+            config,
+            &value,
+            key,
+            UInt(key.lengthOfBytes(using: .utf8))
+        ) else {
+            return defaultValue
+        }
+        return value
+    }
+
     private func handleAction(target: ghostty_target_s, action: ghostty_action_s) -> Bool {
         if target.tag != GHOSTTY_TARGET_SURFACE {
             if action.tag == GHOSTTY_ACTION_RELOAD_CONFIG ||
@@ -1523,14 +1541,25 @@ class GhosttyApp {
         let callbackSurfaceId = callbackContext?.surfaceId
 
         if action.tag == GHOSTTY_ACTION_SHOW_CHILD_EXITED {
-            // The child (shell) exited. Ghostty will fall back to printing
-            // "Process exited. Press any key..." into the terminal unless the host
-            // handles this action. For cmux, the correct behavior is to close
-            // the panel immediately (no prompt).
+            // The child (shell, or a spawn-command like `tmux attach`) exited.
+            // Ghostty will fall back to printing "Process exited. Press any
+            // key..." into the terminal unless the host handles this action.
+            //
+            // Normal / established-process exits (Ctrl+D, tmux detach) close the
+            // panel immediately so a spawn-command pane is never stranded.
+            // Abnormal exits within the abnormal-command-exit-runtime threshold
+            // (startup failures, e.g. `tmux attach` against a dead server) keep
+            // the dead surface visible so the error is inspectable.
+            // upstream: PR #8681 (GhosttyApp+ChildExitPolicy)
+            let message = action.action.child_exited
+            let keepSurfaceVisible = TerminalChildExitPolicy(
+                abnormalRuntimeMilliseconds: abnormalCommandExitRuntimeMilliseconds()
+            ).shouldKeepSurfaceVisible(runtimeMilliseconds: message.timetime_ms)
 #if DEBUG
             dlog(
                 "surface.action.showChildExited tab=\(callbackTabId?.uuidString.prefix(5) ?? "nil") " +
-                "surface=\(callbackSurfaceId?.uuidString.prefix(5) ?? "nil")"
+                "surface=\(callbackSurfaceId?.uuidString.prefix(5) ?? "nil") " +
+                "runtimeMs=\(message.timetime_ms) keepVisible=\(keepSurfaceVisible ? 1 : 0)"
             )
 #endif
 #if DEBUG
@@ -1538,6 +1567,8 @@ class GhosttyApp {
                 [
                     "probeShowChildExitedTabId": callbackTabId?.uuidString ?? "",
                     "probeShowChildExitedSurfaceId": callbackSurfaceId?.uuidString ?? "",
+                    "probeShowChildExitedRuntimeMs": String(message.timetime_ms),
+                    "probeShowChildExitedKeptVisible": keepSurfaceVisible ? "1" : "0",
                 ],
                 increments: ["probeShowChildExitedCount": 1]
             )
@@ -1551,11 +1582,17 @@ class GhosttyApp {
                    let manager = app.tabManagerFor(tabId: callbackTabId) ?? app.tabManager,
                    let workspace = manager.tabs.first(where: { $0.id == callbackTabId }),
                    workspace.panels[callbackSurfaceId] != nil {
-                    manager.closePanelAfterChildExited(tabId: callbackTabId, surfaceId: callbackSurfaceId)
+                    manager.closePanelAfterChildExited(
+                        tabId: callbackTabId,
+                        surfaceId: callbackSurfaceId,
+                        keepSurfaceVisible: keepSurfaceVisible
+                    )
                 }
             }
-            // Always report handled so Ghostty doesn't print the fallback prompt.
-            return true
+            // Returning false lets Ghostty render its detailed abnormal-exit text
+            // and, by Ghostty's contract, retain the dead surface for inspection.
+            // upstream: PR #8681
+            return !keepSurfaceVisible
         }
 
         guard let surfaceView = callbackContext?.surfaceView else { return false }
@@ -2065,6 +2102,12 @@ final class TerminalSurface: Identifiable, ObservableObject {
     private let configTemplate: ghostty_surface_config_s?
     private let workingDirectory: String?
     private let additionalEnvironment: [String: String]
+    /// Optional command to run instead of the login shell (the daemon seam:
+    /// e.g. `tmux -L fadi attach -t fadi/<uuid>` per ADR-0004). libghostty runs
+    /// a config-set command through a shell and forces wait-after-command=true;
+    /// the SHOW_CHILD_EXITED handler owns the resulting exit outcome.
+    /// upstream: surface spawn-command seam (Workspace+PersistentRemotePTYReattach at HEAD)
+    private let spawnCommand: String?
     let hostedView: GhosttySurfaceScrollView
     private let surfaceView: GhosttyNSView
     private var lastPixelWidth: UInt32 = 0
@@ -2125,7 +2168,8 @@ final class TerminalSurface: Identifiable, ObservableObject {
         context: ghostty_surface_context_e,
         configTemplate: ghostty_surface_config_s?,
         workingDirectory: String? = nil,
-        additionalEnvironment: [String: String] = [:]
+        additionalEnvironment: [String: String] = [:],
+        spawnCommand: String? = nil
     ) {
         self.id = UUID()
         self.tabId = tabId
@@ -2133,6 +2177,7 @@ final class TerminalSurface: Identifiable, ObservableObject {
         self.configTemplate = configTemplate
         self.workingDirectory = workingDirectory?.trimmingCharacters(in: .whitespacesAndNewlines)
         self.additionalEnvironment = additionalEnvironment
+        self.spawnCommand = spawnCommand?.trimmingCharacters(in: .whitespacesAndNewlines)
         // Match Ghostty's own SurfaceView: ensure a non-zero initial frame so the backing layer
         // has non-zero bounds and the renderer can initialize without presenting a blank/stretched
         // intermediate frame on the first real resize.
@@ -2513,13 +2558,30 @@ final class TerminalSurface: Identifiable, ObservableObject {
             }
         }
 
-        if let workingDirectory, !workingDirectory.isEmpty {
-            workingDirectory.withCString { cWorkingDir in
-                surfaceConfig.working_directory = cWorkingDir
+        let createSurfaceWithWorkingDirectory = { [self] in
+            if let workingDirectory, !workingDirectory.isEmpty {
+                workingDirectory.withCString { cWorkingDir in
+                    surfaceConfig.working_directory = cWorkingDir
+                    createSurface()
+                }
+            } else {
                 createSurface()
             }
+        }
+
+        if let spawnCommand, !spawnCommand.isEmpty {
+            // Daemon seam (ADR-0004): run an explicit command (e.g. tmux attach)
+            // instead of the login shell. libghostty runs config-set commands
+            // through a shell and forces wait-after-command=true
+            // (apprt/embedded.zig); set it explicitly so the surface's exit
+            // contract is visible on the config too.
+            spawnCommand.withCString { cCommand in
+                surfaceConfig.command = cCommand
+                surfaceConfig.wait_after_command = true
+                createSurfaceWithWorkingDirectory()
+            }
         } else {
-            createSurface()
+            createSurfaceWithWorkingDirectory()
         }
 
         if surface == nil {

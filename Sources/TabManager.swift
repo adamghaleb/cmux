@@ -1160,16 +1160,33 @@ class TabManager: ObservableObject {
         return false
     }
 
-    func setCustomTitle(tabId: UUID, title: String?) {
-        guard let index = tabs.firstIndex(where: { $0.id == tabId }) else { return }
-        tabs[index].setCustomTitle(title)
-        if selectedTabId == tabId {
+    /// Sets, replaces, or clears a workspace custom title. Returns whether the
+    /// write landed (`.auto` writes are rejected over user-set titles; see
+    /// ``Workspace/setCustomTitle(_:source:)``).
+    /// upstream: PR #5547
+    @discardableResult
+    func setCustomTitle(tabId: UUID, title: String?, source: Workspace.CustomTitleSource = .user) -> Bool {
+        guard let index = tabs.firstIndex(where: { $0.id == tabId }) else { return false }
+        let applied = tabs[index].setCustomTitle(title, source: source)
+        if applied, selectedTabId == tabId {
             updateWindowTitle(for: tabs[index])
         }
+        return applied
     }
 
     func clearCustomTitle(tabId: UUID) {
         setCustomTitle(tabId: tabId, title: nil)
+    }
+
+    /// upstream: PR #2475
+    func setCustomDescription(tabId: UUID, description: String?) {
+        guard let index = tabs.firstIndex(where: { $0.id == tabId }) else { return }
+        tabs[index].setCustomDescription(description)
+    }
+
+    /// upstream: PR #2475
+    func clearCustomDescription(tabId: UUID) {
+        setCustomDescription(tabId: tabId, description: nil)
     }
 
     func setTabColor(tabId: UUID, color: String?) {
@@ -1578,13 +1595,20 @@ class TabManager: ObservableObject {
         AppDelegate.shared?.notificationStore?.clearNotifications(forTabId: tab.id, surfaceId: surfaceId)
     }
 
-    /// Close a panel because its child process exited (e.g. the user hit Ctrl+D).
+    /// Close a panel because its child process exited (e.g. the user hit Ctrl+D,
+    /// or a spawn-command pane's command — like `tmux attach` — exited/detached).
     ///
     /// This should never prompt: the process is already gone, and Ghostty emits the
     /// `SHOW_CHILD_EXITED` action specifically so the host app can decide what to do.
-    func closePanelAfterChildExited(tabId: UUID, surfaceId: UUID) {
+    ///
+    /// `keepSurfaceVisible` is true for startup failures (abnormal exits within
+    /// the abnormal-command-exit-runtime threshold): the dead surface is retained
+    /// so the user can inspect the error instead of the pane flash-closing.
+    /// upstream: PR #8681 (child-exit policy)
+    func closePanelAfterChildExited(tabId: UUID, surfaceId: UUID, keepSurfaceVisible: Bool = false) {
         guard let tab = tabs.first(where: { $0.id == tabId }) else { return }
         guard tab.panels[surfaceId] != nil else { return }
+        if keepSurfaceVisible { return }
 
 #if DEBUG
         dlog(

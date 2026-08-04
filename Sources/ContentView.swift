@@ -6,17 +6,9 @@ import ObjectiveC
 import UniformTypeIdentifiers
 import WebKit
 
-private extension Color {
-    init?(hex: String) {
-        let hex = hex.trimmingCharacters(in: .init(charactersIn: "#"))
-        guard hex.count == 6, let value = UInt64(hex, radix: 16) else { return nil }
-        self.init(
-            red:   Double((value >> 16) & 0xFF) / 255.0,
-            green: Double((value >> 8)  & 0xFF) / 255.0,
-            blue:  Double( value        & 0xFF) / 255.0
-        )
-    }
-}
+// Color(hex:) lives in Sources/Fadicode/Observatory/AgentCardView.swift
+// (internal extension); the private duplicate that used to live here collides
+// with it now that the Fadicode layer is part of the target.
 
 private func coloredCircleImage(color: NSColor) -> NSImage {
     let size = NSSize(width: 14, height: 14)
@@ -8940,6 +8932,21 @@ enum SidebarWorkspaceShortcutHintMetrics {
     #endif
 }
 
+/// Applies a `.help()` hover tooltip only when a description exists, so rows
+/// without one register no (empty) tooltip. upstream: PR #2475
+private struct WorkspaceDescriptionHelpModifier: ViewModifier {
+    let description: String?
+
+    func body(content: Content) -> some View {
+        if let description = description?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !description.isEmpty {
+            content.help(description)
+        } else {
+            content
+        }
+    }
+}
+
 private struct TabItemView: View {
     @EnvironmentObject var tabManager: TabManager
     @EnvironmentObject var notificationStore: TerminalNotificationStore
@@ -9436,6 +9443,9 @@ private struct TabItemView: View {
         .accessibilityAction(named: Text(moveDownActionText)) {
             moveBy(1)
         }
+        // Daemon/user-set workspace description surfaces as a hover tooltip
+        // (socket: `workspace.action set_description`). upstream: PR #2475
+        .modifier(WorkspaceDescriptionHelpModifier(description: tab.customDescription))
         .contextMenu { workspaceContextMenu }
     }
 

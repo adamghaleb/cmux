@@ -1730,6 +1730,8 @@ class TerminalController {
             return v2Result(id: id, self.v2WorkspaceRename(params: params))
         case "workspace.action":
             return v2Result(id: id, self.v2WorkspaceAction(params: params))
+        case "workspace.set_auto_title":
+            return v2Result(id: id, self.v2WorkspaceSetAutoTitle(params: params))
         case "workspace.next":
             return v2Result(id: id, self.v2WorkspaceNext(params: params))
         case "workspace.previous":
@@ -2093,6 +2095,7 @@ class TerminalController {
             "workspace.reorder",
             "workspace.rename",
             "workspace.action",
+            "workspace.set_auto_title",
             "workspace.next",
             "workspace.previous",
             "workspace.last",
@@ -3193,11 +3196,15 @@ class TerminalController {
             return .err(code: "invalid_params", message: "Missing action", data: nil)
         }
 
+        // upstream: PR #2475 (set_description/clear_description),
+        // PR #1873 (set_color/clear_color)
         let supportedActions = [
             "pin", "unpin", "rename", "clear_name",
+            "set_description", "clear_description",
             "move_up", "move_down", "move_top",
             "close_others", "close_above", "close_below",
-            "mark_read", "mark_unread"
+            "mark_read", "mark_unread",
+            "set_color", "clear_color"
         ]
 
         var result: V2CallResult = .err(code: "invalid_params", message: "Unknown workspace action", data: [
@@ -3267,6 +3274,21 @@ class TerminalController {
                 tabManager.clearCustomTitle(tabId: workspace.id)
                 finish(["title": workspace.title])
 
+            // upstream: PR #2475
+            case "set_description":
+                guard let descriptionRaw = v2String(params, "description"),
+                      !descriptionRaw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                    result = .err(code: "invalid_params", message: "Missing or invalid description", data: nil)
+                    return
+                }
+                tabManager.setCustomDescription(tabId: workspace.id, description: descriptionRaw)
+                finish(["description": v2OrNull(workspace.customDescription)])
+
+            // upstream: PR #2475
+            case "clear_description":
+                tabManager.clearCustomDescription(tabId: workspace.id)
+                finish(["description": NSNull()])
+
             case "move_up":
                 guard let currentIndex = tabManager.tabs.firstIndex(where: { $0.id == workspace.id }) else {
                     result = .err(code: "not_found", message: "Workspace not found", data: nil)
@@ -3323,6 +3345,39 @@ class TerminalController {
                 AppDelegate.shared?.notificationStore?.markUnread(forTabId: workspace.id)
                 finish()
 
+            // upstream: PR #1873
+            case "set_color":
+                guard let colorRaw = v2String(params, "color"),
+                      !colorRaw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                    result = .err(code: "invalid_params", message: "Missing or invalid color", data: nil)
+                    return
+                }
+                let colorInput = colorRaw.trimmingCharacters(in: .whitespacesAndNewlines)
+                // Resolve named colors from the effective palette (the 16
+                // built-in named colors plus user-defined additions).
+                let effectivePalette = WorkspaceTabColorSettings.palette()
+                let hex: String
+                if let entry = effectivePalette.first(where: {
+                    $0.name.caseInsensitiveCompare(colorInput) == .orderedSame
+                }) {
+                    hex = entry.hex
+                } else if let normalized = WorkspaceTabColorSettings.normalizedHex(colorInput) {
+                    hex = normalized
+                } else {
+                    let colorNames = effectivePalette.map(\.name)
+                    result = .err(code: "invalid_params", message: "Invalid color. Use a hex value (#RRGGBB) or a named color.", data: [
+                        "named_colors": colorNames
+                    ])
+                    return
+                }
+                tabManager.setTabColor(tabId: workspace.id, color: hex)
+                finish(["color": hex])
+
+            // upstream: PR #1873
+            case "clear_color":
+                tabManager.setTabColor(tabId: workspace.id, color: nil)
+                finish(["color": NSNull()])
+
             default:
                 result = .err(code: "invalid_params", message: "Unknown workspace action", data: [
                     "action": action,
@@ -3332,6 +3387,94 @@ class TerminalController {
         }
 
         return result
+    }
+
+    /// `workspace.set_auto_title`: applies a daemon/AI-generated semantic label
+    /// to a workspace (and optionally one of its panels/tabs) with `.auto`
+    /// provenance, so a user-set title is never overwritten. `{"probe": true}`
+    /// reads the live state without writing. `panel_id` accepts either a panel
+    /// UUID or a surface UUID.
+    ///
+    /// Transcribed from upstream (PR #5547) minus the opt-in
+    /// workspaceAutoNaming setting, the summarizer-agent selection, and the
+    /// AutoNamingStatusStore failure ledger — this fork's labeler is fadid, so
+    /// the verb is always enabled. The request/response wire shape is kept
+    /// compatible (`enabled` is always true; `failure` is accepted and
+    /// acknowledged without a status store).
+    private func v2WorkspaceSetAutoTitle(params: [String: Any]) -> V2CallResult {
+        if v2Bool(params, "probe") == true {
+            var result: [String: Any] = [
+                "enabled": true,
+                "summarizer_agent": NSNull()
+            ]
+            // With a workspace_id the probe also reports user ownership, so
+            // naming engines can skip the labeling call entirely for
+            // workspaces the user renamed.
+            if let workspaceId = v2UUID(params, "workspace_id"),
+               let tabManager = v2ResolveTabManager(params: params) {
+                var userOwned: Bool?
+                v2MainSync {
+                    guard let workspace = tabManager.tabs.first(where: { $0.id == workspaceId }) else { return }
+                    userOwned = workspace.effectiveCustomTitleSource == .user
+                }
+                result["workspace_user_owned"] = v2OrNull(userOwned)
+            }
+            return .ok(result)
+        }
+        // upstream records naming-pass failures in a Settings status line;
+        // the fork acknowledges them for wire compatibility.
+        if v2String(params, "failure") != nil {
+            return .ok(["recorded": true, "enabled": true])
+        }
+        guard let tabManager = v2ResolveTabManager(params: params) else {
+            return .err(code: "unavailable", message: "TabManager not available", data: nil)
+        }
+        guard let workspaceId = v2UUID(params, "workspace_id") else {
+            return .err(code: "invalid_params", message: "Missing or invalid workspace_id", data: nil)
+        }
+        guard let titleRaw = v2String(params, "title"),
+              !titleRaw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return .err(code: "invalid_params", message: "Missing or invalid title", data: nil)
+        }
+        let panelId = v2UUID(params, "panel_id")
+
+        let title = titleRaw.trimmingCharacters(in: .whitespacesAndNewlines)
+        let panelOnlyIfMultiple = v2Bool(params, "panel_only_if_multiple") ?? false
+        var found = false
+        var workspaceApplied = false
+        var panelApplied: Bool?
+        v2MainSync {
+            guard let workspace = tabManager.tabs.first(where: { $0.id == workspaceId }) else { return }
+            found = true
+            workspaceApplied = tabManager.setCustomTitle(tabId: workspaceId, title: title, source: .auto)
+            if let panelId {
+                // Hook payloads carry surface ids; accept either a panel id
+                // or a surface id for the tab target.
+                let resolvedPanelId = workspace.panels[panelId] != nil
+                    ? panelId
+                    : workspace.panelIdFromSurfaceId(TabID(uuid: panelId))
+                if let resolvedPanelId,
+                   !(panelOnlyIfMultiple && workspace.panels.count < 2) {
+                    panelApplied = workspace.setPanelCustomTitle(panelId: resolvedPanelId, title: title, source: .auto)
+                }
+            }
+        }
+
+        guard found else {
+            return .err(code: "not_found", message: "Workspace not found", data: [
+                "workspace_id": workspaceId.uuidString,
+                "workspace_ref": v2Ref(kind: .workspace, uuid: workspaceId)
+            ])
+        }
+
+        return .ok([
+            "workspace_id": workspaceId.uuidString,
+            "workspace_ref": v2Ref(kind: .workspace, uuid: workspaceId),
+            "title": title,
+            "workspace_applied": workspaceApplied,
+            "panel_applied": v2OrNull(panelApplied),
+            "enabled": true
+        ])
     }
 
     private func v2TabAction(params: [String: Any]) -> V2CallResult {
@@ -3827,7 +3970,16 @@ class TerminalController {
             if panelType == .browser {
                 newPanelId = ws.newBrowserSurface(inPane: paneId, url: url, focus: v2FocusAllowed())?.id
             } else {
-                newPanelId = ws.newTerminalSurface(inPane: paneId, focus: v2FocusAllowed())?.id
+                // Daemon seam (ADR-0004): an optional spawn command runs instead
+                // of the login shell (e.g. `tmux -L fadi attach -t fadi/<uuid>`).
+                // libghostty forces wait-after-command=true for such surfaces;
+                // the SHOW_CHILD_EXITED policy owns the exit outcome.
+                let spawnCommand = v2String(params, "command")?.trimmingCharacters(in: .whitespacesAndNewlines)
+                newPanelId = ws.newTerminalSurface(
+                    inPane: paneId,
+                    focus: v2FocusAllowed(),
+                    spawnCommand: (spawnCommand?.isEmpty ?? true) ? nil : spawnCommand
+                )?.id
             }
 
             guard let newPanelId else {

@@ -153,6 +153,8 @@ extension Workspace {
         return SessionWorkspaceSnapshot(
             processTitle: processTitle,
             customTitle: customTitle,
+            customTitleSource: effectiveCustomTitleSource,
+            customDescription: customDescription,
             customColor: customColor,
             isPinned: isPinned,
             currentDirectory: currentDirectory,
@@ -191,7 +193,10 @@ extension Workspace {
         applySessionDividerPositions(snapshotNode: snapshot.layout, liveNode: bonsplitController.treeSnapshot())
 
         applyProcessTitle(snapshot.processTitle)
-        setCustomTitle(snapshot.customTitle)
+        // Restore provenance verbatim: a pre-provenance snapshot title is
+        // treated as `.user` so a daemon label never overwrites it.
+        setCustomTitle(snapshot.customTitle, source: snapshot.customTitleSource ?? .user)
+        setCustomDescription(snapshot.customDescription)
         setCustomColor(snapshot.customColor)
         isPinned = snapshot.isPinned
 
@@ -347,6 +352,9 @@ extension Workspace {
             terminalSnapshot = nil
             browserSnapshot = nil
             markdownSnapshot = SessionMarkdownPanelSnapshot(filePath: mdPanel.filePath)
+        case .observatory:
+            // Observatory panels are ephemeral UI; they are not persisted.
+            return nil
         }
 
         return SessionPanelSnapshot(
@@ -354,6 +362,7 @@ extension Workspace {
             type: panel.panelType,
             title: panelTitle,
             customTitle: customTitle,
+            customTitleSource: customTitle != nil ? (panelCustomTitleSources[panelId] ?? .user) : nil,
             directory: directory,
             isPinned: isPinned,
             isManuallyUnread: isManuallyUnread,
@@ -538,6 +547,9 @@ extension Workspace {
             }
             applySessionPanelMetadata(snapshot, toPanelId: markdownPanel.id)
             return markdownPanel.id
+        case .observatory:
+            // Observatory panels are not persisted, so there is nothing to restore.
+            return nil
         }
     }
 
@@ -546,7 +558,7 @@ extension Workspace {
             panelTitles[panelId] = title
         }
 
-        setPanelCustomTitle(panelId: panelId, title: snapshot.customTitle)
+        setPanelCustomTitle(panelId: panelId, title: snapshot.customTitle, source: snapshot.customTitleSource ?? .user)
         setPanelPinned(panelId: panelId, pinned: snapshot.isPinned)
 
         if snapshot.isManuallyUnread {
@@ -918,6 +930,18 @@ final class Workspace: Identifiable, ObservableObject {
     let id: UUID
     @Published var title: String
     @Published var customTitle: String?
+    /// Provenance of `customTitle`: `.user` for manual renames (sidebar,
+    /// CLI, command palette), `.auto` for daemon/AI-set semantic labels.
+    /// `nil` when no custom title is set. A present title with absent
+    /// provenance is treated as `.user` so an auto label never overwrites
+    /// a title it cannot prove it owns.
+    /// upstream: PR #5547 (opt-in AI auto-naming of workspaces and tabs)
+    @Published var customTitleSource: CustomTitleSource?
+    /// Daemon/user-set workspace description, surfaced as a hover tooltip on
+    /// the sidebar workspace row and settable over the socket via
+    /// `workspace.action set_description`.
+    /// upstream: PR #2475 (editable workspace descriptions)
+    @Published var customDescription: String?
     @Published var isPinned: Bool = false
     @Published var customColor: String?  // hex string, e.g. "#C0392B"
     @Published var currentDirectory: String
@@ -980,6 +1004,10 @@ final class Workspace: Identifiable, ObservableObject {
     @Published var panelDirectories: [UUID: String] = [:]
     @Published var panelTitles: [UUID: String] = [:]
     @Published private(set) var panelCustomTitles: [UUID: String] = [:]
+    /// Provenance of entries in `panelCustomTitles` (see ``CustomTitleSource``).
+    /// A panel with a title but no recorded source is treated as `.user`.
+    /// upstream: PR #5547
+    var panelCustomTitleSources: [UUID: CustomTitleSource] = [:]
     @Published private(set) var pinnedPanelIds: Set<UUID> = []
     @Published private(set) var manualUnreadPanelIds: Set<UUID> = []
     private var manualUnreadMarkedAt: [UUID: Date] = [:]
@@ -1380,9 +1408,27 @@ final class Workspace: Identifiable, ObservableObject {
             return SurfaceKind.browser
         case .markdown:
             return SurfaceKind.markdown
+        case .observatory:
+            return SurfaceKind.observatory
         }
     }
 
+    /// Resolves the title a panel's tab renders.
+    ///
+    /// Precedence (highest wins):
+    ///   1. Explicit user rename (`panelCustomTitles` entry with `.user`
+    ///      provenance — sidebar/context-menu/CLI rename).
+    ///   2. Daemon-set semantic label (`panelCustomTitles` entry with `.auto`
+    ///      provenance — pushed over the socket via `workspace.set_auto_title`
+    ///      or a future fadid labeler).
+    ///   3. Auto-derived title (`fallback`: the process/OSC title flowing in
+    ///      through `updatePanelTitle`, or the panel's display title).
+    ///
+    /// Tiers 1 and 2 share the `panelCustomTitles` storage; their ordering is
+    /// enforced at write time by `setPanelCustomTitle(panelId:title:source:)`,
+    /// which rejects `.auto` writes over a `.user` entry (upstream: PR #5547).
+    /// This keeps the read path a single-map lookup while guaranteeing a
+    /// daemon label can never clobber an explicit user rename.
     private func resolvedPanelTitle(panelId: UUID, fallback: String) -> String {
         let trimmedFallback = fallback.trimmingCharacters(in: .whitespacesAndNewlines)
         let fallbackTitle = trimmedFallback.isEmpty ? "Tab" : trimmedFallback
@@ -1459,25 +1505,44 @@ final class Workspace: Identifiable, ObservableObject {
         return max(rawTarget, pinnedCount)
     }
 
-    func setPanelCustomTitle(panelId: UUID, title: String?) {
-        guard panels[panelId] != nil else { return }
+    /// Sets, replaces, or clears a panel custom title.
+    ///
+    /// `.auto` writes (daemon/AI semantic labels) are rejected when a
+    /// user-set title exists, and `.auto` never clears. Returns whether the
+    /// write landed.
+    /// upstream: PR #5547
+    @discardableResult
+    func setPanelCustomTitle(panelId: UUID, title: String?, source: CustomTitleSource = .user) -> Bool {
+        guard panels[panelId] != nil else { return false }
         let trimmed = title?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let previous = panelCustomTitles[panelId]
+        if source == .auto {
+            guard !trimmed.isEmpty else { return false }
+            if previous != nil, (panelCustomTitleSources[panelId] ?? .user) == .user { return false }
+        }
         if trimmed.isEmpty {
-            guard previous != nil else { return }
+            guard previous != nil else { return false }
             panelCustomTitles.removeValue(forKey: panelId)
+            panelCustomTitleSources.removeValue(forKey: panelId)
         } else {
-            guard previous != trimmed else { return }
+            guard previous != trimmed else {
+                // Same text: a user write still claims ownership so a later
+                // auto write cannot replace a title the user re-confirmed.
+                if source == .user { panelCustomTitleSources[panelId] = .user }
+                return true
+            }
             panelCustomTitles[panelId] = trimmed
+            panelCustomTitleSources[panelId] = source
         }
 
-        guard let panel = panels[panelId], let tabId = surfaceIdFromPanelId(panelId) else { return }
+        guard let panel = panels[panelId], let tabId = surfaceIdFromPanelId(panelId) else { return true }
         let baseTitle = panelTitles[panelId] ?? panel.displayTitle
         bonsplitController.updateTab(
             tabId,
             title: resolvedPanelTitle(panelId: panelId, fallback: baseTitle),
             hasCustomTitle: panelCustomTitles[panelId] != nil
         )
+        return true
     }
 
     func isPanelPinned(_ panelId: UUID) -> Bool {
@@ -1567,9 +1632,31 @@ final class Workspace: Identifiable, ObservableObject {
 
     // MARK: - Title Management
 
+    /// Who set a custom title. Daemon/AI semantic labels (`.auto`) must never
+    /// overwrite a user-set title; this enum carries that distinction for
+    /// workspace and panel custom titles, and round-trips through session
+    /// persistence.
+    /// upstream: PR #5547
+    enum CustomTitleSource: String, Codable, Sendable {
+        case user
+        case auto
+    }
+
     var hasCustomTitle: Bool {
         let trimmed = customTitle?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         return !trimmed.isEmpty
+    }
+
+    /// The provenance of the current custom title, normalizing legacy state:
+    /// `nil` when no custom title is set; `.user` when a title exists but
+    /// provenance was never recorded (pre-provenance snapshots).
+    /// upstream: PR #5547
+    var effectiveCustomTitleSource: CustomTitleSource? {
+        hasCustomTitle ? (customTitleSource ?? .user) : nil
+    }
+
+    var hasCustomDescription: Bool {
+        Self.normalizedCustomDescription(customDescription) != nil
     }
 
     func applyProcessTitle(_ title: String) {
@@ -1673,15 +1760,49 @@ final class Workspace: Identifiable, ObservableObject {
         setCustomColor(color)
     }
 
-    func setCustomTitle(_ title: String?) {
+    /// Sets, replaces, or clears the workspace custom title.
+    ///
+    /// `.auto` writes (daemon/AI semantic labels) are rejected when a
+    /// user-set title exists, and `.auto` never clears. Returns whether the
+    /// write landed.
+    /// upstream: PR #5547
+    @discardableResult
+    func setCustomTitle(_ title: String?, source: CustomTitleSource = .user) -> Bool {
         let trimmed = title?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if source == .auto {
+            guard !trimmed.isEmpty else { return false }
+            if hasCustomTitle, (customTitleSource ?? .user) == .user { return false }
+        }
         if trimmed.isEmpty {
             customTitle = nil
+            customTitleSource = nil
             self.title = processTitle
         } else {
             customTitle = trimmed
+            customTitleSource = source
             self.title = trimmed
         }
+        return true
+    }
+
+    /// Sets or clears the workspace description (nil / whitespace-only clears).
+    /// Line endings are normalized to `\n`; leading/trailing whitespace-only
+    /// content is treated as empty.
+    /// upstream: PR #2475
+    func setCustomDescription(_ description: String?) {
+        let normalizedDescription = Self.normalizedCustomDescription(description)
+        guard customDescription != normalizedDescription else { return }
+        customDescription = normalizedDescription
+    }
+
+    /// upstream: PR #2475
+    private static func normalizedCustomDescription(_ description: String?) -> String? {
+        let normalizedLineEndings = description?
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .replacingOccurrences(of: "\r", with: "\n")
+        let trimmed = normalizedLineEndings?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard !trimmed.isEmpty else { return nil }
+        return normalizedLineEndings
     }
 
     // MARK: - Directory Updates
@@ -2147,7 +2268,8 @@ final class Workspace: Identifiable, ObservableObject {
         inPane paneId: PaneID,
         focus: Bool? = nil,
         workingDirectory: String? = nil,
-        startupEnvironment: [String: String] = [:]
+        startupEnvironment: [String: String] = [:],
+        spawnCommand: String? = nil
     ) -> TerminalPanel? {
         let shouldFocusNewTab = focus ?? (bonsplitController.focusedPaneId == paneId)
 
@@ -2160,7 +2282,8 @@ final class Workspace: Identifiable, ObservableObject {
             configTemplate: inheritedConfig,
             workingDirectory: workingDirectory,
             additionalEnvironment: startupEnvironment,
-            portOrdinal: portOrdinal
+            portOrdinal: portOrdinal,
+            spawnCommand: spawnCommand
         )
         panels[newPanel.id] = newPanel
         panelTitles[newPanel.id] = newPanel.displayTitle
