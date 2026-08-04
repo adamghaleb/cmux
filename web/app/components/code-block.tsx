@@ -54,13 +54,14 @@ export async function CodeBlock({
         style={
           variant === "ascii"
             ? {
-                fontFamily:
-                  "Menlo, Monaco, Consolas, 'Courier New', monospace",
+                fontFamily: "Menlo, Monaco, Consolas, 'Courier New', monospace",
               }
             : undefined
         }
       >
-        <code style={variant === "ascii" ? { fontFamily: "inherit" } : undefined}>
+        <code
+          style={variant === "ascii" ? { fontFamily: "inherit" } : undefined}
+        >
           {children}
         </code>
       </pre>

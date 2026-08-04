@@ -24,8 +24,12 @@ function Cmd({
       <h4>{name}</h4>
       <p>{desc}</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        <CodeBlock title="CLI" lang="bash">{cli}</CodeBlock>
-        <CodeBlock title="Socket" lang="json">{socket}</CodeBlock>
+        <CodeBlock title="CLI" lang="bash">
+          {cli}
+        </CodeBlock>
+        <CodeBlock title="Socket" lang="json">
+          {socket}
+        </CodeBlock>
       </div>
     </div>
   );
@@ -97,15 +101,15 @@ export default function ApiPage() {
               <strong>Off</strong>
             </td>
             <td>Socket disabled</td>
-            <td>Settings UI or <code>CMUX_SOCKET_MODE=off</code></td>
+            <td>
+              Settings UI or <code>CMUX_SOCKET_MODE=off</code>
+            </td>
           </tr>
           <tr>
             <td>
               <strong>cmux processes only</strong>
             </td>
-            <td>
-              Only processes spawned inside cmux terminals can connect.
-            </td>
+            <td>Only processes spawned inside cmux terminals can connect.</td>
             <td>Default mode in Settings UI</td>
           </tr>
           <tr>
@@ -403,10 +407,10 @@ cmux identify --json`}
               <code>CMUX_SOCKET_MODE</code>
             </td>
             <td>
-              Override access mode (<code>cmuxOnly</code>,{" "}
-              <code>allowAll</code>, <code>off</code>). Also accepts{" "}
-              <code>cmux-only</code>/<code>cmux_only</code> and{" "}
-              <code>allow-all</code>/<code>allow_all</code>
+              Override access mode (<code>cmuxOnly</code>, <code>allowAll</code>
+              , <code>off</code>). Also accepts <code>cmux-only</code>/
+              <code>cmux_only</code> and <code>allow-all</code>/
+              <code>allow_all</code>
             </td>
           </tr>
           <tr>

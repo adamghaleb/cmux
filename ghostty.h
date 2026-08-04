@@ -832,6 +832,16 @@ typedef struct {
   ssize_t selected;
 } ghostty_action_search_selected_s;
 
+// apprt.action.TaskCompletion.C
+typedef struct {
+  const char *tier;
+} ghostty_action_task_completion_s;
+
+// apprt.action.WorkingState.C
+typedef struct {
+  const char *action;
+} ghostty_action_working_state_s;
+
 // terminal.Scrollbar
 typedef struct {
   uint64_t total;
@@ -904,6 +914,9 @@ typedef enum {
   GHOSTTY_ACTION_SEARCH_TOTAL,
   GHOSTTY_ACTION_SEARCH_SELECTED,
   GHOSTTY_ACTION_READONLY,
+  GHOSTTY_ACTION_COPY_TITLE_TO_CLIPBOARD,
+  GHOSTTY_ACTION_TASK_COMPLETION,
+  GHOSTTY_ACTION_WORKING_STATE,
 } ghostty_action_tag_e;
 
 typedef union {
@@ -944,6 +957,8 @@ typedef union {
   ghostty_action_search_total_s search_total;
   ghostty_action_search_selected_s search_selected;
   ghostty_action_readonly_e readonly;
+  ghostty_action_task_completion_s task_completion;
+  ghostty_action_working_state_s working_state;
 } ghostty_action_u;
 
 typedef struct {
@@ -1065,6 +1080,8 @@ bool ghostty_surface_process_exited(ghostty_surface_t);
 void ghostty_surface_refresh(ghostty_surface_t);
 void ghostty_surface_draw(ghostty_surface_t);
 void ghostty_surface_set_content_scale(ghostty_surface_t, double, double);
+void ghostty_surface_set_accent_color(ghostty_surface_t, uint8_t, uint8_t, uint8_t);
+void ghostty_surface_clear_accent_color(ghostty_surface_t);
 void ghostty_surface_set_focus(ghostty_surface_t, bool);
 void ghostty_surface_set_occlusion(ghostty_surface_t, bool);
 void ghostty_surface_set_size(ghostty_surface_t, uint32_t, uint32_t);

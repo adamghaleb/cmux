@@ -72,9 +72,21 @@ final class UpdatePillReleaseVisibilityTests: XCTestCase {
     }
 }
 
-/// Regression test: ensure WKWebView can load HTTP development URLs (e.g. *.localtest.me).
+/// ATS (App Transport Security) regression tests.
+///
+/// The browser panel uses WKWebView to load arbitrary URLs, including local dev
+/// servers (localhost, *.localtest.me, etc.) that may use plain HTTP.
+/// `NSAllowsArbitraryLoadsInWebContent` is the minimal ATS exception that permits
+/// this without weakening ATS for the app's own URLSession networking (Sparkle
+/// update checks, etc.).
+///
+/// `NSAllowsArbitraryLoads` would disable ATS app-wide and must never be added.
+/// See GitHub issue #11.
 final class AppTransportSecurityTests: XCTestCase {
-    func testInfoPlistAllowsArbitraryLoadsInWebContent() throws {
+
+    // MARK: - Helpers
+
+    private func loadATSDictionary() throws -> [String: Any] {
         let projectRoot = findProjectRoot()
         let infoPlistURL = projectRoot.appendingPathComponent("Resources/Info.plist")
         let data = try Data(contentsOf: infoPlistURL)
@@ -82,12 +94,7 @@ final class AppTransportSecurityTests: XCTestCase {
         let plist = try XCTUnwrap(
             PropertyListSerialization.propertyList(from: data, options: [], format: &format) as? [String: Any]
         )
-        let ats = try XCTUnwrap(plist["NSAppTransportSecurity"] as? [String: Any])
-        XCTAssertEqual(
-            ats["NSAllowsArbitraryLoadsInWebContent"] as? Bool,
-            true,
-            "Resources/Info.plist must allow HTTP loads in WKWebView for local dev hostnames."
-        )
+        return try XCTUnwrap(plist["NSAppTransportSecurity"] as? [String: Any])
     }
 
     private func findProjectRoot() -> URL {
@@ -100,6 +107,35 @@ final class AppTransportSecurityTests: XCTestCase {
             dir = dir.deletingLastPathComponent()
         }
         return URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+    }
+
+    // MARK: - Tests
+
+    func testInfoPlistAllowsArbitraryLoadsInWebContent() throws {
+        let ats = try loadATSDictionary()
+        XCTAssertEqual(
+            ats["NSAllowsArbitraryLoadsInWebContent"] as? Bool,
+            true,
+            """
+            Resources/Info.plist must set NSAllowsArbitraryLoadsInWebContent = YES \
+            so the browser panel's WKWebView can load HTTP URLs (local dev servers, etc.).
+            """
+        )
+    }
+
+    /// Regression: NSAllowsArbitraryLoads disables ATS for ALL networking (URLSession,
+    /// Sparkle, etc.), not just web views. Only the web-content exception should be used.
+    func testInfoPlistDoesNotAllowArbitraryLoadsGlobally() throws {
+        let ats = try loadATSDictionary()
+        XCTAssertNil(
+            ats["NSAllowsArbitraryLoads"],
+            """
+            Resources/Info.plist must NOT contain NSAllowsArbitraryLoads. \
+            That key disables ATS for all app networking. Use \
+            NSAllowsArbitraryLoadsInWebContent instead (browser panel only). \
+            See GitHub issue #11.
+            """
+        )
     }
 }
 

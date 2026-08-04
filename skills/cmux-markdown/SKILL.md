@@ -102,9 +102,9 @@ cmux markdown open plan.md --window window:1
 
 ## Deep-Dive References
 
-| Reference | When to Use |
-|-----------|-------------|
-| [references/commands.md](references/commands.md) | Full command syntax and options |
+| Reference                                              | When to Use                                       |
+| ------------------------------------------------------ | ------------------------------------------------- |
+| [references/commands.md](references/commands.md)       | Full command syntax and options                   |
 | [references/live-reload.md](references/live-reload.md) | File watching behavior, atomic writes, edge cases |
 
 ## Rendering Support

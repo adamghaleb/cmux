@@ -631,7 +631,7 @@ class TabManager: ObservableObject {
     private let panelTitleUpdateCoalescer = NotificationBurstCoalescer(delay: 1.0 / 30.0)
     private var recentlyClosedBrowsers = RecentlyClosedBrowserStack(capacity: 20)
     private let initialWorkspaceGitProbeQueue = DispatchQueue(
-        label: "com.cmux.initial-workspace-git-probe",
+        label: "com.fadicode.initial-workspace-git-probe",
         qos: .utility
     )
     private var initialWorkspaceGitProbeGenerationByWorkspace: [UUID: UUID] = [:]
@@ -1880,7 +1880,7 @@ class TabManager: ObservableObject {
     }
 
     private func windowTitle(for tab: Workspace?) -> String {
-        guard let tab else { return "cmux" }
+        guard let tab else { return "fadicode" }
         let trimmedTitle = tab.title.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmedTitle.isEmpty {
             return trimmedTitle
@@ -2480,6 +2480,20 @@ class TabManager: ObservableObject {
             preferSplitRight: false,
             insertAtEnd: insertAtEnd
         )
+    }
+
+    /// Convert the currently focused terminal into a browser panel in-place.
+    /// If the focused panel is already a browser (or not a terminal), falls back to
+    /// opening a new browser tab instead.
+    @discardableResult
+    func convertCurrentToBrowser(url: URL? = nil) -> UUID? {
+        guard let workspace = selectedWorkspace else { return nil }
+        if let browserPanel = workspace.replaceFocusedTerminalWithBrowser(url: url) {
+            rememberFocusedSurface(tabId: workspace.id, surfaceId: browserPanel.id)
+            return browserPanel.id
+        }
+        // Focused panel is not a terminal — fall back to new browser tab
+        return openBrowser(url: url, insertAtEnd: true)
     }
 
     /// Reopen the most recently closed browser panel (Cmd+Shift+T).
@@ -3875,17 +3889,17 @@ enum ResizeDirection {
 }
 
 extension Notification.Name {
-    static let commandPaletteToggleRequested = Notification.Name("cmux.commandPaletteToggleRequested")
-    static let commandPaletteRequested = Notification.Name("cmux.commandPaletteRequested")
-    static let commandPaletteSwitcherRequested = Notification.Name("cmux.commandPaletteSwitcherRequested")
-    static let commandPaletteSubmitRequested = Notification.Name("cmux.commandPaletteSubmitRequested")
-    static let commandPaletteDismissRequested = Notification.Name("cmux.commandPaletteDismissRequested")
-    static let commandPaletteRenameTabRequested = Notification.Name("cmux.commandPaletteRenameTabRequested")
-    static let commandPaletteRenameWorkspaceRequested = Notification.Name("cmux.commandPaletteRenameWorkspaceRequested")
-    static let commandPaletteMoveSelection = Notification.Name("cmux.commandPaletteMoveSelection")
-    static let commandPaletteRenameInputInteractionRequested = Notification.Name("cmux.commandPaletteRenameInputInteractionRequested")
-    static let commandPaletteRenameInputDeleteBackwardRequested = Notification.Name("cmux.commandPaletteRenameInputDeleteBackwardRequested")
-    static let feedbackComposerRequested = Notification.Name("cmux.feedbackComposerRequested")
+    static let commandPaletteToggleRequested = Notification.Name("fadicode.commandPaletteToggleRequested")
+    static let commandPaletteRequested = Notification.Name("fadicode.commandPaletteRequested")
+    static let commandPaletteSwitcherRequested = Notification.Name("fadicode.commandPaletteSwitcherRequested")
+    static let commandPaletteSubmitRequested = Notification.Name("fadicode.commandPaletteSubmitRequested")
+    static let commandPaletteDismissRequested = Notification.Name("fadicode.commandPaletteDismissRequested")
+    static let commandPaletteRenameTabRequested = Notification.Name("fadicode.commandPaletteRenameTabRequested")
+    static let commandPaletteRenameWorkspaceRequested = Notification.Name("fadicode.commandPaletteRenameWorkspaceRequested")
+    static let commandPaletteMoveSelection = Notification.Name("fadicode.commandPaletteMoveSelection")
+    static let commandPaletteRenameInputInteractionRequested = Notification.Name("fadicode.commandPaletteRenameInputInteractionRequested")
+    static let commandPaletteRenameInputDeleteBackwardRequested = Notification.Name("fadicode.commandPaletteRenameInputDeleteBackwardRequested")
+    static let feedbackComposerRequested = Notification.Name("fadicode.feedbackComposerRequested")
     static let ghosttyDidSetTitle = Notification.Name("ghosttyDidSetTitle")
     static let ghosttyDidFocusTab = Notification.Name("ghosttyDidFocusTab")
     static let ghosttyDidFocusSurface = Notification.Name("ghosttyDidFocusSurface")

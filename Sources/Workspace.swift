@@ -503,6 +503,9 @@ extension Workspace {
             ) else {
                 return nil
             }
+            if let replayPath = replayEnvironment[SessionScrollbackReplayStore.environmentKey] {
+                replayFilePathByPanelId[terminalPanel.id] = replayPath
+            }
             let fallbackScrollback = SessionPersistencePolicy.truncatedScrollback(snapshot.terminal?.scrollback)
             if let fallbackScrollback {
                 restoredTerminalScrollbackByPanelId[terminalPanel.id] = fallbackScrollback
@@ -994,6 +997,10 @@ final class Workspace: Identifiable, ObservableObject {
     @Published var listeningPorts: [Int] = []
     var surfaceTTYNames: [UUID: String] = [:]
     private var restoredTerminalScrollbackByPanelId: [UUID: String] = [:]
+    /// Tracks the scrollback replay temp file path assigned to each restored panel,
+    /// so the file can be cleaned up when the panel closes (in case shell integration
+    /// did not delete it).
+    private var replayFilePathByPanelId: [UUID: String] = [:]
 
     var focusedSurfaceId: UUID? { focusedPanelId }
     var surfaceDirectories: [UUID: String] {
@@ -1007,6 +1014,7 @@ final class Workspace: Identifiable, ObservableObject {
         static let terminal = "terminal"
         static let browser = "browser"
         static let markdown = "markdown"
+        static let observatory = "observatory"
     }
 
     // MARK: - Initialization
@@ -1162,7 +1170,8 @@ final class Workspace: Identifiable, ObservableObject {
             icon: "terminal.fill",
             kind: SurfaceKind.terminal,
             isDirty: false,
-            isPinned: false
+            isPinned: false,
+            tabColor: customColor
         ) {
             surfaceIdToPanelId[tabId] = terminalPanel.id
             initialTabId = tabId
@@ -1575,6 +1584,93 @@ final class Workspace: Identifiable, ObservableObject {
         } else {
             customColor = nil
         }
+        // Push workspace color to all bonsplit tabs in this workspace
+        propagateTabColor(customColor)
+        // Push workspace color to all overlay hosts (surface tint, pet tint, etc.)
+        propagateOverlayColor(customColor)
+    }
+
+    /// Update the tabColor on every bonsplit tab in this workspace so the
+    /// tab bar renders the workspace's accent color indicator.
+    private func propagateTabColor(_ hex: String?) {
+        for (tabId, _) in surfaceIdToPanelId {
+            bonsplitController.updateTab(tabId, tabColor: .some(hex))
+        }
+    }
+
+    /// Push workspace color to all FadiCodeOverlayHost instances and Ghostty surfaces
+    /// so the surface tint, pixel pet tint, terminal accent color, and other overlays
+    /// match the workspace color.
+    private func propagateOverlayColor(_ hex: String?) {
+        for (_, panelId) in surfaceIdToPanelId {
+            guard let panel = panels[panelId] as? TerminalPanel else { continue }
+            panel.surface.hostedView.fadicodeOverlay?.projectColorHex = hex
+            // Push accent color to Ghostty renderer for Claude CLI orange recoloring
+            if let surface = panel.surface.surface {
+                if let hex, let nsColor = NSColor(hex: hex) {
+                    var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0
+                    nsColor.usingColorSpace(.sRGB)?.getRed(&r, green: &g, blue: &b, alpha: nil)
+                    ghostty_surface_set_accent_color(
+                        surface,
+                        UInt8(min(max(r * 255, 0), 255)),
+                        UInt8(min(max(g * 255, 0), 255)),
+                        UInt8(min(max(b * 255, 0), 255))
+                    )
+                } else {
+                    ghostty_surface_clear_accent_color(surface)
+                }
+            }
+        }
+    }
+
+    // MARK: - Auto-Color by Project
+
+    private static var projectColorMap: [String: String] = [:]
+    private static let autoColorPalette: [String] = [
+        "#C0392B", // Red
+        "#8E44AD", // Purple
+        "#E91E8C", // Pink
+        "#E67E22", // Orange
+        "#F1C40F", // Yellow
+        "#27AE60", // Green
+        "#16A085", // Teal
+        "#2980B9", // Blue
+        "#2C3E50", // Navy
+        "#D35400", // Burnt Orange
+        "#1ABC9C", // Aqua
+        "#9B59B6", // Violet
+    ]
+
+    /// Extract project name from a path like ~/Documents/windsurf projects/foo/bar -> "foo"
+    static func projectName(from directory: String) -> String? {
+        let projectRoots = ProjectRootSettings.roots()
+        for root in projectRoots {
+            if directory.hasPrefix(root + "/") {
+                let remainder = String(directory.dropFirst(root.count + 1))
+                let projectName = remainder.split(separator: "/").first.map(String.init)
+                return projectName
+            }
+        }
+        return nil
+    }
+
+    /// Get or assign a color for a project name.
+    static func colorForProject(_ name: String) -> String {
+        if let existing = projectColorMap[name] { return existing }
+        let usedColors = Set(projectColorMap.values)
+        let available = autoColorPalette.filter { !usedColors.contains($0) }
+        let color = available.first ?? autoColorPalette[projectColorMap.count % autoColorPalette.count]
+        projectColorMap[name] = color
+        return color
+    }
+
+    /// Auto-assign color when directory changes into a project.
+    func autoColorIfNeeded() {
+        guard customColor == nil else { return }
+        guard UserDefaults.standard.bool(forKey: "FadicodeAutoColorEnabled") else { return }
+        guard let project = Self.projectName(from: currentDirectory) else { return }
+        let color = Self.colorForProject(project)
+        setCustomColor(color)
     }
 
     func setCustomTitle(_ title: String?) {
@@ -1599,6 +1695,7 @@ final class Workspace: Identifiable, ObservableObject {
         // Update current directory if this is the focused panel
         if panelId == focusedPanelId, currentDirectory != trimmed {
             currentDirectory = trimmed
+            autoColorIfNeeded()
         }
     }
 
@@ -1996,7 +2093,8 @@ final class Workspace: Identifiable, ObservableObject {
             icon: newPanel.displayIcon,
             kind: SurfaceKind.terminal,
             isDirty: newPanel.isDirty,
-            isPinned: false
+            isPinned: false,
+            tabColor: customColor
         )
         surfaceIdToPanelId[newTab.id] = newPanel.id
         let previousFocusedPanelId = focusedPanelId
@@ -2075,6 +2173,7 @@ final class Workspace: Identifiable, ObservableObject {
             kind: SurfaceKind.terminal,
             isDirty: newPanel.isDirty,
             isPinned: false,
+            tabColor: customColor,
             inPane: paneId
         ) else {
             panels.removeValue(forKey: newPanel.id)
@@ -2131,7 +2230,8 @@ final class Workspace: Identifiable, ObservableObject {
             kind: SurfaceKind.browser,
             isDirty: browserPanel.isDirty,
             isLoading: browserPanel.isLoading,
-            isPinned: false
+            isPinned: false,
+            tabColor: customColor
         )
         surfaceIdToPanelId[newTab.id] = browserPanel.id
         let previousFocusedPanelId = focusedPanelId
@@ -2197,6 +2297,7 @@ final class Workspace: Identifiable, ObservableObject {
             isDirty: browserPanel.isDirty,
             isLoading: browserPanel.isLoading,
             isPinned: false,
+            tabColor: customColor,
             inPane: paneId
         ) else {
             panels.removeValue(forKey: browserPanel.id)
@@ -2219,6 +2320,71 @@ final class Workspace: Identifiable, ObservableObject {
             browserPanel.focus()
             applyTabSelection(tabId: newTabId, inPane: paneId)
         }
+
+        installBrowserPanelSubscription(browserPanel)
+
+        return browserPanel
+    }
+
+    // MARK: - Terminal → Browser Conversion
+
+    /// Replace the currently focused terminal with a browser panel in-place.
+    /// The bonsplit tab is reused — no new tab is created.
+    /// Returns the new browser panel, or nil if the focused panel is not a terminal.
+    @discardableResult
+    func replaceFocusedTerminalWithBrowser(url: URL? = nil) -> BrowserPanel? {
+        guard let paneId = bonsplitController.focusedPaneId,
+              let selectedTab = bonsplitController.selectedTab(inPane: paneId) else {
+            return nil
+        }
+        let tabId = selectedTab.id
+        guard let panelId = panelIdFromSurfaceId(tabId),
+              let terminalPanel = panels[panelId] as? TerminalPanel else {
+            return nil
+        }
+
+        // Create the replacement browser panel
+        let browserPanel = BrowserPanel(workspaceId: id, initialURL: url)
+
+        // Close the old terminal (tears down Ghostty surface, detaches portal)
+        terminalPanel.close()
+
+        // Remove old panel metadata
+        panels.removeValue(forKey: panelId)
+        panelTitles.removeValue(forKey: panelId)
+        panelCustomTitles.removeValue(forKey: panelId)
+        panelDirectories.removeValue(forKey: panelId)
+        panelGitBranches.removeValue(forKey: panelId)
+        panelPullRequests.removeValue(forKey: panelId)
+        panelSubscriptions.removeValue(forKey: panelId)
+        surfaceTTYNames.removeValue(forKey: panelId)
+        pinnedPanelIds.remove(panelId)
+        manualUnreadPanelIds.remove(panelId)
+        manualUnreadMarkedAt.removeValue(forKey: panelId)
+        restoredTerminalScrollbackByPanelId.removeValue(forKey: panelId)
+        terminalInheritanceFontPointsByPanelId.removeValue(forKey: panelId)
+        if lastTerminalConfigInheritancePanelId == panelId {
+            lastTerminalConfigInheritancePanelId = nil
+        }
+        PortScanner.shared.unregisterPanel(workspaceId: id, panelId: panelId)
+
+        // Install browser panel in the same slot
+        panels[browserPanel.id] = browserPanel
+        panelTitles[browserPanel.id] = browserPanel.displayTitle
+        surfaceIdToPanelId[tabId] = browserPanel.id
+
+        // Update the bonsplit tab metadata to reflect browser type
+        bonsplitController.updateTab(
+            tabId,
+            title: browserPanel.displayTitle,
+            icon: browserPanel.displayIcon,
+            kind: .some(SurfaceKind.browser),
+            isDirty: false,
+            isLoading: false
+        )
+
+        // Focus the new browser
+        browserPanel.focus()
 
         installBrowserPanelSubscription(browserPanel)
 
@@ -2260,7 +2426,8 @@ final class Workspace: Identifiable, ObservableObject {
             kind: SurfaceKind.markdown,
             isDirty: markdownPanel.isDirty,
             isLoading: false,
-            isPinned: false
+            isPinned: false,
+            tabColor: customColor
         )
         surfaceIdToPanelId[newTab.id] = markdownPanel.id
         let previousFocusedPanelId = focusedPanelId
@@ -2317,6 +2484,7 @@ final class Workspace: Identifiable, ObservableObject {
             isDirty: markdownPanel.isDirty,
             isLoading: false,
             isPinned: false,
+            tabColor: customColor,
             inPane: paneId
         ) else {
             panels.removeValue(forKey: markdownPanel.id)
@@ -2336,6 +2504,46 @@ final class Workspace: Identifiable, ObservableObject {
         installMarkdownPanelSubscription(markdownPanel)
 
         return markdownPanel
+    }
+
+    // MARK: - Observatory Panel
+
+    /// Create a new observatory panel (tab) in the specified pane.
+    @discardableResult
+    func newObservatorySurface(
+        inPane paneId: PaneID,
+        focus: Bool? = nil
+    ) -> AgentObservatoryPanel? {
+        let shouldFocusNewTab = focus ?? (bonsplitController.focusedPaneId == paneId)
+
+        let observatoryPanel = AgentObservatoryPanel(workspaceId: id)
+        panels[observatoryPanel.id] = observatoryPanel
+        panelTitles[observatoryPanel.id] = observatoryPanel.displayTitle
+
+        guard let newTabId = bonsplitController.createTab(
+            title: observatoryPanel.displayTitle,
+            icon: observatoryPanel.displayIcon,
+            kind: SurfaceKind.observatory,
+            isDirty: observatoryPanel.isDirty,
+            isLoading: false,
+            isPinned: false,
+            tabColor: customColor,
+            inPane: paneId
+        ) else {
+            panels.removeValue(forKey: observatoryPanel.id)
+            panelTitles.removeValue(forKey: observatoryPanel.id)
+            return nil
+        }
+
+        surfaceIdToPanelId[newTabId] = observatoryPanel.id
+
+        if shouldFocusNewTab {
+            bonsplitController.focusPane(paneId)
+            bonsplitController.selectTab(newTabId)
+            applyTabSelection(tabId: newTabId, inPane: paneId)
+        }
+
+        return observatoryPanel
     }
 
     /// Tear down all panels in this workspace, freeing their Ghostty surfaces.
@@ -2888,6 +3096,7 @@ final class Workspace: Identifiable, ObservableObject {
             isDirty: detached.panel.isDirty,
             isLoading: detached.isLoading,
             isPinned: detached.isPinned,
+            tabColor: customColor,
             inPane: paneId
         ) else {
             panels.removeValue(forKey: detached.panelId)
@@ -3318,7 +3527,8 @@ final class Workspace: Identifiable, ObservableObject {
             icon: newPanel.displayIcon,
             kind: SurfaceKind.terminal,
             isDirty: newPanel.isDirty,
-            isPinned: false
+            isPinned: false,
+            tabColor: customColor
         ) {
             surfaceIdToPanelId[newTabId] = newPanel.id
         }
@@ -3662,7 +3872,7 @@ final class Workspace: Identifiable, ObservableObject {
             let failure = NSAlert()
             failure.alertStyle = .warning
             failure.messageText = String(localized: "dialog.moveFailed.title", defaultValue: "Move Failed")
-            failure.informativeText = String(localized: "dialog.moveFailed.message", defaultValue: "cmux could not move this tab to the selected destination.")
+            failure.informativeText = String(localized: "dialog.moveFailed.message", defaultValue: "fadicode could not move this tab to the selected destination.")
             failure.addButton(withTitle: String(localized: "common.ok", defaultValue: "OK"))
             _ = failure.runModal()
         }
@@ -3823,6 +4033,23 @@ extension Workspace: BonsplitDelegate {
         }
         if let terminalPanel = panel as? TerminalPanel {
             rememberTerminalConfigInheritanceSource(terminalPanel)
+            // Re-sync overlay color when returning focus to a terminal
+            terminalPanel.surface.hostedView.fadicodeOverlay?.projectColorHex = customColor
+            // Re-sync accent color for Claude CLI orange recoloring
+            if let surface = terminalPanel.surface.surface {
+                if let customColor, let nsColor = NSColor(hex: customColor) {
+                    var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0
+                    nsColor.usingColorSpace(.sRGB)?.getRed(&r, green: &g, blue: &b, alpha: nil)
+                    ghostty_surface_set_accent_color(
+                        surface,
+                        UInt8(min(max(r * 255, 0), 255)),
+                        UInt8(min(max(g * 255, 0), 255)),
+                        UInt8(min(max(b * 255, 0), 255))
+                    )
+                } else {
+                    ghostty_surface_clear_accent_color(surface)
+                }
+            }
         }
         let isManuallyUnread = manualUnreadPanelIds.contains(panelId)
         let markedAt = manualUnreadMarkedAt[panelId]
@@ -4376,7 +4603,8 @@ extension Workspace: BonsplitDelegate {
                         isDirty: replacementPanel.isDirty,
                         showsNotificationBadge: false,
                         isLoading: false,
-                        isPinned: false
+                        isPinned: false,
+                        tabColor: .some(customColor)
                     )
 
                     for extraPlaceholder in placeholderTabs.dropFirst() {
@@ -4437,6 +4665,7 @@ extension Workspace: BonsplitDelegate {
             kind: SurfaceKind.terminal,
             isDirty: newPanel.isDirty,
             isPinned: false,
+            tabColor: customColor,
             inPane: newPane
         ) else {
             panels.removeValue(forKey: newPanel.id)

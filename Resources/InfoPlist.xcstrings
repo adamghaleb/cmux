@@ -8,13 +8,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A program running within cmux would like to use your camera."
+            "value": "A program running within fadicode would like to use your camera."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux 内で実行中のプログラムがカメラの使用を求めています。"
+            "value": "fadicode 内で実行中のプログラムがカメラの使用を求めています。"
           }
         }
       }
@@ -25,37 +25,37 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A program running within cmux would like to use your microphone."
+            "value": "A program running within fadicode would like to use your microphone."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux 内で実行中のプログラムがマイクの使用を求めています。"
+            "value": "fadicode 内で実行中のプログラムがマイクの使用を求めています。"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "在 cmux 中运行的程序想要使用您的麦克风。"
+            "value": "在 fadicode 中运行的程序想要使用您的麦克风。"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "在 cmux 中執行的程式想要使用您的麥克風。"
+            "value": "在 fadicode 中執行的程式想要使用您的麥克風。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux 내에서 실행 중인 프로그램이 마이크를 사용하려고 합니다."
+            "value": "fadicode 내에서 실행 중인 프로그램이 마이크를 사용하려고 합니다."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ein in cmux ausgeführtes Programm möchte Ihr Mikrofon verwenden."
+            "value": "Ein in fadicode ausgeführtes Programm möchte Ihr Mikrofon verwenden."
           }
         },
         "es": {
@@ -67,31 +67,31 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un programme s'exécutant dans cmux souhaite utiliser votre microphone."
+            "value": "Un programme s'exécutant dans fadicode souhaite utiliser votre microphone."
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un programma in esecuzione in cmux desidera utilizzare il microfono."
+            "value": "Un programma in esecuzione in fadicode desidera utilizzare il microfono."
           }
         },
         "da": {
           "stringUnit": {
             "state": "translated",
-            "value": "Et program, der kører i cmux, vil gerne bruge din mikrofon."
+            "value": "Et program, der kører i fadicode, vil gerne bruge din mikrofon."
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Program działający w cmux chciałby użyć Twojego mikrofonu."
+            "value": "Program działający w fadicode chciałby użyć Twojego mikrofonu."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Программа, запущенная в cmux, хотела бы использовать ваш микрофон."
+            "value": "Программа, запущенная в fadicode, хотела бы использовать ваш микрофон."
           }
         },
         "bs": {
@@ -109,7 +109,7 @@
         "nb": {
           "stringUnit": {
             "state": "translated",
-            "value": "Et program som kjører i cmux ønsker å bruke mikrofonen din."
+            "value": "Et program som kjører i fadicode ønsker å bruke mikrofonen din."
           }
         },
         "pt-BR": {

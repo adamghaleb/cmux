@@ -22,6 +22,9 @@ final class TerminalPanel: Panel, ObservableObject {
     /// Published directory from the terminal
     @Published private(set) var directory: String = ""
 
+    /// Whether this terminal is in read-only mode (keyboard input blocked).
+    @Published var isReadOnly: Bool = false
+
     /// Search state for find functionality
     @Published var searchState: TerminalSurface.SearchState? {
         didSet {

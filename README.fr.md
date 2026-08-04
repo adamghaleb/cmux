@@ -68,83 +68,83 @@ Tout est scriptable via le CLI et l'API socket — créer des espaces de travail
 
 ### Espaces de travail
 
-| Raccourci | Action |
-|----------|--------|
-| ⌘ N | Nouvel espace de travail |
-| ⌘ 1–8 | Aller à l'espace de travail 1–8 |
-| ⌘ 9 | Aller au dernier espace de travail |
-| ⌃ ⌘ ] | Espace de travail suivant |
-| ⌃ ⌘ [ | Espace de travail précédent |
-| ⌘ ⇧ W | Fermer l'espace de travail |
-| ⌘ B | Basculer la barre latérale |
+| Raccourci | Action                             |
+| --------- | ---------------------------------- |
+| ⌘ N       | Nouvel espace de travail           |
+| ⌘ 1–8     | Aller à l'espace de travail 1–8    |
+| ⌘ 9       | Aller au dernier espace de travail |
+| ⌃ ⌘ ]     | Espace de travail suivant          |
+| ⌃ ⌘ [     | Espace de travail précédent        |
+| ⌘ ⇧ W     | Fermer l'espace de travail         |
+| ⌘ B       | Basculer la barre latérale         |
 
 ### Surfaces
 
-| Raccourci | Action |
-|----------|--------|
-| ⌘ T | Nouvelle surface |
-| ⌘ ⇧ ] | Surface suivante |
-| ⌘ ⇧ [ | Surface précédente |
-| ⌃ Tab | Surface suivante |
-| ⌃ ⇧ Tab | Surface précédente |
-| ⌃ 1–8 | Aller à la surface 1–8 |
-| ⌃ 9 | Aller à la dernière surface |
-| ⌘ W | Fermer la surface |
+| Raccourci | Action                      |
+| --------- | --------------------------- |
+| ⌘ T       | Nouvelle surface            |
+| ⌘ ⇧ ]     | Surface suivante            |
+| ⌘ ⇧ [     | Surface précédente          |
+| ⌃ Tab     | Surface suivante            |
+| ⌃ ⇧ Tab   | Surface précédente          |
+| ⌃ 1–8     | Aller à la surface 1–8      |
+| ⌃ 9       | Aller à la dernière surface |
+| ⌘ W       | Fermer la surface           |
 
 ### Panneaux divisés
 
-| Raccourci | Action |
-|----------|--------|
-| ⌘ D | Diviser à droite |
-| ⌘ ⇧ D | Diviser vers le bas |
+| Raccourci   | Action                                  |
+| ----------- | --------------------------------------- |
+| ⌘ D         | Diviser à droite                        |
+| ⌘ ⇧ D       | Diviser vers le bas                     |
 | ⌥ ⌘ ← → ↑ ↓ | Focaliser le panneau directionnellement |
-| ⌘ ⇧ H | Faire clignoter le panneau focalisé |
+| ⌘ ⇧ H       | Faire clignoter le panneau focalisé     |
 
 ### Navigateur
 
-| Raccourci | Action |
-|----------|--------|
-| ⌘ ⇧ L | Ouvrir le navigateur en division |
-| ⌘ L | Focaliser la barre d'adresse |
-| ⌘ [ | Reculer |
-| ⌘ ] | Avancer |
-| ⌘ R | Recharger la page |
-| ⌥ ⌘ I | Ouvrir les outils de développement |
+| Raccourci | Action                             |
+| --------- | ---------------------------------- |
+| ⌘ ⇧ L     | Ouvrir le navigateur en division   |
+| ⌘ L       | Focaliser la barre d'adresse       |
+| ⌘ [       | Reculer                            |
+| ⌘ ]       | Avancer                            |
+| ⌘ R       | Recharger la page                  |
+| ⌥ ⌘ I     | Ouvrir les outils de développement |
 
 ### Notifications
 
-| Raccourci | Action |
-|----------|--------|
-| ⌘ I | Afficher le panneau de notifications |
-| ⌘ ⇧ U | Aller à la dernière non lue |
+| Raccourci | Action                               |
+| --------- | ------------------------------------ |
+| ⌘ I       | Afficher le panneau de notifications |
+| ⌘ ⇧ U     | Aller à la dernière non lue          |
 
 ### Recherche
 
-| Raccourci | Action |
-|----------|--------|
-| ⌘ F | Rechercher |
-| ⌘ G / ⌘ ⇧ G | Résultat suivant / précédent |
-| ⌘ ⇧ F | Masquer la barre de recherche |
-| ⌘ E | Utiliser la sélection pour la recherche |
+| Raccourci   | Action                                  |
+| ----------- | --------------------------------------- |
+| ⌘ F         | Rechercher                              |
+| ⌘ G / ⌘ ⇧ G | Résultat suivant / précédent            |
+| ⌘ ⇧ F       | Masquer la barre de recherche           |
+| ⌘ E         | Utiliser la sélection pour la recherche |
 
 ### Terminal
 
-| Raccourci | Action |
-|----------|--------|
-| ⌘ K | Effacer l'historique de défilement |
-| ⌘ C | Copier (avec sélection) |
-| ⌘ V | Coller |
+| Raccourci | Action                                   |
+| --------- | ---------------------------------------- |
+| ⌘ K       | Effacer l'historique de défilement       |
+| ⌘ C       | Copier (avec sélection)                  |
+| ⌘ V       | Coller                                   |
 | ⌘ + / ⌘ - | Augmenter / diminuer la taille de police |
-| ⌘ 0 | Réinitialiser la taille de police |
+| ⌘ 0       | Réinitialiser la taille de police        |
 
 ### Fenêtre
 
-| Raccourci | Action |
-|----------|--------|
-| ⌘ ⇧ N | Nouvelle fenêtre |
-| ⌘ , | Paramètres |
-| ⌘ ⇧ , | Recharger la configuration |
-| ⌘ Q | Quitter |
+| Raccourci | Action                     |
+| --------- | -------------------------- |
+| ⌘ ⇧ N     | Nouvelle fenêtre           |
+| ⌘ ,       | Paramètres                 |
+| ⌘ ⇧ ,     | Recharger la configuration |
+| ⌘ Q       | Quitter                    |
 
 ## Licence
 

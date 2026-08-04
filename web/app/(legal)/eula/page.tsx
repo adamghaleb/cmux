@@ -12,8 +12,8 @@ export default function EulaPage() {
       <p>Last updated: December 2, 2025</p>
 
       <p>
-        Please read this End-User License Agreement carefully before
-        downloading or using cmux.
+        Please read this End-User License Agreement carefully before downloading
+        or using cmux.
       </p>
 
       <h2>Interpretation and Definitions</h2>
@@ -53,9 +53,9 @@ export default function EulaPage() {
 
       <h2>Acknowledgment</h2>
       <p>
-        By downloading or using the Application, You are agreeing to be bound
-        by the terms of this Agreement. If You do not agree, do not download or
-        use the Application.
+        By downloading or using the Application, You are agreeing to be bound by
+        the terms of this Agreement. If You do not agree, do not download or use
+        the Application.
       </p>
       <p>
         The Application is licensed, not sold, to You by the Company for use
@@ -159,9 +159,9 @@ export default function EulaPage() {
         USD if You haven&rsquo;t purchased anything.
       </p>
       <p>
-        To the maximum extent permitted by law, in no event shall the Company
-        be liable for any special, incidental, indirect, or consequential
-        damages whatsoever.
+        To the maximum extent permitted by law, in no event shall the Company be
+        liable for any special, incidental, indirect, or consequential damages
+        whatsoever.
       </p>
 
       <h2>Indemnification</h2>

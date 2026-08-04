@@ -29,7 +29,7 @@ export function useMobileDrawer() {
     if (!open || !drawerRef.current) return;
     const el = drawerRef.current;
     const focusable = el.querySelectorAll<HTMLElement>(
-      'a[href], button, [tabindex]:not([tabindex="-1"])'
+      'a[href], button, [tabindex]:not([tabindex="-1"])',
     );
     if (focusable.length === 0) return;
     const first = focusable[0];
@@ -66,7 +66,13 @@ export function useMobileDrawer() {
   return { open, setOpen, toggle, close, drawerRef, buttonRef };
 }
 
-export function MobileDrawerOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function MobileDrawerOverlay({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
   if (!open) return null;
   return (
     <div

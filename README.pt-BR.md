@@ -70,83 +70,83 @@ Tudo é programável através da CLI e socket API — criar workspaces/abas, div
 
 ### Workspaces
 
-| Atalho | Ação |
-|----------|--------|
-| ⌘ N | Novo workspace |
-| ⌘ 1–8 | Ir para workspace 1–8 |
-| ⌘ 9 | Ir para último workspace |
-| ⌃ ⌘ ] | Próximo workspace |
-| ⌃ ⌘ [ | Workspace anterior |
-| ⌘ ⇧ W | Fechar workspace |
-| ⌘ B | Alternar barra lateral |
+| Atalho | Ação                     |
+| ------ | ------------------------ |
+| ⌘ N    | Novo workspace           |
+| ⌘ 1–8  | Ir para workspace 1–8    |
+| ⌘ 9    | Ir para último workspace |
+| ⌃ ⌘ ]  | Próximo workspace        |
+| ⌃ ⌘ [  | Workspace anterior       |
+| ⌘ ⇧ W  | Fechar workspace         |
+| ⌘ B    | Alternar barra lateral   |
 
 ### Surfaces
 
-| Atalho | Ação |
-|----------|--------|
-| ⌘ T | Nova surface |
-| ⌘ ⇧ ] | Próxima surface |
-| ⌘ ⇧ [ | Surface anterior |
-| ⌃ Tab | Próxima surface |
-| ⌃ ⇧ Tab | Surface anterior |
-| ⌃ 1–8 | Ir para surface 1–8 |
-| ⌃ 9 | Ir para última surface |
-| ⌘ W | Fechar surface |
+| Atalho  | Ação                   |
+| ------- | ---------------------- |
+| ⌘ T     | Nova surface           |
+| ⌘ ⇧ ]   | Próxima surface        |
+| ⌘ ⇧ [   | Surface anterior       |
+| ⌃ Tab   | Próxima surface        |
+| ⌃ ⇧ Tab | Surface anterior       |
+| ⌃ 1–8   | Ir para surface 1–8    |
+| ⌃ 9     | Ir para última surface |
+| ⌘ W     | Fechar surface         |
 
 ### Painéis Divididos
 
-| Atalho | Ação |
-|----------|--------|
-| ⌘ D | Dividir à direita |
-| ⌘ ⇧ D | Dividir para baixo |
+| Atalho      | Ação                         |
+| ----------- | ---------------------------- |
+| ⌘ D         | Dividir à direita            |
+| ⌘ ⇧ D       | Dividir para baixo           |
 | ⌥ ⌘ ← → ↑ ↓ | Focar painel direcionalmente |
-| ⌘ ⇧ H | Piscar painel focado |
+| ⌘ ⇧ H       | Piscar painel focado         |
 
 ### Navegador
 
-| Atalho | Ação |
-|----------|--------|
-| ⌘ ⇧ L | Abrir navegador em divisão |
-| ⌘ L | Focar barra de endereço |
-| ⌘ [ | Voltar |
-| ⌘ ] | Avançar |
-| ⌘ R | Recarregar página |
-| ⌥ ⌘ I | Abrir Ferramentas do Desenvolvedor |
+| Atalho | Ação                               |
+| ------ | ---------------------------------- |
+| ⌘ ⇧ L  | Abrir navegador em divisão         |
+| ⌘ L    | Focar barra de endereço            |
+| ⌘ [    | Voltar                             |
+| ⌘ ]    | Avançar                            |
+| ⌘ R    | Recarregar página                  |
+| ⌥ ⌘ I  | Abrir Ferramentas do Desenvolvedor |
 
 ### Notificações
 
-| Atalho | Ação |
-|----------|--------|
-| ⌘ I | Mostrar painel de notificações |
-| ⌘ ⇧ U | Ir para última não lida |
+| Atalho | Ação                           |
+| ------ | ------------------------------ |
+| ⌘ I    | Mostrar painel de notificações |
+| ⌘ ⇧ U  | Ir para última não lida        |
 
 ### Busca
 
-| Atalho | Ação |
-|----------|--------|
-| ⌘ F | Buscar |
+| Atalho      | Ação                      |
+| ----------- | ------------------------- |
+| ⌘ F         | Buscar                    |
 | ⌘ G / ⌘ ⇧ G | Buscar próximo / anterior |
-| ⌘ ⇧ F | Ocultar barra de busca |
-| ⌘ E | Usar seleção para busca |
+| ⌘ ⇧ F       | Ocultar barra de busca    |
+| ⌘ E         | Usar seleção para busca   |
 
 ### Terminal
 
-| Atalho | Ação |
-|----------|--------|
-| ⌘ K | Limpar histórico de rolagem |
-| ⌘ C | Copiar (com seleção) |
-| ⌘ V | Colar |
+| Atalho    | Ação                                 |
+| --------- | ------------------------------------ |
+| ⌘ K       | Limpar histórico de rolagem          |
+| ⌘ C       | Copiar (com seleção)                 |
+| ⌘ V       | Colar                                |
 | ⌘ + / ⌘ - | Aumentar / diminuir tamanho da fonte |
-| ⌘ 0 | Redefinir tamanho da fonte |
+| ⌘ 0       | Redefinir tamanho da fonte           |
 
 ### Janela
 
-| Atalho | Ação |
-|----------|--------|
-| ⌘ ⇧ N | Nova janela |
-| ⌘ , | Configurações |
-| ⌘ ⇧ , | Recarregar configuração |
-| ⌘ Q | Sair |
+| Atalho | Ação                    |
+| ------ | ----------------------- |
+| ⌘ ⇧ N  | Nova janela             |
+| ⌘ ,    | Configurações           |
+| ⌘ ⇧ ,  | Recarregar configuração |
+| ⌘ Q    | Sair                    |
 
 ## Licença
 

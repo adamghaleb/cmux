@@ -19,6 +19,7 @@ After making code changes, always run the reload script with a tag to launch the
 When reporting a tagged reload result in chat, use the format for your agent type:
 
 **Claude Code** (markdown link with correct derived-data path, cmd+clickable):
+
 ```markdown
 =======================================================
 [cmux DEV <tag-name>.app](file:///Users/lawrencechen/Library/Developer/Xcode/DerivedData/cmux-<tag-name>/Build/Products/Debug/cmux%20DEV%20<tag-name>.app)
@@ -26,6 +27,7 @@ When reporting a tagged reload result in chat, use the format for your agent typ
 ```
 
 **Codex** (plain text format):
+
 ```
 =======================================================
 [<tag-name>: file:///Users/lawrencechen/Library/Developer/Xcode/DerivedData/cmux-<tag-name>/Build/Products/Debug/cmux%20DEV%20<tag-name>.app](file:///Users/lawrencechen/Library/Developer/Xcode/DerivedData/cmux-<tag-name>/Build/Products/Debug/cmux%20DEV%20<tag-name>.app)
@@ -196,6 +198,7 @@ git commit -m "Update ghostty submodule"
 ## Release
 
 Use the `/release` command to prepare a new release. This will:
+
 1. Determine the new version (bumps minor by default)
 2. Gather commits since the last tag and update the changelog
 3. Update `CHANGELOG.md` (the docs changelog page at `web/app/docs/changelog/page.tsx` reads from it)
@@ -222,6 +225,7 @@ gh run watch --repo manaflow-ai/cmux
 ```
 
 Notes:
+
 - Requires GitHub secrets: `APPLE_CERTIFICATE_BASE64`, `APPLE_CERTIFICATE_PASSWORD`,
   `APPLE_SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, `APPLE_TEAM_ID`.
 - The release asset is `cmux-macos.dmg` attached to the tag.

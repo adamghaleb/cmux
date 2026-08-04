@@ -27,9 +27,9 @@
 	<key>NSMainStoryboardFile</key>
 	<string></string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>A program running within cmux would like to use your microphone.</string>
+	<string>A program running within fadicode would like to use your microphone.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>A program running within cmux would like to use your camera.</string>
+	<string>A program running within fadicode would like to use your camera.</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>NSServices</key>
@@ -87,15 +87,24 @@
 		</dict>
 		<dict>
 			<key>UTTypeIdentifier</key>
-			<string>com.cmux.sidebar-tab-reorder</string>
+			<string>com.fadicode.sidebar-tab-reorder</string>
 			<key>UTTypeDescription</key>
-			<string>cmux Sidebar Tab Reorder</string>
+			<string>fadicode Sidebar Tab Reorder</string>
 			<key>UTTypeConformsTo</key>
 			<array>
 				<string>public.data</string>
 			</array>
 		</dict>
 	</array>
+	<!--
+	  ATS (App Transport Security) exception for the browser panel.
+	  NSAllowsArbitraryLoadsInWebContent = YES lets WKWebView load HTTP
+	  URLs (needed because the browser panel navigates to arbitrary sites
+	  including local dev servers on *.localtest.me, localhost, etc.).
+	  This does NOT disable ATS for the app's own URLSession networking,
+	  which still requires HTTPS.  Do NOT add NSAllowsArbitraryLoads here;
+	  only web-content exceptions are intentional.  See GitHub issue #11.
+	-->
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoadsInWebContent</key>

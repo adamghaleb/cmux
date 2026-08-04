@@ -68,83 +68,83 @@ Todo es programable a través del CLI y la API de socket — crear espacios de t
 
 ### Espacios de trabajo
 
-| Atajo | Acción |
-|----------|--------|
-| ⌘ N | Nuevo espacio de trabajo |
-| ⌘ 1–8 | Ir al espacio de trabajo 1–8 |
-| ⌘ 9 | Ir al último espacio de trabajo |
-| ⌃ ⌘ ] | Siguiente espacio de trabajo |
-| ⌃ ⌘ [ | Espacio de trabajo anterior |
-| ⌘ ⇧ W | Cerrar espacio de trabajo |
-| ⌘ B | Alternar barra lateral |
+| Atajo | Acción                          |
+| ----- | ------------------------------- |
+| ⌘ N   | Nuevo espacio de trabajo        |
+| ⌘ 1–8 | Ir al espacio de trabajo 1–8    |
+| ⌘ 9   | Ir al último espacio de trabajo |
+| ⌃ ⌘ ] | Siguiente espacio de trabajo    |
+| ⌃ ⌘ [ | Espacio de trabajo anterior     |
+| ⌘ ⇧ W | Cerrar espacio de trabajo       |
+| ⌘ B   | Alternar barra lateral          |
 
 ### Superficies
 
-| Atajo | Acción |
-|----------|--------|
-| ⌘ T | Nueva superficie |
-| ⌘ ⇧ ] | Siguiente superficie |
-| ⌘ ⇧ [ | Superficie anterior |
-| ⌃ Tab | Siguiente superficie |
-| ⌃ ⇧ Tab | Superficie anterior |
-| ⌃ 1–8 | Ir a la superficie 1–8 |
-| ⌃ 9 | Ir a la última superficie |
-| ⌘ W | Cerrar superficie |
+| Atajo   | Acción                    |
+| ------- | ------------------------- |
+| ⌘ T     | Nueva superficie          |
+| ⌘ ⇧ ]   | Siguiente superficie      |
+| ⌘ ⇧ [   | Superficie anterior       |
+| ⌃ Tab   | Siguiente superficie      |
+| ⌃ ⇧ Tab | Superficie anterior       |
+| ⌃ 1–8   | Ir a la superficie 1–8    |
+| ⌃ 9     | Ir a la última superficie |
+| ⌘ W     | Cerrar superficie         |
 
 ### Paneles divididos
 
-| Atajo | Acción |
-|----------|--------|
-| ⌘ D | Dividir a la derecha |
-| ⌘ ⇧ D | Dividir hacia abajo |
+| Atajo       | Acción                         |
+| ----------- | ------------------------------ |
+| ⌘ D         | Dividir a la derecha           |
+| ⌘ ⇧ D       | Dividir hacia abajo            |
 | ⌥ ⌘ ← → ↑ ↓ | Enfocar panel direccionalmente |
-| ⌘ ⇧ H | Destellar panel enfocado |
+| ⌘ ⇧ H       | Destellar panel enfocado       |
 
 ### Navegador
 
-| Atajo | Acción |
-|----------|--------|
-| ⌘ ⇧ L | Abrir navegador en división |
-| ⌘ L | Enfocar barra de direcciones |
-| ⌘ [ | Atrás |
-| ⌘ ] | Adelante |
-| ⌘ R | Recargar página |
+| Atajo | Acción                           |
+| ----- | -------------------------------- |
+| ⌘ ⇧ L | Abrir navegador en división      |
+| ⌘ L   | Enfocar barra de direcciones     |
+| ⌘ [   | Atrás                            |
+| ⌘ ]   | Adelante                         |
+| ⌘ R   | Recargar página                  |
 | ⌥ ⌘ I | Abrir herramientas de desarrollo |
 
 ### Notificaciones
 
-| Atajo | Acción |
-|----------|--------|
-| ⌘ I | Mostrar panel de notificaciones |
-| ⌘ ⇧ U | Ir a la última no leída |
+| Atajo | Acción                          |
+| ----- | ------------------------------- |
+| ⌘ I   | Mostrar panel de notificaciones |
+| ⌘ ⇧ U | Ir a la última no leída         |
 
 ### Buscar
 
-| Atajo | Acción |
-|----------|--------|
-| ⌘ F | Buscar |
+| Atajo       | Acción                      |
+| ----------- | --------------------------- |
+| ⌘ F         | Buscar                      |
 | ⌘ G / ⌘ ⇧ G | Buscar siguiente / anterior |
-| ⌘ ⇧ F | Ocultar barra de búsqueda |
-| ⌘ E | Usar selección para buscar |
+| ⌘ ⇧ F       | Ocultar barra de búsqueda   |
+| ⌘ E         | Usar selección para buscar  |
 
 ### Terminal
 
-| Atajo | Acción |
-|----------|--------|
-| ⌘ K | Limpiar historial de desplazamiento |
-| ⌘ C | Copiar (con selección) |
-| ⌘ V | Pegar |
+| Atajo     | Acción                                |
+| --------- | ------------------------------------- |
+| ⌘ K       | Limpiar historial de desplazamiento   |
+| ⌘ C       | Copiar (con selección)                |
+| ⌘ V       | Pegar                                 |
 | ⌘ + / ⌘ - | Aumentar / disminuir tamaño de fuente |
-| ⌘ 0 | Restablecer tamaño de fuente |
+| ⌘ 0       | Restablecer tamaño de fuente          |
 
 ### Ventana
 
-| Atajo | Acción |
-|----------|--------|
-| ⌘ ⇧ N | Nueva ventana |
-| ⌘ , | Ajustes |
+| Atajo | Acción                 |
+| ----- | ---------------------- |
+| ⌘ ⇧ N | Nueva ventana          |
+| ⌘ ,   | Ajustes                |
 | ⌘ ⇧ , | Recargar configuración |
-| ⌘ Q | Salir |
+| ⌘ Q   | Salir                  |
 
 ## Licencia
 

@@ -12,4 +12,3 @@ cmux.
 
 The build phase `Copy Ghostty Resources` overlays this directory onto the app
 bundle's `Contents/Resources/terminfo` after copying Ghostty's resources.
-

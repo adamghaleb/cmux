@@ -20,7 +20,8 @@ const CATEGORIES: ShortcutCategory[] = [
   {
     id: "workspaces",
     title: "Workspaces",
-    blurb: "Workspaces live in the sidebar. Each workspace has its own set of panes and surfaces.",
+    blurb:
+      "Workspaces live in the sidebar. Each workspace has its own set of panes and surfaces.",
     shortcuts: [
       { id: "ws-new", combos: [["⌘", "N"]], description: "New workspace" },
       {
@@ -214,7 +215,9 @@ function comboToText(combo: string[]) {
 
 function shortcutSearchText(category: ShortcutCategory, s: Shortcut) {
   const combos = s.combos.map(comboToText).join(" ");
-  return normalize(`${category.title} ${combos} ${s.description} ${s.note ?? ""}`);
+  return normalize(
+    `${category.title} ${combos} ${s.description} ${s.note ?? ""}`,
+  );
 }
 
 function KeyCombo({ combo }: { combo: string[] }) {

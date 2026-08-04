@@ -13,14 +13,14 @@ The panel uses a kernel-level file system watcher (`DispatchSource` with `O_EVTO
 
 ## Supported Write Patterns
 
-| Pattern | Supported | Notes |
-|---------|-----------|-------|
-| Direct write (`echo >>`) | Yes | Triggers write/extend event |
-| Editor save (vim, nano) | Yes | Most editors use atomic write (see below) |
-| Atomic replace (write tmp + rename) | Yes | Handled via delete/rename recovery |
-| `sed -i` | Yes | Uses atomic replace internally |
-| VS Code / IDE save | Yes | Uses atomic replace |
-| Agent progressive writes | Yes | Each write triggers a re-render |
+| Pattern                             | Supported | Notes                                     |
+| ----------------------------------- | --------- | ----------------------------------------- |
+| Direct write (`echo >>`)            | Yes       | Triggers write/extend event               |
+| Editor save (vim, nano)             | Yes       | Most editors use atomic write (see below) |
+| Atomic replace (write tmp + rename) | Yes       | Handled via delete/rename recovery        |
+| `sed -i`                            | Yes       | Uses atomic replace internally            |
+| VS Code / IDE save                  | Yes       | Uses atomic replace                       |
+| Agent progressive writes            | Yes       | Each write triggers a re-render           |
 
 ## Atomic File Replacement
 

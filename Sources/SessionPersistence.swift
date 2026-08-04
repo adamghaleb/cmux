@@ -405,7 +405,7 @@ enum SessionPersistenceStore {
         }
         let bundleId = (bundleIdentifier?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false)
             ? bundleIdentifier!
-            : "com.cmuxterm.app"
+            : "com.fadicode.terminal"
         let safeBundleId = bundleId.replacingOccurrences(
             of: "[^A-Za-z0-9._-]",
             with: "_",
@@ -475,5 +475,55 @@ enum SessionScrollbackReplayStore {
         } catch {
             return nil
         }
+    }
+
+    // MARK: - Cleanup
+
+    /// Remove orphaned replay files older than 24 hours.
+    ///
+    /// The shell integration scripts normally delete each replay file immediately
+    /// after replaying it, but files can become orphaned when the shell integration
+    /// does not load (unsupported shell, crash, custom shell config). Call this on
+    /// app launch to sweep stale leftovers.
+    static func cleanupStaleReplayFiles(
+        tempDirectory: URL = FileManager.default.temporaryDirectory,
+        maxAge: TimeInterval = 86400
+    ) {
+        let directory = tempDirectory.appendingPathComponent(directoryName, isDirectory: true)
+        let fm = FileManager.default
+        guard let files = try? fm.contentsOfDirectory(
+            at: directory,
+            includingPropertiesForKeys: [.contentModificationDateKey],
+            options: [.skipsHiddenFiles]
+        ) else { return }
+
+        let cutoff = Date().addingTimeInterval(-maxAge)
+        for fileURL in files {
+            guard let values = try? fileURL.resourceValues(forKeys: [.contentModificationDateKey]),
+                  let modified = values.contentModificationDate,
+                  modified < cutoff else { continue }
+            try? fm.removeItem(at: fileURL)
+        }
+    }
+
+    /// Remove a specific replay file by path.
+    ///
+    /// Used when a session closes and we know the exact replay file that was
+    /// assigned to it via the `CMUX_RESTORE_SCROLLBACK_FILE` environment variable.
+    static func removeReplayFile(atPath path: String) {
+        let fm = FileManager.default
+        guard fm.fileExists(atPath: path) else { return }
+        try? fm.removeItem(atPath: path)
+    }
+
+    /// Remove the entire replay temp directory and all files within it.
+    ///
+    /// Called on app termination — any replay files still on disk at that point
+    /// are orphans because all terminal sessions are ending.
+    static func removeAllReplayFiles(
+        tempDirectory: URL = FileManager.default.temporaryDirectory
+    ) {
+        let directory = tempDirectory.appendingPathComponent(directoryName, isDirectory: true)
+        try? FileManager.default.removeItem(at: directory)
     }
 }

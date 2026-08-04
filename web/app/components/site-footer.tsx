@@ -76,9 +76,7 @@ export function SiteFooter() {
             </div>
           ))}
         </div>
-        <p className="text-xs text-muted mt-10">
-          &copy; {year} Manaflow
-        </p>
+        <p className="text-xs text-muted mt-10">&copy; {year} Manaflow</p>
       </div>
     </footer>
   );

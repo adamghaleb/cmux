@@ -27932,7 +27932,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Notifications are disabled for cmux. Enable them in System Settings to see alerts."
+            "value": "Notifications are disabled for fadicode. Enable them in System Settings to see alerts."
           }
         },
         "ja": {
@@ -28271,7 +28271,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Enable Notifications for cmux"
+            "value": "Enable Notifications for fadicode"
           }
         },
         "ja": {
@@ -31199,6 +31199,125 @@
           "stringUnit": {
             "state": "translated",
             "value": "Geçerli Pencere"
+          }
+        }
+      }
+    },
+    "menu.fadicode.visualPreset.cleanPixel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clean Pixel"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "クリーンピクセル"
+          }
+        }
+      }
+    },
+    "menu.fadicode.visualPreset.crt": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CRT"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CRT"
+          }
+        }
+      }
+    },
+    "menu.fadicode.visualPreset.halftone": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Halftone"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ハーフトーン"
+          }
+        }
+      }
+    },
+    "menu.fadicode.visualPreset.honeycomb": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Honeycomb"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ハニカム"
+          }
+        }
+      }
+    },
+    "menu.fadicode.visualPreset.neon": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neon"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ネオン"
+          }
+        }
+      }
+    },
+    "menu.fadicode.visualPreset.pixelGrid": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pixel Grid"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ピクセルグリッド"
+          }
+        }
+      }
+    },
+    "menu.fadicode.visualStyle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visual Style"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ビジュアルスタイル"
           }
         }
       }
@@ -51216,6 +51335,142 @@
         }
       }
     },
+    "settings.fadicode.visualPreset": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visual Preset"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ビジュアルプリセット"
+          }
+        }
+      }
+    },
+    "settings.fadicode.visualPreset.cleanPixel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clean Pixel"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "クリーンピクセル"
+          }
+        }
+      }
+    },
+    "settings.fadicode.visualPreset.crt": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CRT"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CRT"
+          }
+        }
+      }
+    },
+    "settings.fadicode.visualPreset.halftone": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Halftone"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ハーフトーン"
+          }
+        }
+      }
+    },
+    "settings.fadicode.visualPreset.honeycomb": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Honeycomb"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ハニカム"
+          }
+        }
+      }
+    },
+    "settings.fadicode.visualPreset.neon": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neon"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ネオン"
+          }
+        }
+      }
+    },
+    "settings.fadicode.visualPreset.pixelGrid": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pixel Grid"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ピクセルグリッド"
+          }
+        }
+      }
+    },
+    "settings.fadicode.visualPreset.subtitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Applied shader visual style"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "適用されるシェーダーのビジュアルスタイル"
+          }
+        }
+      }
+    },
     "settings.material.contentBackground": {
       "extractionState": "manual",
       "localizations": {
@@ -61731,7 +61986,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Only processes started inside cmux terminals can send commands."
+            "value": "Only processes started inside fadicode terminals can send commands."
           }
         },
         "ja": {
@@ -61844,7 +62099,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "cmux processes only"
+            "value": "fadicode processes only"
           }
         },
         "ja": {

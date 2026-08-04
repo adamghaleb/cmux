@@ -1,4 +1,4 @@
-# Contributing to cmux
+# Contributing to fadicode
 
 ## Prerequisites
 
@@ -9,18 +9,20 @@
 ## Getting Started
 
 1. Clone the repository with submodules:
+
    ```bash
-   git clone --recursive https://github.com/manaflow-ai/cmux.git
-   cd cmux
+   git clone --recursive https://github.com/manaflow-ai/fadicode.git
+   cd fadicode
    ```
 
 2. Run the setup script:
+
    ```bash
    ./scripts/setup.sh
    ```
 
    This will:
-   - Initialize git submodules (ghostty, homebrew-cmux)
+   - Initialize git submodules (ghostty, homebrew-fadicode)
    - Build the GhosttyKit.xcframework from source
    - Create the necessary symlinks
 
@@ -31,13 +33,13 @@
 
 ## Development Scripts
 
-| Script | Description |
-|--------|-------------|
-| `./scripts/setup.sh` | One-time setup (submodules + xcframework) |
-| `./scripts/reload.sh` | Build and launch Debug app |
-| `./scripts/reloadp.sh` | Build and launch Release app |
-| `./scripts/reload2.sh` | Reload both Debug and Release |
-| `./scripts/rebuild.sh` | Clean rebuild |
+| Script                 | Description                               |
+| ---------------------- | ----------------------------------------- |
+| `./scripts/setup.sh`   | One-time setup (submodules + xcframework) |
+| `./scripts/reload.sh`  | Build and launch Debug app                |
+| `./scripts/reloadp.sh` | Build and launch Release app              |
+| `./scripts/reload2.sh` | Reload both Debug and Release             |
+| `./scripts/rebuild.sh` | Clean rebuild                             |
 
 ## Rebuilding GhosttyKit
 
@@ -53,13 +55,13 @@ zig build -Demit-xcframework=true -Doptimize=ReleaseFast
 ### Basic tests (run on VM)
 
 ```bash
-ssh cmux-vm 'cd /Users/cmux/GhosttyTabs && xcodebuild -project GhosttyTabs.xcodeproj -scheme cmux -configuration Debug -destination "platform=macOS" build && pkill -x "cmux DEV" || true && APP=$(find /Users/cmux/Library/Developer/Xcode/DerivedData -path "*/Build/Products/Debug/cmux DEV.app" -print -quit) && open "$APP" && for i in {1..20}; do [ -S /tmp/cmux.sock ] && break; sleep 0.5; done && python3 tests/test_update_timing.py && python3 tests/test_signals_auto.py && python3 tests/test_ctrl_socket.py && python3 tests/test_notifications.py'
+ssh fadicode-vm 'cd /Users/fadicode/GhosttyTabs && xcodebuild -project GhosttyTabs.xcodeproj -scheme fadicode -configuration Debug -destination "platform=macOS" build && pkill -x "fadicode DEV" || true && APP=$(find /Users/fadicode/Library/Developer/Xcode/DerivedData -path "*/Build/Products/Debug/fadicode DEV.app" -print -quit) && open "$APP" && for i in {1..20}; do [ -S /tmp/fadicode.sock ] && break; sleep 0.5; done && python3 tests/test_update_timing.py && python3 tests/test_signals_auto.py && python3 tests/test_ctrl_socket.py && python3 tests/test_notifications.py'
 ```
 
 ### UI tests (run on VM)
 
 ```bash
-ssh cmux-vm 'cd /Users/cmux/GhosttyTabs && xcodebuild -project GhosttyTabs.xcodeproj -scheme cmux -configuration Debug -destination "platform=macOS" -only-testing:cmuxUITests test'
+ssh fadicode-vm 'cd /Users/fadicode/GhosttyTabs && xcodebuild -project GhosttyTabs.xcodeproj -scheme fadicode -configuration Debug -destination "platform=macOS" -only-testing:fadicodeUITests test'
 ```
 
 ## Ghostty Submodule

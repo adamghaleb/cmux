@@ -535,11 +535,11 @@ enum BrowserUserAgentSettings {
 }
 
 func normalizedBrowserHistoryNamespace(bundleIdentifier: String) -> String {
-    if bundleIdentifier.hasPrefix("com.cmuxterm.app.debug.") {
-        return "com.cmuxterm.app.debug"
+    if bundleIdentifier.hasPrefix("com.fadicode.terminal.debug.") {
+        return "com.fadicode.terminal.debug"
     }
-    if bundleIdentifier.hasPrefix("com.cmuxterm.app.staging.") {
-        return "com.cmuxterm.app.staging"
+    if bundleIdentifier.hasPrefix("com.fadicode.terminal.staging.") {
+        return "com.fadicode.terminal.staging"
     }
     return bundleIdentifier
 }
@@ -1562,11 +1562,41 @@ final class BrowserPanel: Panel, ObservableObject {
             )
         )
 
+        // Dark mode CSS injection for all web pages
+        let darkModeCSS = """
+        @media (prefers-color-scheme: dark) {
+            :root {
+                color-scheme: dark;
+            }
+            html:not([data-theme="light"]):not(.light) {
+                filter: invert(0.88) hue-rotate(180deg);
+            }
+            html:not([data-theme="light"]):not(.light) img,
+            html:not([data-theme="light"]):not(.light) video,
+            html:not([data-theme="light"]):not(.light) canvas,
+            html:not([data-theme="light"]):not(.light) picture,
+            html:not([data-theme="light"]):not(.light) [style*="background-image"],
+            html:not([data-theme="light"]):not(.light) .emoji {
+                filter: invert(1) hue-rotate(180deg);
+            }
+        }
+        """
+        let darkModeScript = "var style = document.createElement('style'); style.textContent = `\(darkModeCSS.replacingOccurrences(of: "\n", with: "\\n"))`; document.head.appendChild(style);"
+        config.userContentController.addUserScript(
+            WKUserScript(
+                source: darkModeScript,
+                injectionTime: .atDocumentEnd,
+                forMainFrameOnly: false
+            )
+        )
+
         let webView = CmuxWebView(frame: .zero, configuration: config)
         webView.allowsBackForwardNavigationGestures = true
+        #if DEBUG
         if #available(macOS 13.3, *) {
             webView.isInspectable = true
         }
+        #endif
         // Match the empty-page background to the terminal theme so newly-created browsers
         // don't flash white before content loads.
         webView.underPageBackgroundColor = GhosttyBackgroundTheme.currentColor()
@@ -1602,6 +1632,10 @@ final class BrowserPanel: Panel, ObservableObject {
         let navDelegate = BrowserNavigationDelegate()
         navDelegate.didFinish = { webView in
             BrowserHistoryStore.shared.recordVisit(url: webView.url, title: webView.title)
+            if let urlString = webView.url?.absoluteString,
+               urlString != "about:blank" {
+                WebFavoritesStore.shared.trackVisit(url: urlString, title: webView.title)
+            }
             Task { @MainActor [weak self] in
                 self?.refreshFavicon(from: webView)
                 self?.applyBrowserThemeModeIfNeeded()

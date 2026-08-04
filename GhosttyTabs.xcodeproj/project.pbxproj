@@ -39,14 +39,12 @@
 			A5001095 /* TerminalNotificationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5001092 /* TerminalNotificationStore.swift */; };
 			A5001250 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = A5001251 /* Sentry */; };
 			B9000024A1B2C3D4E5F60719 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = A5001251 /* Sentry */; };
-			A5001270 /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = A5001271 /* PostHog */; };
 			A5001303 /* SurfaceSearchOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5001301 /* SurfaceSearchOverlay.swift */; };
 			A5008371 /* BrowserSearchOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5008370 /* BrowserSearchOverlay.swift */; };
 			A5008373 /* BrowserFindJavaScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5008372 /* BrowserFindJavaScript.swift */; };
 			A50012F1 /* Backport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50012F0 /* Backport.swift */; };
 			A50012F3 /* KeyboardShortcutSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50012F2 /* KeyboardShortcutSettings.swift */; };
 			A50012F5 /* KeyboardLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50012F4 /* KeyboardLayout.swift */; };
-			A5001521 /* PostHogAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5001520 /* PostHogAnalytics.swift */; };
 			A5001201 /* UpdateController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5001211 /* UpdateController.swift */; };
 		A5001202 /* UpdateDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5001212 /* UpdateDelegate.swift */; };
 		A5001203 /* UpdateDriver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5001213 /* UpdateDriver.swift */; };
@@ -94,7 +92,111 @@
 					A5008383 /* CommandPaletteSearchEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5008382 /* CommandPaletteSearchEngineTests.swift */; };
 		DA7A10CA710E000000000003 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = DA7A10CA710E000000000001 /* Localizable.xcstrings */; };
 		DA7A10CA710E000000000004 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = DA7A10CA710E000000000002 /* InfoPlist.xcstrings */; };
-			/* End PBXBuildFile section */
+			FC000001 /* FadiCodeModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100001 /* FadiCodeModels.swift */; };
+		FC000002 /* TaskFlashOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100002 /* TaskFlashOverlay.swift */; };
+		FC000003 /* FadiCodeOverlayHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100003 /* FadiCodeOverlayHost.swift */; };
+		FC000004 /* ClaudeActivitySummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100004 /* ClaudeActivitySummary.swift */; };
+		FC000005 /* ShaderPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100005 /* ShaderPicker.swift */; };
+		FC000006 /* GradientPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100006 /* GradientPalette.swift */; };
+		FC000007 /* DebugStateOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100007 /* DebugStateOverlay.swift */; };
+		FC000027 /* ShaderOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100092 /* ShaderOverlayView.swift */; };
+		FC300001 /* cat.png in Resources */ = {isa = PBXBuildFile; fileRef = FC300002 /* cat.png */; };
+		FC000010 /* FadiCodeOverlaySystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100010 /* FadiCodeOverlaySystem.swift */; };
+		FC000011 /* LifecycleManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100011 /* LifecycleManager.swift */; };
+		FC000012 /* EffectBus.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100012 /* EffectBus.swift */; };
+		FC000013 /* EffectTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100013 /* EffectTypes.swift */; };
+		FC000014 /* VisualController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100014 /* VisualController.swift */; };
+		FC000015 /* TaskFlashController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100015 /* TaskFlashController.swift */; };
+		FC000016 /* ActivityBadgeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100016 /* ActivityBadgeController.swift */; };
+		FC000017 /* BorderGlowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100017 /* BorderGlowController.swift */; };
+		FC000018 /* CompletionPopupController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100018 /* CompletionPopupController.swift */; };
+		FC000019 /* CompletionSoundController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100019 /* CompletionSoundController.swift */; };
+		FC00001A /* QuestionDetectionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC10001A /* QuestionDetectionController.swift */; };
+		FC00001B /* PixelPetController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC10001B /* PixelPetController.swift */; };
+		FC00001C /* ShaderDirector.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC10001C /* ShaderDirector.swift */; };
+		FC000020 /* PixelPetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100020 /* PixelPetView.swift */; };
+		FC000021 /* PetAnimator.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100021 /* PetAnimator.swift */; };
+		FC000022 /* PetAnimation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100022 /* PetAnimation.swift */; };
+		FC000023 /* PetState.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100023 /* PetState.swift */; };
+		FC000024 /* PetStatusIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100024 /* PetStatusIndicator.swift */; };
+		FC000025 /* SpriteSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100025 /* SpriteSheet.swift */; };
+		FC000026 /* NSImage+Colorize.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100026 /* NSImage+Colorize.swift */; };
+		FC200030 /* ModeAkashicField.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100030 /* ModeAkashicField.metal */; };
+		FC200031 /* ModeArchitectsGaze.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100031 /* ModeArchitectsGaze.metal */; };
+		FC200032 /* ModeAurora.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100032 /* ModeAurora.metal */; };
+		FC200033 /* ModeBreathOfGod.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100033 /* ModeBreathOfGod.metal */; };
+		FC200034 /* ModeCelestialClockwork.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100034 /* ModeCelestialClockwork.metal */; };
+		FC200035 /* ModeChrysanthemum.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100035 /* ModeChrysanthemum.metal */; };
+		FC200036 /* ModeCircleWave.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100036 /* ModeCircleWave.metal */; };
+		FC200037 /* ModeCombined.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100037 /* ModeCombined.metal */; };
+		FC200038 /* ModeCosmicWeb.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100038 /* ModeCosmicWeb.metal */; };
+		FC200039 /* ModeCrystalCavern.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100039 /* ModeCrystalCavern.metal */; };
+		FC20003A /* ModeCymatics.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC10003A /* ModeCymatics.metal */; };
+		FC20003B /* ModeDNAHelix.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC10003B /* ModeDNAHelix.metal */; };
+		FC20003C /* ModeDreamCatcher.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC10003C /* ModeDreamCatcher.metal */; };
+		FC20003D /* ModeEgoDissolution.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC10003D /* ModeEgoDissolution.metal */; };
+		FC20003E /* ModeElectricField.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC10003E /* ModeElectricField.metal */; };
+		FC20003F /* ModeEntityPresence.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC10003F /* ModeEntityPresence.metal */; };
+		FC200040 /* ModeEventHorizon.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100040 /* ModeEventHorizon.metal */; };
+		FC200041 /* ModeFlowerOfLife.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100041 /* ModeFlowerOfLife.metal */; };
+		FC200042 /* ModeFoldingDimensions.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100042 /* ModeFoldingDimensions.metal */; };
+		FC200043 /* ModeFractalMandelbrot.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100043 /* ModeFractalMandelbrot.metal */; };
+		FC200044 /* ModeFractalRings.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100044 /* ModeFractalRings.metal */; };
+		FC200045 /* ModeGeometricAlchemy.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100045 /* ModeGeometricAlchemy.metal */; };
+		FC200046 /* ModeGradientSpin.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100046 /* ModeGradientSpin.metal */; };
+		FC200047 /* ModeHyperspace.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100047 /* ModeHyperspace.metal */; };
+		FC200048 /* ModeInfiniteZoom.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100048 /* ModeInfiniteZoom.metal */; };
+		FC200049 /* ModeInterferenceCrystal.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100049 /* ModeInterferenceCrystal.metal */; };
+		FC20004A /* ModeJewelLattice.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC10004A /* ModeJewelLattice.metal */; };
+		FC20004B /* ModeKaleidoscope.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC10004B /* ModeKaleidoscope.metal */; };
+		FC20004C /* ModeLavaLamp.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC10004C /* ModeLavaLamp.metal */; };
+		FC20004D /* ModeLightGrid.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC10004D /* ModeLightGrid.metal */; };
+		FC20004E /* ModeMachineElves.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC10004E /* ModeMachineElves.metal */; };
+		FC20004F /* ModeMandala.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC10004F /* ModeMandala.metal */; };
+		FC200050 /* ModeMetatronsCube.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100050 /* ModeMetatronsCube.metal */; };
+		FC200051 /* ModeMoire.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100051 /* ModeMoire.metal */; };
+		FC200052 /* ModeNebulaCloud.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100052 /* ModeNebulaCloud.metal */; };
+		FC200053 /* ModeNeuralBloom.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100053 /* ModeNeuralBloom.metal */; };
+		FC200054 /* ModeOrganicFlow.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100054 /* ModeOrganicFlow.metal */; };
+		FC200055 /* ModePenroseTiling.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100055 /* ModePenroseTiling.metal */; };
+		FC200056 /* ModePlasma.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100056 /* ModePlasma.metal */; };
+		FC200057 /* ModePointCloud.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100057 /* ModePointCloud.metal */; };
+		FC200058 /* ModePulseGrid.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100058 /* ModePulseGrid.metal */; };
+		FC200059 /* ModeQuantumField.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100059 /* ModeQuantumField.metal */; };
+		FC20005A /* ModeResonance.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC10005A /* ModeResonance.metal */; };
+		FC20005B /* ModeResonanceChamber.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC10005B /* ModeResonanceChamber.metal */; };
+		FC20005C /* ModeRipplePond.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC10005C /* ModeRipplePond.metal */; };
+		FC20005D /* ModeSacredGeometry.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC10005D /* ModeSacredGeometry.metal */; };
+		FC20005E /* ModeSigilNetwork.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC10005E /* ModeSigilNetwork.metal */; };
+		FC20005F /* ModeSinebow.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC10005F /* ModeSinebow.metal */; };
+		FC200060 /* ModeSpiralGalaxy.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100060 /* ModeSpiralGalaxy.metal */; };
+		FC200061 /* ModeSpiritMolecule.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100061 /* ModeSpiritMolecule.metal */; };
+		FC200062 /* ModeStringTheory.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100062 /* ModeStringTheory.metal */; };
+		FC200063 /* ModeTessellationDance.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100063 /* ModeTessellationDance.metal */; };
+		FC200064 /* ModeTimecrystal.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100064 /* ModeTimecrystal.metal */; };
+		FC200065 /* ModeTopographicFlow.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100065 /* ModeTopographicFlow.metal */; };
+		FC200066 /* ModeVoidBloom.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100066 /* ModeVoidBloom.metal */; };
+		FC200067 /* ModeVoronoi.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100067 /* ModeVoronoi.metal */; };
+		FC200068 /* ModeWarpTunnel.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100068 /* ModeWarpTunnel.metal */; };
+		FC200069 /* ModeWeaversLoom.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC100069 /* ModeWeaversLoom.metal */; };
+		FC20006A /* ModeWormhole.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC10006A /* ModeWormhole.metal */; };
+		FC20006B /* PostProcess.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC10006B /* PostProcess.metal */; };
+		FC20006C /* TransitionDissolve.metal in Sources */ = {isa = PBXBuildFile; fileRef = FC10006C /* TransitionDissolve.metal */; };
+		FC000028 /* WebFavoritesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100028 /* WebFavoritesStore.swift */; };
+		FC000029 /* ProjectPickerOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100029 /* ProjectPickerOverlay.swift */; };
+		FC00002A /* ProjectBadgeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC10002A /* ProjectBadgeView.swift */; };
+		FC00002B /* QuickLaunchBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC10002B /* QuickLaunchBar.swift */; };
+		FC00002C /* TerminalInspectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC10002C /* TerminalInspectorView.swift */; };
+		FC00002D /* QuickTerminalController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC10002D /* QuickTerminalController.swift */; };
+		FC00002E /* FadicodeIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC10002E /* FadicodeIntents.swift */; };
+		FC000030 /* AgentSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100030A /* AgentSnapshot.swift */; };
+		FC000031 /* AgentDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100031A /* AgentDetector.swift */; };
+		FC000032 /* AgentObservatoryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100032A /* AgentObservatoryService.swift */; };
+		FC000033 /* AgentObservatoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100033A /* AgentObservatoryView.swift */; };
+		FC000034 /* AgentCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100034A /* AgentCardView.swift */; };
+		FC000035 /* ProjectGroupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100035A /* ProjectGroupView.swift */; };
+		FC000036 /* AgentObservatoryPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100037A /* AgentObservatoryPanel.swift */; };
+		/* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		A5001020 /* Embed Frameworks */ = {
@@ -167,7 +269,6 @@
 		A5001600 /* SentryHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SentryHelper.swift; sourceTree = "<group>"; };
 			A5001510 /* CmuxWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Panels/CmuxWebView.swift; sourceTree = "<group>"; };
 			A5001511 /* UITestRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UITestRecorder.swift; sourceTree = "<group>"; };
-			A5001520 /* PostHogAnalytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostHogAnalytics.swift; sourceTree = "<group>"; };
 			A5001225 /* SocketControlSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocketControlSettings.swift; sourceTree = "<group>"; };
 		A5001410 /* Panel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Panels/Panel.swift; sourceTree = "<group>"; };
 		A5001411 /* TerminalPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Panels/TerminalPanel.swift; sourceTree = "<group>"; };
@@ -235,6 +336,112 @@
 				A5008382 /* CommandPaletteSearchEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandPaletteSearchEngineTests.swift; sourceTree = "<group>"; };
 					DA7A10CA710E000000000001 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		DA7A10CA710E000000000002 /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
+		FC100001 /* FadiCodeModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FadiCodeModels.swift; sourceTree = "<group>"; };
+		FC100002 /* TaskFlashOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskFlashOverlay.swift; sourceTree = "<group>"; };
+		FC100003 /* FadiCodeOverlayHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FadiCodeOverlayHost.swift; sourceTree = "<group>"; };
+		FC100004 /* ClaudeActivitySummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeActivitySummary.swift; sourceTree = "<group>"; };
+		FC100005 /* ShaderPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShaderPicker.swift; sourceTree = "<group>"; };
+		FC100006 /* GradientPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradientPalette.swift; sourceTree = "<group>"; };
+		FC100007 /* DebugStateOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugStateOverlay.swift; sourceTree = "<group>"; };
+		FC100092 /* ShaderOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShaderOverlayView.swift; sourceTree = "<group>"; };
+		FC100028 /* WebFavoritesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebFavoritesStore.swift; sourceTree = "<group>"; };
+		FC100029 /* ProjectPickerOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectPickerOverlay.swift; sourceTree = "<group>"; };
+		FC10002A /* ProjectBadgeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectBadgeView.swift; sourceTree = "<group>"; };
+		FC10002B /* QuickLaunchBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickLaunchBar.swift; sourceTree = "<group>"; };
+		FC10002C /* TerminalInspectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalInspectorView.swift; sourceTree = "<group>"; };
+		FC10002D /* QuickTerminalController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickTerminalController.swift; sourceTree = "<group>"; };
+		FC10002E /* FadicodeIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FadicodeIntents.swift; sourceTree = "<group>"; };
+		FC100010 /* FadiCodeOverlaySystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FadiCodeOverlaySystem.swift; sourceTree = "<group>"; };
+		FC100011 /* LifecycleManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LifecycleManager.swift; sourceTree = "<group>"; };
+		FC100012 /* EffectBus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EffectBus.swift; sourceTree = "<group>"; };
+		FC100013 /* EffectTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EffectTypes.swift; sourceTree = "<group>"; };
+		FC100014 /* VisualController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisualController.swift; sourceTree = "<group>"; };
+		FC100015 /* TaskFlashController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskFlashController.swift; sourceTree = "<group>"; };
+		FC100016 /* ActivityBadgeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityBadgeController.swift; sourceTree = "<group>"; };
+		FC100017 /* BorderGlowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BorderGlowController.swift; sourceTree = "<group>"; };
+		FC100018 /* CompletionPopupController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompletionPopupController.swift; sourceTree = "<group>"; };
+		FC100019 /* CompletionSoundController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompletionSoundController.swift; sourceTree = "<group>"; };
+		FC10001A /* QuestionDetectionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuestionDetectionController.swift; sourceTree = "<group>"; };
+		FC10001B /* PixelPetController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelPetController.swift; sourceTree = "<group>"; };
+		FC10001C /* ShaderDirector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShaderDirector.swift; sourceTree = "<group>"; };
+		FC100020 /* PixelPetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelPetView.swift; sourceTree = "<group>"; };
+		FC100021 /* PetAnimator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetAnimator.swift; sourceTree = "<group>"; };
+		FC100022 /* PetAnimation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetAnimation.swift; sourceTree = "<group>"; };
+		FC100023 /* PetState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetState.swift; sourceTree = "<group>"; };
+		FC100024 /* PetStatusIndicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetStatusIndicator.swift; sourceTree = "<group>"; };
+		FC100025 /* SpriteSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpriteSheet.swift; sourceTree = "<group>"; };
+		FC100026 /* NSImage+Colorize.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSImage+Colorize.swift"; sourceTree = "<group>"; };
+		FC300002 /* cat.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = cat.png; sourceTree = "<group>"; };
+		FC100030 /* ModeAkashicField.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeAkashicField.metal; sourceTree = "<group>"; };
+		FC100031 /* ModeArchitectsGaze.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeArchitectsGaze.metal; sourceTree = "<group>"; };
+		FC100032 /* ModeAurora.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeAurora.metal; sourceTree = "<group>"; };
+		FC100033 /* ModeBreathOfGod.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeBreathOfGod.metal; sourceTree = "<group>"; };
+		FC100034 /* ModeCelestialClockwork.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeCelestialClockwork.metal; sourceTree = "<group>"; };
+		FC100035 /* ModeChrysanthemum.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeChrysanthemum.metal; sourceTree = "<group>"; };
+		FC100036 /* ModeCircleWave.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeCircleWave.metal; sourceTree = "<group>"; };
+		FC100037 /* ModeCombined.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeCombined.metal; sourceTree = "<group>"; };
+		FC100038 /* ModeCosmicWeb.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeCosmicWeb.metal; sourceTree = "<group>"; };
+		FC100039 /* ModeCrystalCavern.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeCrystalCavern.metal; sourceTree = "<group>"; };
+		FC10003A /* ModeCymatics.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeCymatics.metal; sourceTree = "<group>"; };
+		FC10003B /* ModeDNAHelix.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeDNAHelix.metal; sourceTree = "<group>"; };
+		FC10003C /* ModeDreamCatcher.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeDreamCatcher.metal; sourceTree = "<group>"; };
+		FC10003D /* ModeEgoDissolution.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeEgoDissolution.metal; sourceTree = "<group>"; };
+		FC10003E /* ModeElectricField.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeElectricField.metal; sourceTree = "<group>"; };
+		FC10003F /* ModeEntityPresence.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeEntityPresence.metal; sourceTree = "<group>"; };
+		FC100040 /* ModeEventHorizon.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeEventHorizon.metal; sourceTree = "<group>"; };
+		FC100041 /* ModeFlowerOfLife.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeFlowerOfLife.metal; sourceTree = "<group>"; };
+		FC100042 /* ModeFoldingDimensions.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeFoldingDimensions.metal; sourceTree = "<group>"; };
+		FC100043 /* ModeFractalMandelbrot.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeFractalMandelbrot.metal; sourceTree = "<group>"; };
+		FC100044 /* ModeFractalRings.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeFractalRings.metal; sourceTree = "<group>"; };
+		FC100045 /* ModeGeometricAlchemy.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeGeometricAlchemy.metal; sourceTree = "<group>"; };
+		FC100046 /* ModeGradientSpin.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeGradientSpin.metal; sourceTree = "<group>"; };
+		FC100047 /* ModeHyperspace.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeHyperspace.metal; sourceTree = "<group>"; };
+		FC100048 /* ModeInfiniteZoom.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeInfiniteZoom.metal; sourceTree = "<group>"; };
+		FC100049 /* ModeInterferenceCrystal.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeInterferenceCrystal.metal; sourceTree = "<group>"; };
+		FC10004A /* ModeJewelLattice.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeJewelLattice.metal; sourceTree = "<group>"; };
+		FC10004B /* ModeKaleidoscope.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeKaleidoscope.metal; sourceTree = "<group>"; };
+		FC10004C /* ModeLavaLamp.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeLavaLamp.metal; sourceTree = "<group>"; };
+		FC10004D /* ModeLightGrid.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeLightGrid.metal; sourceTree = "<group>"; };
+		FC10004E /* ModeMachineElves.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeMachineElves.metal; sourceTree = "<group>"; };
+		FC10004F /* ModeMandala.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeMandala.metal; sourceTree = "<group>"; };
+		FC100050 /* ModeMetatronsCube.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeMetatronsCube.metal; sourceTree = "<group>"; };
+		FC100051 /* ModeMoire.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeMoire.metal; sourceTree = "<group>"; };
+		FC100052 /* ModeNebulaCloud.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeNebulaCloud.metal; sourceTree = "<group>"; };
+		FC100053 /* ModeNeuralBloom.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeNeuralBloom.metal; sourceTree = "<group>"; };
+		FC100054 /* ModeOrganicFlow.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeOrganicFlow.metal; sourceTree = "<group>"; };
+		FC100055 /* ModePenroseTiling.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModePenroseTiling.metal; sourceTree = "<group>"; };
+		FC100056 /* ModePlasma.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModePlasma.metal; sourceTree = "<group>"; };
+		FC100057 /* ModePointCloud.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModePointCloud.metal; sourceTree = "<group>"; };
+		FC100058 /* ModePulseGrid.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModePulseGrid.metal; sourceTree = "<group>"; };
+		FC100059 /* ModeQuantumField.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeQuantumField.metal; sourceTree = "<group>"; };
+		FC10005A /* ModeResonance.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeResonance.metal; sourceTree = "<group>"; };
+		FC10005B /* ModeResonanceChamber.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeResonanceChamber.metal; sourceTree = "<group>"; };
+		FC10005C /* ModeRipplePond.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeRipplePond.metal; sourceTree = "<group>"; };
+		FC10005D /* ModeSacredGeometry.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeSacredGeometry.metal; sourceTree = "<group>"; };
+		FC10005E /* ModeSigilNetwork.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeSigilNetwork.metal; sourceTree = "<group>"; };
+		FC10005F /* ModeSinebow.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeSinebow.metal; sourceTree = "<group>"; };
+		FC100060 /* ModeSpiralGalaxy.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeSpiralGalaxy.metal; sourceTree = "<group>"; };
+		FC100061 /* ModeSpiritMolecule.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeSpiritMolecule.metal; sourceTree = "<group>"; };
+		FC100062 /* ModeStringTheory.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeStringTheory.metal; sourceTree = "<group>"; };
+		FC100063 /* ModeTessellationDance.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeTessellationDance.metal; sourceTree = "<group>"; };
+		FC100064 /* ModeTimecrystal.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeTimecrystal.metal; sourceTree = "<group>"; };
+		FC100065 /* ModeTopographicFlow.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeTopographicFlow.metal; sourceTree = "<group>"; };
+		FC100066 /* ModeVoidBloom.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeVoidBloom.metal; sourceTree = "<group>"; };
+		FC100067 /* ModeVoronoi.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeVoronoi.metal; sourceTree = "<group>"; };
+		FC100068 /* ModeWarpTunnel.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeWarpTunnel.metal; sourceTree = "<group>"; };
+		FC100069 /* ModeWeaversLoom.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeWeaversLoom.metal; sourceTree = "<group>"; };
+		FC10006A /* ModeWormhole.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ModeWormhole.metal; sourceTree = "<group>"; };
+		FC10006B /* PostProcess.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = PostProcess.metal; sourceTree = "<group>"; };
+		FC10006C /* TransitionDissolve.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = TransitionDissolve.metal; sourceTree = "<group>"; };
+		FC100090 /* ShaderUtils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ShaderUtils.h; sourceTree = "<group>"; };
+		FC100091 /* WorkingStatePipeline.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WorkingStatePipeline.h; sourceTree = "<group>"; };
+		FC100030A /* AgentSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentSnapshot.swift; sourceTree = "<group>"; };
+		FC100031A /* AgentDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentDetector.swift; sourceTree = "<group>"; };
+		FC100032A /* AgentObservatoryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentObservatoryService.swift; sourceTree = "<group>"; };
+		FC100033A /* AgentObservatoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentObservatoryView.swift; sourceTree = "<group>"; };
+		FC100034A /* AgentCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentCardView.swift; sourceTree = "<group>"; };
+		FC100035A /* ProjectGroupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectGroupView.swift; sourceTree = "<group>"; };
+		FC100037A /* AgentObservatoryPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Panels/AgentObservatoryPanel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -280,6 +487,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A5001100 /* Assets.xcassets in Resources */,
+				FC300001 /* cat.png in Resources */,
 				84E00D47E4584162AE53BC8D /* xterm-ghostty in Resources */,
 				A5002000 /* THIRD_PARTY_LICENSES.md in Resources */,
 				DA7A10CA710E000000000003 /* Localizable.xcstrings in Resources */,
@@ -377,6 +585,7 @@
 				A5001414 /* BrowserPanelView.swift */,
 				A5001418 /* MarkdownPanel.swift */,
 				A5001419 /* MarkdownPanelView.swift */,
+				FC100037A /* AgentObservatoryPanel.swift */,
 				A5001510 /* CmuxWebView.swift */,
 				A5001415 /* PanelContentView.swift */,
 				A5001211 /* UpdateController.swift */,
@@ -395,6 +604,7 @@
 				A5001241 /* WindowDecorationsController.swift */,
 				A5001222 /* WindowAccessor.swift */,
 				A5001611 /* SessionPersistence.swift */,
+				FC200000 /* Fadicode */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -465,6 +675,166 @@
 				path = cmuxTests;
 				sourceTree = "<group>";
 			};
+		FC200000 /* Fadicode */ = {
+			isa = PBXGroup;
+			children = (
+				FC100001 /* FadiCodeModels.swift */,
+				FC100002 /* TaskFlashOverlay.swift */,
+				FC100003 /* FadiCodeOverlayHost.swift */,
+				FC100004 /* ClaudeActivitySummary.swift */,
+				FC100005 /* ShaderPicker.swift */,
+				FC100006 /* GradientPalette.swift */,
+				FC100007 /* DebugStateOverlay.swift */,
+				FC100092 /* ShaderOverlayView.swift */,
+				FC100028 /* WebFavoritesStore.swift */,
+				FC100029 /* ProjectPickerOverlay.swift */,
+				FC10002A /* ProjectBadgeView.swift */,
+				FC10002B /* QuickLaunchBar.swift */,
+				FC10002C /* TerminalInspectorView.swift */,
+				FC200001 /* Overlay */,
+				FC200002 /* PixelPet */,
+				FC200003 /* Shaders */,
+				FC200004 /* QuickTerminal */,
+				FC200005 /* AppIntents */,
+				FC200006 /* Observatory */,
+			);
+			path = Fadicode;
+			sourceTree = "<group>";
+		};
+		FC200001 /* Overlay */ = {
+			isa = PBXGroup;
+			children = (
+				FC100010 /* FadiCodeOverlaySystem.swift */,
+				FC100011 /* LifecycleManager.swift */,
+				FC100012 /* EffectBus.swift */,
+				FC100013 /* EffectTypes.swift */,
+				FC100014 /* VisualController.swift */,
+				FC100015 /* TaskFlashController.swift */,
+				FC100016 /* ActivityBadgeController.swift */,
+				FC100017 /* BorderGlowController.swift */,
+				FC100018 /* CompletionPopupController.swift */,
+				FC100019 /* CompletionSoundController.swift */,
+				FC10001A /* QuestionDetectionController.swift */,
+				FC10001B /* PixelPetController.swift */,
+				FC10001C /* ShaderDirector.swift */,
+			);
+			path = Overlay;
+			sourceTree = "<group>";
+		};
+		FC200002 /* PixelPet */ = {
+			isa = PBXGroup;
+			children = (
+				FC100020 /* PixelPetView.swift */,
+				FC100021 /* PetAnimator.swift */,
+				FC100022 /* PetAnimation.swift */,
+				FC100023 /* PetState.swift */,
+				FC100024 /* PetStatusIndicator.swift */,
+				FC100025 /* SpriteSheet.swift */,
+				FC100026 /* NSImage+Colorize.swift */,
+				FC300002 /* cat.png */,
+			);
+			path = PixelPet;
+			sourceTree = "<group>";
+		};
+		FC200003 /* Shaders */ = {
+			isa = PBXGroup;
+			children = (
+				FC100030 /* ModeAkashicField.metal */,
+				FC100031 /* ModeArchitectsGaze.metal */,
+				FC100032 /* ModeAurora.metal */,
+				FC100033 /* ModeBreathOfGod.metal */,
+				FC100034 /* ModeCelestialClockwork.metal */,
+				FC100035 /* ModeChrysanthemum.metal */,
+				FC100036 /* ModeCircleWave.metal */,
+				FC100037 /* ModeCombined.metal */,
+				FC100038 /* ModeCosmicWeb.metal */,
+				FC100039 /* ModeCrystalCavern.metal */,
+				FC10003A /* ModeCymatics.metal */,
+				FC10003B /* ModeDNAHelix.metal */,
+				FC10003C /* ModeDreamCatcher.metal */,
+				FC10003D /* ModeEgoDissolution.metal */,
+				FC10003E /* ModeElectricField.metal */,
+				FC10003F /* ModeEntityPresence.metal */,
+				FC100040 /* ModeEventHorizon.metal */,
+				FC100041 /* ModeFlowerOfLife.metal */,
+				FC100042 /* ModeFoldingDimensions.metal */,
+				FC100043 /* ModeFractalMandelbrot.metal */,
+				FC100044 /* ModeFractalRings.metal */,
+				FC100045 /* ModeGeometricAlchemy.metal */,
+				FC100046 /* ModeGradientSpin.metal */,
+				FC100047 /* ModeHyperspace.metal */,
+				FC100048 /* ModeInfiniteZoom.metal */,
+				FC100049 /* ModeInterferenceCrystal.metal */,
+				FC10004A /* ModeJewelLattice.metal */,
+				FC10004B /* ModeKaleidoscope.metal */,
+				FC10004C /* ModeLavaLamp.metal */,
+				FC10004D /* ModeLightGrid.metal */,
+				FC10004E /* ModeMachineElves.metal */,
+				FC10004F /* ModeMandala.metal */,
+				FC100050 /* ModeMetatronsCube.metal */,
+				FC100051 /* ModeMoire.metal */,
+				FC100052 /* ModeNebulaCloud.metal */,
+				FC100053 /* ModeNeuralBloom.metal */,
+				FC100054 /* ModeOrganicFlow.metal */,
+				FC100055 /* ModePenroseTiling.metal */,
+				FC100056 /* ModePlasma.metal */,
+				FC100057 /* ModePointCloud.metal */,
+				FC100058 /* ModePulseGrid.metal */,
+				FC100059 /* ModeQuantumField.metal */,
+				FC10005A /* ModeResonance.metal */,
+				FC10005B /* ModeResonanceChamber.metal */,
+				FC10005C /* ModeRipplePond.metal */,
+				FC10005D /* ModeSacredGeometry.metal */,
+				FC10005E /* ModeSigilNetwork.metal */,
+				FC10005F /* ModeSinebow.metal */,
+				FC100060 /* ModeSpiralGalaxy.metal */,
+				FC100061 /* ModeSpiritMolecule.metal */,
+				FC100062 /* ModeStringTheory.metal */,
+				FC100063 /* ModeTessellationDance.metal */,
+				FC100064 /* ModeTimecrystal.metal */,
+				FC100065 /* ModeTopographicFlow.metal */,
+				FC100066 /* ModeVoidBloom.metal */,
+				FC100067 /* ModeVoronoi.metal */,
+				FC100068 /* ModeWarpTunnel.metal */,
+				FC100069 /* ModeWeaversLoom.metal */,
+				FC10006A /* ModeWormhole.metal */,
+				FC10006B /* PostProcess.metal */,
+				FC10006C /* TransitionDissolve.metal */,
+				FC100090 /* ShaderUtils.h */,
+				FC100091 /* WorkingStatePipeline.h */,
+			);
+			path = Shaders;
+			sourceTree = "<group>";
+		};
+		FC200004 /* QuickTerminal */ = {
+			isa = PBXGroup;
+			children = (
+				FC10002D /* QuickTerminalController.swift */,
+			);
+			path = QuickTerminal;
+			sourceTree = "<group>";
+		};
+		FC200005 /* AppIntents */ = {
+			isa = PBXGroup;
+			children = (
+				FC10002E /* FadicodeIntents.swift */,
+			);
+			path = AppIntents;
+			sourceTree = "<group>";
+		};
+		FC200006 /* Observatory */ = {
+			isa = PBXGroup;
+			children = (
+				FC100030A /* AgentSnapshot.swift */,
+				FC100031A /* AgentDetector.swift */,
+				FC100032A /* AgentObservatoryService.swift */,
+				FC100033A /* AgentObservatoryView.swift */,
+				FC100034A /* AgentCardView.swift */,
+				FC100035A /* ProjectGroupView.swift */,
+			);
+			path = Observatory;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -662,6 +1032,109 @@
 				A5001240 /* WindowDecorationsController.swift in Sources */,
 				A500120C /* WindowAccessor.swift in Sources */,
 				A5001610 /* SessionPersistence.swift in Sources */,
+				FC000001 /* FadiCodeModels.swift in Sources */,
+				FC000002 /* TaskFlashOverlay.swift in Sources */,
+				FC000003 /* FadiCodeOverlayHost.swift in Sources */,
+				FC000004 /* ClaudeActivitySummary.swift in Sources */,
+				FC000005 /* ShaderPicker.swift in Sources */,
+				FC000006 /* GradientPalette.swift in Sources */,
+				FC000007 /* DebugStateOverlay.swift in Sources */,
+				FC000010 /* FadiCodeOverlaySystem.swift in Sources */,
+				FC000011 /* LifecycleManager.swift in Sources */,
+				FC000012 /* EffectBus.swift in Sources */,
+				FC000013 /* EffectTypes.swift in Sources */,
+				FC000014 /* VisualController.swift in Sources */,
+				FC000015 /* TaskFlashController.swift in Sources */,
+				FC000016 /* ActivityBadgeController.swift in Sources */,
+				FC000017 /* BorderGlowController.swift in Sources */,
+				FC000018 /* CompletionPopupController.swift in Sources */,
+				FC000019 /* CompletionSoundController.swift in Sources */,
+				FC00001A /* QuestionDetectionController.swift in Sources */,
+				FC00001B /* PixelPetController.swift in Sources */,
+				FC00001C /* ShaderDirector.swift in Sources */,
+				FC000020 /* PixelPetView.swift in Sources */,
+				FC000021 /* PetAnimator.swift in Sources */,
+				FC000022 /* PetAnimation.swift in Sources */,
+				FC000023 /* PetState.swift in Sources */,
+				FC000024 /* PetStatusIndicator.swift in Sources */,
+				FC000025 /* SpriteSheet.swift in Sources */,
+				FC000026 /* NSImage+Colorize.swift in Sources */,
+				FC000027 /* ShaderOverlayView.swift in Sources */,
+				FC000028 /* WebFavoritesStore.swift in Sources */,
+				FC000029 /* ProjectPickerOverlay.swift in Sources */,
+				FC00002A /* ProjectBadgeView.swift in Sources */,
+				FC00002B /* QuickLaunchBar.swift in Sources */,
+				FC00002C /* TerminalInspectorView.swift in Sources */,
+				FC00002D /* QuickTerminalController.swift in Sources */,
+				FC00002E /* FadicodeIntents.swift in Sources */,
+				FC000030 /* AgentSnapshot.swift in Sources */,
+				FC000031 /* AgentDetector.swift in Sources */,
+				FC000032 /* AgentObservatoryService.swift in Sources */,
+				FC000033 /* AgentObservatoryView.swift in Sources */,
+				FC000034 /* AgentCardView.swift in Sources */,
+				FC000035 /* ProjectGroupView.swift in Sources */,
+				FC000036 /* AgentObservatoryPanel.swift in Sources */,
+				FC200030 /* ModeAkashicField.metal in Sources */,
+				FC200031 /* ModeArchitectsGaze.metal in Sources */,
+				FC200032 /* ModeAurora.metal in Sources */,
+				FC200033 /* ModeBreathOfGod.metal in Sources */,
+				FC200034 /* ModeCelestialClockwork.metal in Sources */,
+				FC200035 /* ModeChrysanthemum.metal in Sources */,
+				FC200036 /* ModeCircleWave.metal in Sources */,
+				FC200037 /* ModeCombined.metal in Sources */,
+				FC200038 /* ModeCosmicWeb.metal in Sources */,
+				FC200039 /* ModeCrystalCavern.metal in Sources */,
+				FC20003A /* ModeCymatics.metal in Sources */,
+				FC20003B /* ModeDNAHelix.metal in Sources */,
+				FC20003C /* ModeDreamCatcher.metal in Sources */,
+				FC20003D /* ModeEgoDissolution.metal in Sources */,
+				FC20003E /* ModeElectricField.metal in Sources */,
+				FC20003F /* ModeEntityPresence.metal in Sources */,
+				FC200040 /* ModeEventHorizon.metal in Sources */,
+				FC200041 /* ModeFlowerOfLife.metal in Sources */,
+				FC200042 /* ModeFoldingDimensions.metal in Sources */,
+				FC200043 /* ModeFractalMandelbrot.metal in Sources */,
+				FC200044 /* ModeFractalRings.metal in Sources */,
+				FC200045 /* ModeGeometricAlchemy.metal in Sources */,
+				FC200046 /* ModeGradientSpin.metal in Sources */,
+				FC200047 /* ModeHyperspace.metal in Sources */,
+				FC200048 /* ModeInfiniteZoom.metal in Sources */,
+				FC200049 /* ModeInterferenceCrystal.metal in Sources */,
+				FC20004A /* ModeJewelLattice.metal in Sources */,
+				FC20004B /* ModeKaleidoscope.metal in Sources */,
+				FC20004C /* ModeLavaLamp.metal in Sources */,
+				FC20004D /* ModeLightGrid.metal in Sources */,
+				FC20004E /* ModeMachineElves.metal in Sources */,
+				FC20004F /* ModeMandala.metal in Sources */,
+				FC200050 /* ModeMetatronsCube.metal in Sources */,
+				FC200051 /* ModeMoire.metal in Sources */,
+				FC200052 /* ModeNebulaCloud.metal in Sources */,
+				FC200053 /* ModeNeuralBloom.metal in Sources */,
+				FC200054 /* ModeOrganicFlow.metal in Sources */,
+				FC200055 /* ModePenroseTiling.metal in Sources */,
+				FC200056 /* ModePlasma.metal in Sources */,
+				FC200057 /* ModePointCloud.metal in Sources */,
+				FC200058 /* ModePulseGrid.metal in Sources */,
+				FC200059 /* ModeQuantumField.metal in Sources */,
+				FC20005A /* ModeResonance.metal in Sources */,
+				FC20005B /* ModeResonanceChamber.metal in Sources */,
+				FC20005C /* ModeRipplePond.metal in Sources */,
+				FC20005D /* ModeSacredGeometry.metal in Sources */,
+				FC20005E /* ModeSigilNetwork.metal in Sources */,
+				FC20005F /* ModeSinebow.metal in Sources */,
+				FC200060 /* ModeSpiralGalaxy.metal in Sources */,
+				FC200061 /* ModeSpiritMolecule.metal in Sources */,
+				FC200062 /* ModeStringTheory.metal in Sources */,
+				FC200063 /* ModeTessellationDance.metal in Sources */,
+				FC200064 /* ModeTimecrystal.metal in Sources */,
+				FC200065 /* ModeTopographicFlow.metal in Sources */,
+				FC200066 /* ModeVoidBloom.metal in Sources */,
+				FC200067 /* ModeVoronoi.metal in Sources */,
+				FC200068 /* ModeWarpTunnel.metal in Sources */,
+				FC200069 /* ModeWeaversLoom.metal in Sources */,
+				FC20006A /* ModeWormhole.metal in Sources */,
+				FC20006B /* PostProcess.metal in Sources */,
+				FC20006C /* TransitionDissolve.metal in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -820,8 +1293,8 @@
 					"-framework",
 					Carbon,
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.cmuxterm.app.debug;
-				PRODUCT_NAME = "cmux DEV";
+				PRODUCT_BUNDLE_IDENTIFIER = com.fadicode.terminal.debug;
+				PRODUCT_NAME = "fadicode DEV";
 				SPARKLE_PUBLIC_KEY = "avjcgKibf1FTvhIjLBxhd+0HSpsXU4D0IGlVk8cgqRc=";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "cmux-Bridging-Header.h";
@@ -860,8 +1333,8 @@
 					Carbon,
 				);
 				ONLY_ACTIVE_ARCH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.cmuxterm.app;
-				PRODUCT_NAME = cmux;
+				PRODUCT_BUNDLE_IDENTIFIER = com.fadicode.terminal;
+				PRODUCT_NAME = fadicode;
 				SPARKLE_PUBLIC_KEY = "avjcgKibf1FTvhIjLBxhd+0HSpsXU4D0IGlVk8cgqRc=";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "cmux-Bridging-Header.h";
@@ -916,7 +1389,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 0.61.0;
 				ONLY_ACTIVE_ARCH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.cmuxterm.appuitests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.fadicode.terminal.uitests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_VERSION = 5.0;
@@ -933,7 +1406,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 0.61.0;
 				ONLY_ACTIVE_ARCH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.cmuxterm.appuitests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.fadicode.terminal.uitests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TEST_TARGET_NAME = GhosttyTabs;
@@ -950,11 +1423,11 @@
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 0.61.0;
 				ONLY_ACTIVE_ARCH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.cmuxterm.apptests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.fadicode.terminal.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/cmux DEV.app/Contents/MacOS/cmux DEV";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/fadicode DEV.app/Contents/MacOS/fadicode DEV";
 				TEST_TARGET_NAME = GhosttyTabs;
 			};
 			name = Debug;
@@ -969,10 +1442,10 @@
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 0.61.0;
 				ONLY_ACTIVE_ARCH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.cmuxterm.apptests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.fadicode.terminal.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/cmux.app/Contents/MacOS/cmux";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/fadicode.app/Contents/MacOS/fadicode";
 				TEST_TARGET_NAME = GhosttyTabs;
 			};
 			name = Release;

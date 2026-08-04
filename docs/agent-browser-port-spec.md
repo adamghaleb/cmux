@@ -16,6 +16,7 @@ This document tracks implemented behavior and remaining parity gaps for the cmux
 ## Validation Status
 
 As of February 12, 2026:
+
 1. `./scripts/run-tests-v1.sh` passes on `cmux-vm`.
 2. `./scripts/run-tests-v2.sh` passes on `cmux-vm`.
 3. Browser parity suites passing in v2: `test_browser_api_comprehensive.py`, `test_browser_api_p0.py`, `test_browser_api_extended_families.py`, `test_browser_api_unsupported_matrix.py`, and `test_browser_cli_agent_port.py`.
@@ -30,6 +31,7 @@ As of February 12, 2026:
 5. `panel`: internal implementation term; CLI/API should prefer `surface`.
 
 Terminology decision:
+
 - Public v2 API and new CLI docs should standardize on `surface` and `pane`.
 - Keep `--panel` as compatibility alias in CLI until v1 is retired.
 
@@ -38,6 +40,7 @@ Terminology decision:
 `system.identify` is the canonical "where am I?" call for agents and should remain first-class.
 
 Required response fields for agent workflows:
+
 1. `focused.window_id`
 2. `focused.workspace_id`
 3. `focused.pane_id`
@@ -45,6 +48,7 @@ Required response fields for agent workflows:
 5. `caller` validation result when caller context is supplied
 
 Recommended extension for browser workflows:
+
 1. `focused.surface_type`
 2. `focused.browser.url`
 3. `focused.browser.title`
@@ -148,11 +152,13 @@ Recommended extension for browser workflows:
 ### Protocol Actions in `src/protocol.ts`
 
 Counts:
+
 1. total actions: 125
 2. directly emitted by CLI parser: 93
 3. protocol-only (not directly emitted by CLI parser): 32
 
 Protocol-only action names:
+
 1. `addinitscript`
 2. `addscript`
 3. `addstyle`
@@ -203,6 +209,7 @@ Protocol-only action names:
 ### New Browser Parity Method Families (Proposed)
 
 P0 (core parity for daily automation):
+
 1. `browser.snapshot`
 2. `browser.eval`
 3. `browser.wait`
@@ -221,6 +228,7 @@ P0 (core parity for daily automation):
 16. `browser.focus_webview` and `browser.is_webview_focused` (already present, keep)
 
 P1 (important but not blocking initial parity):
+
 1. `browser.find.*` locators (`role|text|label|placeholder|alt|title|testid|nth|first|last`)
 2. `browser.frame.select`
 3. `browser.frame.main`
@@ -233,6 +241,7 @@ P1 (important but not blocking initial parity):
 10. `browser.state.save|load` (browser state in cmux context)
 
 P2 (advanced parity / optional):
+
 1. network interception/mocking equivalents (`route|unroute|requests|responsebody`)
 2. emulation/settings (`viewport|media|offline|geolocation|permissions|headers|credentials|useragent|locale|timezone|device`)
 3. trace/video/screencast/har equivalents
@@ -249,16 +258,19 @@ P2 (advanced parity / optional):
 ## CLI Spec (Proposed)
 
 Primary form:
+
 ```bash
 cmux browser --surface <surface-id> <agent-browser-style-command...>
 ```
 
 Shorthand:
+
 ```bash
 cmux browser <surface-id> <agent-browser-style-command...>
 ```
 
 Agent discovery:
+
 ```bash
 cmux identify
 cmux capabilities
@@ -266,11 +278,13 @@ cmux browser identify --surface <surface-id>   # wrapper over system.identify + 
 ```
 
 Flash:
+
 ```bash
 cmux trigger-flash [--workspace <id>] [--surface <id>]
 ```
 
 Compatibility:
+
 1. Keep v1 commands.
 2. Add v1->v2 shim for migrated browser/surface commands.
 3. Keep `--panel` as alias for `--surface` during migration.
@@ -278,6 +292,7 @@ Compatibility:
 ## Move/Reorder Spec (Required)
 
 Required capabilities:
+
 1. reorder surfaces within a pane
 2. move surfaces between panes in same workspace
 3. move surfaces across workspaces
@@ -285,11 +300,13 @@ Required capabilities:
 5. reorder workspaces within window
 
 Proposed methods:
+
 1. `surface.move` with `surface_id` + destination (`pane_id` or `workspace_id`/`window_id`) + placement (`before_surface_id|after_surface_id|start|end`)
 2. `surface.reorder` with `surface_id` + sibling anchor (`before_surface_id|after_surface_id`)
 3. `workspace.reorder` with `workspace_id` + anchor (`before_workspace_id|after_workspace_id`)
 
 Hard invariant:
+
 1. `surface_id` must remain unchanged after all move/reorder operations.
 
 ## Comprehensive TODO
@@ -407,6 +424,7 @@ Hard invariant:
 4. No regressions in existing window/workspace/surface workflows.
 
 Planned verification commands at implementation completion:
+
 1. `ssh cmux-vm 'cd /Users/cmux/GhosttyTabs && ./scripts/run-tests-v2.sh'`
 2. `ssh cmux-vm 'cd /Users/cmux/GhosttyTabs && ./scripts/run-tests-v1.sh'`
 

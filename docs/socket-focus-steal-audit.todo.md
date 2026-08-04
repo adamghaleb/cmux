@@ -1,14 +1,17 @@
 # Socket/CLI No-Focus-Steal Todo
 
 ## Goal
+
 Ensure commands run through the cmux Unix socket/CLI do not steal user focus from the current UI workflow.
 
 Policy target:
+
 - App activation/window raising from socket commands: **never**.
 - In-app focus mutation from socket commands: only for explicit focus-intent commands.
 - Non-focus commands must not move workspace/pane/surface focus as a side effect.
 
 ## Task Checklist
+
 - [x] Inventory all v1 + v2 socket command entrypoints.
 - [x] Add socket-command focus policy context in `TerminalController`.
 - [x] Suppress app activation for socket command path in `AppDelegate` (`focusMainWindow`, `createMainWindow`).
@@ -21,9 +24,11 @@ Policy target:
 - [x] Open PR.
 
 ## Explicit Focus-Intent Allowlist
+
 These may mutate in-app focus/selection state:
 
 v1:
+
 - `focus_window`
 - `select_workspace`
 - `focus_surface`
@@ -34,6 +39,7 @@ v1:
 - `activate_app` (debug)
 
 v2:
+
 - `window.focus`
 - `workspace.select`
 - `workspace.next`
@@ -51,6 +57,7 @@ v2:
 All other commands should preserve current user focus context.
 
 ## Command Coverage Matrix (All Command Families)
+
 - [x] v1 `ping`, `help`
 - [x] v1 window commands (`list_windows`, `current_window`, `focus_window`, `new_window`, `close_window`)
 - [x] v1 workspace commands (`move_workspace_to_window`, `list_workspaces`, `new_workspace`, `close_workspace`, `select_workspace`, `current_workspace`)
@@ -71,6 +78,7 @@ All other commands should preserve current user focus context.
 - [x] v2 debug methods (`debug.*`)
 
 ## CLI Coverage
+
 - [x] Ensure every top-level CLI command routes to non-focus-stealing socket behavior.
 - [x] Add/verify `rename-workspace` + `rename-window` behavior remains intact.
 - [x] Add explicit `rename-tab` command (defaults to `CMUX_TAB_ID` / `CMUX_SURFACE_ID` / `CMUX_WORKSPACE_ID` when flags omitted).

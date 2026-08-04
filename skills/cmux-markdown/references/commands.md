@@ -9,11 +9,11 @@ cmux markdown <path>          # shorthand (implicit "open")
 
 ### Options
 
-| Flag | Description | Default |
-|------|-------------|---------|
-| `--workspace <id\|ref\|index>` | Target workspace | `$CMUX_WORKSPACE_ID` |
-| `--surface <id\|ref\|index>` | Source surface to split from | Focused surface |
-| `--window <id\|ref>` | Target window | Current window |
+| Flag                           | Description                  | Default              |
+| ------------------------------ | ---------------------------- | -------------------- |
+| `--workspace <id\|ref\|index>` | Target workspace             | `$CMUX_WORKSPACE_ID` |
+| `--surface <id\|ref\|index>`   | Source surface to split from | Focused surface      |
+| `--window <id\|ref>`           | Target window                | Current window       |
 
 ### Output
 
@@ -66,4 +66,5 @@ cmux markdown -h
 ```
 
 See also:
+
 - [live-reload.md](live-reload.md)

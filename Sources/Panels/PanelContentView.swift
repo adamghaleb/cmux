@@ -51,6 +51,10 @@ struct PanelContentView: View {
                     onRequestPanelFocus: onRequestPanelFocus
                 )
             }
+        case .observatory:
+            if panel is AgentObservatoryPanel {
+                AgentObservatoryView()
+            }
         }
     }
 }

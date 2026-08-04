@@ -70,83 +70,83 @@ Tutto è scriptabile attraverso il CLI e la socket API — creare workspace/sche
 
 ### Workspace
 
-| Scorciatoia | Azione |
-|----------|--------|
-| ⌘ N | Nuovo workspace |
-| ⌘ 1–8 | Vai al workspace 1–8 |
-| ⌘ 9 | Vai all'ultimo workspace |
-| ⌃ ⌘ ] | Workspace successivo |
-| ⌃ ⌘ [ | Workspace precedente |
-| ⌘ ⇧ W | Chiudi workspace |
-| ⌘ B | Mostra/nascondi barra laterale |
+| Scorciatoia | Azione                         |
+| ----------- | ------------------------------ |
+| ⌘ N         | Nuovo workspace                |
+| ⌘ 1–8       | Vai al workspace 1–8           |
+| ⌘ 9         | Vai all'ultimo workspace       |
+| ⌃ ⌘ ]       | Workspace successivo           |
+| ⌃ ⌘ [       | Workspace precedente           |
+| ⌘ ⇧ W       | Chiudi workspace               |
+| ⌘ B         | Mostra/nascondi barra laterale |
 
 ### Superfici
 
-| Scorciatoia | Azione |
-|----------|--------|
-| ⌘ T | Nuova superficie |
-| ⌘ ⇧ ] | Superficie successiva |
-| ⌘ ⇧ [ | Superficie precedente |
-| ⌃ Tab | Superficie successiva |
-| ⌃ ⇧ Tab | Superficie precedente |
-| ⌃ 1–8 | Vai alla superficie 1–8 |
-| ⌃ 9 | Vai all'ultima superficie |
-| ⌘ W | Chiudi superficie |
+| Scorciatoia | Azione                    |
+| ----------- | ------------------------- |
+| ⌘ T         | Nuova superficie          |
+| ⌘ ⇧ ]       | Superficie successiva     |
+| ⌘ ⇧ [       | Superficie precedente     |
+| ⌃ Tab       | Superficie successiva     |
+| ⌃ ⇧ Tab     | Superficie precedente     |
+| ⌃ 1–8       | Vai alla superficie 1–8   |
+| ⌃ 9         | Vai all'ultima superficie |
+| ⌘ W         | Chiudi superficie         |
 
 ### Pannelli Divisi
 
-| Scorciatoia | Azione |
-|----------|--------|
-| ⌘ D | Dividi a destra |
-| ⌘ ⇧ D | Dividi in basso |
+| Scorciatoia | Azione                          |
+| ----------- | ------------------------------- |
+| ⌘ D         | Dividi a destra                 |
+| ⌘ ⇧ D       | Dividi in basso                 |
 | ⌥ ⌘ ← → ↑ ↓ | Sposta il focus direzionalmente |
-| ⌘ ⇧ H | Lampeggia pannello focalizzato |
+| ⌘ ⇧ H       | Lampeggia pannello focalizzato  |
 
 ### Browser
 
-| Scorciatoia | Azione |
-|----------|--------|
-| ⌘ ⇧ L | Apri browser in divisione |
-| ⌘ L | Focus sulla barra degli indirizzi |
-| ⌘ [ | Indietro |
-| ⌘ ] | Avanti |
-| ⌘ R | Ricarica pagina |
-| ⌥ ⌘ I | Apri Strumenti di Sviluppo |
+| Scorciatoia | Azione                            |
+| ----------- | --------------------------------- |
+| ⌘ ⇧ L       | Apri browser in divisione         |
+| ⌘ L         | Focus sulla barra degli indirizzi |
+| ⌘ [         | Indietro                          |
+| ⌘ ]         | Avanti                            |
+| ⌘ R         | Ricarica pagina                   |
+| ⌥ ⌘ I       | Apri Strumenti di Sviluppo        |
 
 ### Notifiche
 
-| Scorciatoia | Azione |
-|----------|--------|
-| ⌘ I | Mostra pannello notifiche |
-| ⌘ ⇧ U | Vai all'ultima non letta |
+| Scorciatoia | Azione                    |
+| ----------- | ------------------------- |
+| ⌘ I         | Mostra pannello notifiche |
+| ⌘ ⇧ U       | Vai all'ultima non letta  |
 
 ### Cerca
 
-| Scorciatoia | Azione |
-|----------|--------|
-| ⌘ F | Cerca |
+| Scorciatoia | Azione                        |
+| ----------- | ----------------------------- |
+| ⌘ F         | Cerca                         |
 | ⌘ G / ⌘ ⇧ G | Trova successivo / precedente |
-| ⌘ ⇧ F | Nascondi barra di ricerca |
-| ⌘ E | Usa selezione per la ricerca |
+| ⌘ ⇧ F       | Nascondi barra di ricerca     |
+| ⌘ E         | Usa selezione per la ricerca  |
 
 ### Terminale
 
-| Scorciatoia | Azione |
-|----------|--------|
-| ⌘ K | Cancella scrollback |
-| ⌘ C | Copia (con selezione) |
-| ⌘ V | Incolla |
-| ⌘ + / ⌘ - | Aumenta / diminuisci dimensione font |
-| ⌘ 0 | Ripristina dimensione font |
+| Scorciatoia | Azione                               |
+| ----------- | ------------------------------------ |
+| ⌘ K         | Cancella scrollback                  |
+| ⌘ C         | Copia (con selezione)                |
+| ⌘ V         | Incolla                              |
+| ⌘ + / ⌘ -   | Aumenta / diminuisci dimensione font |
+| ⌘ 0         | Ripristina dimensione font           |
 
 ### Finestra
 
-| Scorciatoia | Azione |
-|----------|--------|
-| ⌘ ⇧ N | Nuova finestra |
-| ⌘ , | Impostazioni |
-| ⌘ ⇧ , | Ricarica configurazione |
-| ⌘ Q | Esci |
+| Scorciatoia | Azione                  |
+| ----------- | ----------------------- |
+| ⌘ ⇧ N       | Nuova finestra          |
+| ⌘ ,         | Impostazioni            |
+| ⌘ ⇧ ,       | Ricarica configurazione |
+| ⌘ Q         | Esci                    |
 
 ## Licenza
 

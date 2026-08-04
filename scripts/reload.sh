@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_NAME="cmux DEV"
-BUNDLE_ID="com.cmuxterm.app.debug"
-BASE_APP_NAME="cmux DEV"
+APP_NAME="fadicode DEV"
+BUNDLE_ID="com.fadicode.terminal.debug"
+BASE_APP_NAME="fadicode DEV"
 DERIVED_DATA=""
 NAME_SET=0
 BUNDLE_SET=0
@@ -53,7 +53,7 @@ print_tag_cleanup_reminder() {
   local -a stale_tags=()
 
   while IFS= read -r -d '' path; do
-    tag="${path#/tmp/cmux-}"
+    tag="${path#/tmp/fadicode-}"
     if [[ "$tag" == "$current_slug" ]]; then
       continue
     fi
@@ -66,7 +66,7 @@ print_tag_cleanup_reminder() {
     fi
     seen="${seen}${tag} "
     stale_tags+=("$tag")
-  done < <(find /tmp -maxdepth 1 -type d -name 'cmux-*' -print0 2>/dev/null)
+  done < <(find /tmp -maxdepth 1 -type d -name 'fadicode-*' -print0 2>/dev/null)
 
   echo
   echo "Tag cleanup status:"
@@ -81,17 +81,17 @@ print_tag_cleanup_reminder() {
     done
     echo "Cleanup stale tags only:"
     for tag in "${stale_tags[@]}"; do
-      echo "  pkill -f \"cmux DEV ${tag}.app/Contents/MacOS/cmux DEV\""
-      echo "  rm -rf \"/tmp/cmux-${tag}\" \"/tmp/cmux-debug-${tag}.sock\""
-      echo "  rm -f \"/tmp/cmux-debug-${tag}.log\""
-      echo "  rm -f \"$HOME/Library/Application Support/cmux/cmuxd-dev-${tag}.sock\""
+      echo "  pkill -f \"fadicode DEV ${tag}.app/Contents/MacOS/fadicode DEV\""
+      echo "  rm -rf \"/tmp/fadicode-${tag}\" \"/tmp/fadicode-debug-${tag}.sock\""
+      echo "  rm -f \"/tmp/fadicode-debug-${tag}.log\""
+      echo "  rm -f \"$HOME/Library/Application Support/fadicode/fadicode-dev-${tag}.sock\""
     done
   fi
   echo "After you verify current tag, cleanup command:"
-  echo "  pkill -f \"cmux DEV ${current_slug}.app/Contents/MacOS/cmux DEV\""
-  echo "  rm -rf \"/tmp/cmux-${current_slug}\" \"/tmp/cmux-debug-${current_slug}.sock\""
-  echo "  rm -f \"/tmp/cmux-debug-${current_slug}.log\""
-  echo "  rm -f \"$HOME/Library/Application Support/cmux/cmuxd-dev-${current_slug}.sock\""
+  echo "  pkill -f \"fadicode DEV ${current_slug}.app/Contents/MacOS/fadicode DEV\""
+  echo "  rm -rf \"/tmp/fadicode-${current_slug}\" \"/tmp/fadicode-debug-${current_slug}.sock\""
+  echo "  rm -f \"/tmp/fadicode-debug-${current_slug}.log\""
+  echo "  rm -f \"$HOME/Library/Application Support/fadicode/fadicode-dev-${current_slug}.sock\""
 }
 
 while [[ $# -gt 0 ]]; do
@@ -153,13 +153,13 @@ if [[ -n "$TAG" ]]; then
   TAG_ID="$(sanitize_bundle "$TAG")"
   TAG_SLUG="$(sanitize_path "$TAG")"
   if [[ "$NAME_SET" -eq 0 ]]; then
-    APP_NAME="cmux DEV ${TAG}"
+    APP_NAME="fadicode DEV ${TAG}"
   fi
   if [[ "$BUNDLE_SET" -eq 0 ]]; then
-    BUNDLE_ID="com.cmuxterm.app.debug.${TAG_ID}"
+    BUNDLE_ID="com.fadicode.terminal.debug.${TAG_ID}"
   fi
   if [[ "$DERIVED_SET" -eq 0 ]]; then
-    DERIVED_DATA="/tmp/cmux-${TAG_SLUG}"
+    DERIVED_DATA="/tmp/fadicode-${TAG_SLUG}"
   fi
 fi
 
@@ -181,7 +181,7 @@ if [[ -z "$TAG" ]]; then
 fi
 XCODEBUILD_ARGS+=(build)
 
-XCODE_LOG="/tmp/cmux-xcodebuild-${TAG_SLUG}.log"
+XCODE_LOG="/tmp/fadicode-xcodebuild-${TAG_SLUG}.log"
 xcodebuild "${XCODEBUILD_ARGS[@]}" 2>&1 | tee "$XCODE_LOG" | grep -E '(warning:|error:|fatal:|BUILD FAILED|BUILD SUCCEEDED|\*\* BUILD)' || true
 XCODE_EXIT="${PIPESTATUS[0]}"
 echo "Full build log: $XCODE_LOG"
@@ -243,12 +243,12 @@ if [[ -n "$TAG" && "$APP_NAME" != "$SEARCH_APP_NAME" ]]; then
     /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $BUNDLE_ID" "$INFO_PLIST" 2>/dev/null \
       || /usr/libexec/PlistBuddy -c "Add :CFBundleIdentifier string $BUNDLE_ID" "$INFO_PLIST"
     if [[ -n "${TAG_SLUG:-}" ]]; then
-      APP_SUPPORT_DIR="$HOME/Library/Application Support/cmux"
-      CMUXD_SOCKET="${APP_SUPPORT_DIR}/cmuxd-dev-${TAG_SLUG}.sock"
-      CMUX_SOCKET="/tmp/cmux-debug-${TAG_SLUG}.sock"
-      CMUX_DEBUG_LOG="/tmp/cmux-debug-${TAG_SLUG}.log"
-      echo "$CMUX_SOCKET" > /tmp/cmux-last-socket-path || true
-      echo "$CMUX_DEBUG_LOG" > /tmp/cmux-last-debug-log-path || true
+      APP_SUPPORT_DIR="$HOME/Library/Application Support/fadicode"
+      CMUXD_SOCKET="${APP_SUPPORT_DIR}/fadicode-dev-${TAG_SLUG}.sock"
+      CMUX_SOCKET="/tmp/fadicode-debug-${TAG_SLUG}.sock"
+      CMUX_DEBUG_LOG="/tmp/fadicode-debug-${TAG_SLUG}.log"
+      echo "$CMUX_SOCKET" > /tmp/fadicode-last-socket-path || true
+      echo "$CMUX_DEBUG_LOG" > /tmp/fadicode-last-debug-log-path || true
       /usr/libexec/PlistBuddy -c "Add :LSEnvironment dict" "$INFO_PLIST" 2>/dev/null || true
       /usr/libexec/PlistBuddy -c "Set :LSEnvironment:CMUXD_UNIX_PATH \"${CMUXD_SOCKET}\"" "$INFO_PLIST" 2>/dev/null \
         || /usr/libexec/PlistBuddy -c "Add :LSEnvironment:CMUXD_UNIX_PATH string \"${CMUXD_SOCKET}\"" "$INFO_PLIST"
@@ -322,7 +322,7 @@ if [[ -n "${TAG_SLUG:-}" && -n "${CMUX_SOCKET:-}" ]]; then
 elif [[ -n "${TAG_SLUG:-}" ]]; then
   "${OPEN_CLEAN_ENV[@]}" CMUX_TAG="$TAG_SLUG" CMUX_DEBUG_LOG="$CMUX_DEBUG_LOG" open -g "$APP_PATH"
 else
-  echo "/tmp/cmux-debug.log" > /tmp/cmux-last-debug-log-path || true
+  echo "/tmp/fadicode-debug.log" > /tmp/fadicode-last-debug-log-path || true
   "${OPEN_CLEAN_ENV[@]}" open -g "$APP_PATH"
 fi
 

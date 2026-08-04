@@ -52,8 +52,8 @@ export default function NotificationsPage() {
       <h2>Custom command</h2>
       <p>
         Run a shell command every time a notification is scheduled. Set it in{" "}
-        <strong>Settings → App → Notification Command</strong>. The command
-        runs via <code>/bin/sh -c</code> with these environment variables:
+        <strong>Settings → App → Notification Command</strong>. The command runs
+        via <code>/bin/sh -c</code> with these environment variables:
       </p>
       <table>
         <thead>
@@ -64,15 +64,21 @@ export default function NotificationsPage() {
         </thead>
         <tbody>
           <tr>
-            <td><code>CMUX_NOTIFICATION_TITLE</code></td>
+            <td>
+              <code>CMUX_NOTIFICATION_TITLE</code>
+            </td>
             <td>Notification title (workspace name or app name)</td>
           </tr>
           <tr>
-            <td><code>CMUX_NOTIFICATION_SUBTITLE</code></td>
+            <td>
+              <code>CMUX_NOTIFICATION_SUBTITLE</code>
+            </td>
             <td>Notification subtitle</td>
           </tr>
           <tr>
-            <td><code>CMUX_NOTIFICATION_BODY</code></td>
+            <td>
+              <code>CMUX_NOTIFICATION_BODY</code>
+            </td>
             <td>Notification body text</td>
           </tr>
         </tbody>
@@ -98,9 +104,7 @@ echo "$CMUX_NOTIFICATION_TITLE: $CMUX_NOTIFICATION_BODY" >> ~/notifications.log`
 cmux notify --title "Claude Code" --subtitle "Waiting" --body "Agent needs input"`}</CodeBlock>
 
       <h3>OSC 777 (simple)</h3>
-      <p>
-        The RXVT protocol uses a fixed format with title and body:
-      </p>
+      <p>The RXVT protocol uses a fixed format with title and body:</p>
       <CodeBlock lang="bash">{`printf '\\e]777;notify;My Title;Message body here\\a'`}</CodeBlock>
       <CodeBlock title="Shell function" lang="bash">{`notify_osc777() {
     local title="$1"
@@ -111,9 +115,7 @@ cmux notify --title "Claude Code" --subtitle "Waiting" --body "Agent needs input
 notify_osc777 "Build Complete" "All tests passed"`}</CodeBlock>
 
       <h3>OSC 99 (rich)</h3>
-      <p>
-        The Kitty protocol supports subtitles and notification IDs:
-      </p>
+      <p>The Kitty protocol supports subtitles and notification IDs:</p>
       <CodeBlock lang="bash">{`# Format: ESC ] 99 ; <params> ; <payload> ESC \\
 
 # Simple notification
@@ -170,7 +172,10 @@ printf '\\e]99;i=1;e=1;d=1;p=body:All tests passed\\e\\\\'`}</CodeBlock>
       </p>
 
       <h3>1. Create the hook script</h3>
-      <CodeBlock title="~/.claude/hooks/cmux-notify.sh" lang="bash">{`#!/bin/bash
+      <CodeBlock
+        title="~/.claude/hooks/cmux-notify.sh"
+        lang="bash"
+      >{`#!/bin/bash
 # Skip if not in cmux
 [ -S /tmp/cmux.sock ] || exit 0
 
@@ -238,7 +243,10 @@ notify('Build Done', 'webpack finished');`}</CodeBlock>
 
       <h3>tmux passthrough</h3>
       <p>If using tmux inside cmux, enable passthrough:</p>
-      <CodeBlock title=".tmux.conf" lang="bash">{`set -g allow-passthrough on`}</CodeBlock>
+      <CodeBlock
+        title=".tmux.conf"
+        lang="bash"
+      >{`set -g allow-passthrough on`}</CodeBlock>
       <CodeBlock lang="bash">{`printf '\\ePtmux;\\e\\e]777;notify;Title;Body\\a\\e\\\\'`}</CodeBlock>
     </>
   );

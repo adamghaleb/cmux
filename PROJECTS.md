@@ -3,6 +3,7 @@
 Cross-project tracking (features, bugs, backlog) for cmux.
 
 ## Done
+
 - 2026-02-14: Fixed updater release regression path: made `.github/workflows/release.yml` Sparkle Info.plist key injection idempotent (re-running tags no longer fails with "Entry Already Exists"), and hardened `scripts/bump-version.sh` to keep `CURRENT_PROJECT_VERSION` above the latest published Sparkle appcast build number so upgrades from `0.27.0` can be detected.
 - 2026-02-14: Relicensed the repository to strong copyleft (`AGPL-3.0-or-later`), added canonical `LICENSE` text, and updated project/package metadata to advertise AGPL consistently.
 - 2026-02-14: Added an opt-in nightly update channel in Settings (`Receive nightly builds`) that routes Sparkle feed selection between stable and nightly appcasts, plus a scheduled GitHub Actions nightly pipeline (`.github/workflows/nightly.yml`) that only rebuilds when `main` has new commits since `nightly` (or when manually forced).
@@ -96,6 +97,7 @@ Cross-project tracking (features, bugs, backlog) for cmux.
 - 2026-02-11: Expanded CLI split/pane coverage for agent workflows: added `list-panes`, `list-pane-surfaces`, `focus-pane`, `new-pane`, `new-surface`, `close-surface`, `drag-surface-to-split`, `refresh-surfaces`, `surface-health`, `focus-webview`, `is-webview-focused`, and `trigger-flash` (`surface.trigger_flash`).
 
 ## Backlog
+
 - Browser panels: investigate intermittent crash/relaunch around WKWebView lifecycle and focus notifications.
 - Keyboard shortcuts: expand VM XCUITest coverage for focus + shortcuts (once Automation Mode is reliably enabled in the VM).
 - Socket API: tighten/standardize semantics around split insertion side (left/right/up/down) and pane selection (UUID vs index) across CLI/docs/server.

@@ -29,6 +29,7 @@ This doc tracks the migration from the existing v1 line protocol (space-delimite
 - [x] Verify v2 suite passes (VM)
 
 Notes:
+
 - A close-top nested split sequence (T-shape) could leave terminal views detached from the window until the user switched workspaces.
   Fix: a debounced post-close reattach pass (see `Sources/Workspace.swift`, `Sources/Panels/TerminalPanel.swift`).
 
@@ -37,7 +38,7 @@ Notes:
 Each request is one JSON object per line:
 
 ```json
-{"id":"1","method":"workspace.list","params":{}}
+{ "id": "1", "method": "workspace.list", "params": {} }
 ```
 
 Each response is one JSON object per line:
@@ -49,16 +50,22 @@ Each response is one JSON object per line:
 Errors:
 
 ```json
-{"id":"1","ok":false,"error":{"code":"not_found","message":"workspace not found"}}
+{
+  "id": "1",
+  "ok": false,
+  "error": { "code": "not_found", "message": "workspace not found" }
+}
 ```
 
 Notes:
+
 - `id` is echoed back when present (string or number).
 - v2 methods should accept **IDs**; v2 responses may include ephemeral `index` fields for ordering/debugging, but IDs are the stable handles.
 
 ## Method Parity Checklist (v1 -> v2)
 
 Windows:
+
 - [x] list_windows -> `window.list`
 - [x] current_window -> `window.current`
 - [x] focus_window -> `window.focus`
@@ -67,6 +74,7 @@ Windows:
 - [x] move_workspace_to_window -> `workspace.move_to_window`
 
 Workspaces:
+
 - [x] list_workspaces -> `workspace.list`
 - [x] new_workspace -> `workspace.create`
 - [x] select_workspace -> `workspace.select`
@@ -74,6 +82,7 @@ Workspaces:
 - [x] close_workspace -> `workspace.close`
 
 Surfaces / Splits:
+
 - [x] list_surfaces -> `surface.list`
 - [x] focus_surface / focus_surface_by_panel -> `surface.focus`
 - [x] new_split -> `surface.split`
@@ -85,16 +94,19 @@ Surfaces / Splits:
 - [x] trigger_flash -> `surface.trigger_flash` (new in v2)
 
 Panes:
+
 - [x] list_panes -> `pane.list`
 - [x] focus_pane -> `pane.focus`
 - [x] list_pane_surfaces -> `pane.surfaces`
 - [x] new_pane -> `pane.create`
 
 Input:
+
 - [x] send / send_surface -> `surface.send_text`
 - [x] send_key / send_key_surface -> `surface.send_key`
 
 Notifications:
+
 - [x] notify -> `notification.create`
 - [x] notify_surface -> `notification.create_for_surface`
 - [x] notify_target -> `notification.create_for_target`
@@ -104,6 +116,7 @@ Notifications:
 - [x] simulate_app_active -> `app.simulate_active`
 
 Browser:
+
 - [x] open_browser -> `browser.open_split`
 - [x] navigate -> `browser.navigate`
 - [x] browser_back -> `browser.back`
@@ -114,6 +127,7 @@ Browser:
 - [x] is_webview_focused -> `browser.is_webview_focused`
 
 Debug / Test-only:
+
 - [x] set_shortcut -> `debug.shortcut.set`
 - [x] simulate_shortcut -> `debug.shortcut.simulate`
 - [x] simulate_type -> `debug.type`
@@ -134,10 +148,12 @@ Debug / Test-only:
 v1 suite stays in `tests/`.
 
 v2 suite lives in `tests_v2/` and should:
+
 - use a v2 JSON client (`tests_v2/cmux.py`)
 - avoid depending on v1 text output formats
 
 VM runners:
+
 - v1: `ssh cmux-vm 'cd /Users/cmux/GhosttyTabs && ./scripts/run-tests-v1.sh'`
 - v2: `ssh cmux-vm 'cd /Users/cmux/GhosttyTabs && ./scripts/run-tests-v2.sh'`
 

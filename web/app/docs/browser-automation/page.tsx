@@ -48,9 +48,9 @@ export default function BrowserAutomationPage() {
             <td>
               <code>click</code>, <code>dblclick</code>, <code>hover</code>,{" "}
               <code>focus</code>, <code>check</code>, <code>uncheck</code>,{" "}
-              <code>scroll-into-view</code>, <code>type</code>, <code>fill</code>,{" "}
-              <code>press</code>, <code>keydown</code>, <code>keyup</code>,{" "}
-              <code>select</code>, <code>scroll</code>
+              <code>scroll-into-view</code>, <code>type</code>,{" "}
+              <code>fill</code>, <code>press</code>, <code>keydown</code>,{" "}
+              <code>keyup</code>, <code>select</code>, <code>scroll</code>
             </td>
           </tr>
           <tr>
@@ -63,8 +63,8 @@ export default function BrowserAutomationPage() {
           <tr>
             <td>JavaScript and injection</td>
             <td>
-              <code>eval</code>, <code>addinitscript</code>, <code>addscript</code>,{" "}
-              <code>addstyle</code>
+              <code>eval</code>, <code>addinitscript</code>,{" "}
+              <code>addscript</code>, <code>addstyle</code>
             </td>
           </tr>
           <tr>

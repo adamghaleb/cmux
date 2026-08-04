@@ -1,17 +1,69 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  cmux entitlements — minimal privilege set for a terminal emulator.
+  Each entitlement is documented below with the reason it is required.
+  Reviewed for GitHub issue #10: no unnecessary entitlements found.
+
+  NOT included (and why):
+    - com.apple.security.personal-information.addressbook   — no contacts access needed
+    - com.apple.security.personal-information.calendars     — no calendar access needed
+    - com.apple.security.personal-information.location      — no location access needed
+    - com.apple.security.personal-information.photos-library — no photos access needed
+    - com.apple.security.network.client                     — not sandboxed; unnecessary
+    - com.apple.security.network.server                     — not sandboxed; unnecessary
+    - com.apple.security.files.user-selected.read-write     — not sandboxed; unnecessary
+-->
 <plist version="1.0">
 <dict>
+	<!--
+	  Required: GhosttyKit.xcframework is built with Zig and may not share
+	  the same code-signing team identity. Sparkle.framework is also loaded
+	  at runtime. Without this, macOS refuses to load these libraries.
+	-->
 	<key>com.apple.security.cs.disable-library-validation</key>
 	<true/>
+
+	<!--
+	  Required: The Ghostty terminal renderer uses mmap for page memory
+	  management (terminal/page.zig). Some terminal programs also need
+	  writable+executable memory regions to function correctly.
+	-->
 	<key>com.apple.security.cs.allow-unsigned-executable-memory</key>
 	<true/>
+
+	<!--
+	  Required: Programs running inside the terminal (Node.js, Python,
+	  Java, etc.) may use JIT compilation which requires this entitlement
+	  to map memory as both writable and executable.
+	-->
 	<key>com.apple.security.cs.allow-jit</key>
 	<true/>
+
+	<!--
+	  Required: CLI programs running inside the terminal may request
+	  camera access (e.g. ffmpeg webcam capture, imagesnap). The terminal
+	  emulator must hold this entitlement so the OS can prompt the user.
+	  Matches NSCameraUsageDescription in Info.plist.
+	-->
 	<key>com.apple.security.device.camera</key>
 	<true/>
+
+	<!--
+	  Required: CLI programs running inside the terminal may request
+	  microphone access (e.g. ffmpeg audio recording, sox, rec).
+	  The terminal emulator must hold this entitlement so the OS can
+	  prompt the user. Matches NSMicrophoneUsageDescription in Info.plist.
+	-->
 	<key>com.apple.security.device.audio-input</key>
 	<true/>
+
+	<!--
+	  Required: The CLI installer (AppDelegate.swift) uses osascript to
+	  run privileged shell commands with administrator privileges via
+	  Apple Events. Also needed for any AppleScript-based automation
+	  that terminal programs may invoke.
+	-->
 	<key>com.apple.security.automation.apple-events</key>
 	<true/>
 </dict>

@@ -44,7 +44,7 @@ export const changelogMedia: Record<string, VersionMedia> = {
       {
         title: "Open With",
         description:
-          "You can now open your current directory in VS Code, Cursor, Zed, Xcode, Finder, or any other editor directly from the command palette. Type \"open\" and pick your editor.",
+          'You can now open your current directory in VS Code, Cursor, Zed, Xcode, Finder, or any other editor directly from the command palette. Type "open" and pick your editor.',
         image: "/changelog/0.61.0-open-with.png",
       },
       {

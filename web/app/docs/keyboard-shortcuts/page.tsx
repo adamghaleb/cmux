@@ -11,9 +11,7 @@ export default function KeyboardShortcutsPage() {
   return (
     <>
       <h1>Keyboard Shortcuts</h1>
-      <p>
-        All keyboard shortcuts available in cmux, grouped by category.
-      </p>
+      <p>All keyboard shortcuts available in cmux, grouped by category.</p>
       <KeyboardShortcuts />
     </>
   );

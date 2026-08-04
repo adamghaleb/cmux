@@ -24,7 +24,9 @@ export default function ConfigurationPage() {
           <code>~/.config/ghostty/config</code>
         </li>
         <li>
-          <code>~/Library/Application Support/com.mitchellh.ghostty/config</code>
+          <code>
+            ~/Library/Application Support/com.mitchellh.ghostty/config
+          </code>
         </li>
       </ol>
       <p>Create the config file if it doesn&apos;t exist:</p>
@@ -34,11 +36,17 @@ touch ~/.config/ghostty/config`}</CodeBlock>
       <h2>Appearance</h2>
 
       <h3>Font</h3>
-      <CodeBlock title="~/.config/ghostty/config" lang="ini">{`font-family = JetBrains Mono
+      <CodeBlock
+        title="~/.config/ghostty/config"
+        lang="ini"
+      >{`font-family = JetBrains Mono
 font-size = 14`}</CodeBlock>
 
       <h3>Colors</h3>
-      <CodeBlock title="~/.config/ghostty/config" lang="ini">{`# Theme (or use individual colors below)
+      <CodeBlock
+        title="~/.config/ghostty/config"
+        lang="ini"
+      >{`# Theme (or use individual colors below)
 theme = Dracula
 
 # Custom colors
@@ -50,7 +58,10 @@ selection-background = #585b70
 selection-foreground = #cdd6f4`}</CodeBlock>
 
       <h3>Split panes</h3>
-      <CodeBlock title="~/.config/ghostty/config" lang="ini">{`# Opacity for unfocused splits (0.0 to 1.0)
+      <CodeBlock
+        title="~/.config/ghostty/config"
+        lang="ini"
+      >{`# Opacity for unfocused splits (0.0 to 1.0)
 unfocused-split-opacity = 0.7
 
 # Fill color for unfocused splits
@@ -62,11 +73,17 @@ split-divider-color = #45475a`}</CodeBlock>
       <h2>Behavior</h2>
 
       <h3>Scrollback</h3>
-      <CodeBlock title="~/.config/ghostty/config" lang="ini">{`# Number of lines to keep in scrollback buffer
+      <CodeBlock
+        title="~/.config/ghostty/config"
+        lang="ini"
+      >{`# Number of lines to keep in scrollback buffer
 scrollback-limit = 10000`}</CodeBlock>
 
       <h3>Working directory</h3>
-      <CodeBlock title="~/.config/ghostty/config" lang="ini">{`# Default directory for new terminals
+      <CodeBlock
+        title="~/.config/ghostty/config"
+        lang="ini"
+      >{`# Default directory for new terminals
 working-directory = ~/Projects`}</CodeBlock>
 
       <h2>App settings</h2>
@@ -104,8 +121,8 @@ working-directory = ~/Projects`}</CodeBlock>
         </li>
       </ul>
       <Callout type="warn">
-        On shared machines, consider using &ldquo;Off&rdquo; or
-        &ldquo;cmux processes only&rdquo; mode.
+        On shared machines, consider using &ldquo;Off&rdquo; or &ldquo;cmux
+        processes only&rdquo; mode.
       </Callout>
 
       <h3>Browser link behavior</h3>

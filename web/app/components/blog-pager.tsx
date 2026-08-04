@@ -7,7 +7,7 @@ import { blogPosts } from "./blog-posts";
 export function BlogPager() {
   const pathname = usePathname();
   const index = blogPosts.findIndex(
-    (post) => `/blog/${post.slug}` === pathname
+    (post) => `/blog/${post.slug}` === pathname,
   );
   const prev = index > 0 ? blogPosts[index - 1] : null;
   const next = index < blogPosts.length - 1 ? blogPosts[index + 1] : null;

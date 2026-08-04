@@ -1,6 +1,7 @@
 # TODO
 
 ## Socket API / Agent
+
 - [x] Add window handles + `window.list/current/focus/create/close` for multi-window socket control (v2) + v1 equivalents (`list_windows`, etc) + CLI support.
 - [x] Add surface move/reorder commands (move between panes, reorder within pane, move across workspaces/windows).
 - [x] Add browser automation API inspired by `vercel-labs/agent-browser`, but backed by cmux's WKWebView (wait, click, type, eval, screenshot, etc.).
@@ -24,12 +25,15 @@
 - [x] Expand end-user skill docs with deep-linkable cmux-browser references/templates plus a new core `skills/cmux/` topology skill.
 
 ## Command Palette
+
 - [ ] Add cmd+shift+p palette with all commands
 
 ## Feature Requests
+
 - [ ] Warm pool of Claude Code instances mapped to a keyboard shortcut
 
 ## Claude Code Integration
+
 - [ ] Add "Install Claude Code integration" menu item in menubar
   - Opens a new terminal
   - Shows user the diff to their config file (claude.json, opencode config, codex config, etc.)
@@ -37,13 +41,16 @@
   - Implement as part of `cmux` CLI, menubar just triggers the CLI command
 
 ## Additional Integrations
+
 - [ ] Codex integration
 - [ ] OpenCode integration
 
 ## Browser
+
 - [ ] Per-WKWebView local proxy for full network request/response inspection (URL, method, headers, body, status, timing)
 
 ## Bugs
+
 - [ ] **P0** Terminal title updates are suppressed when workspace is not focused (e.g. Claude Code loading indicator doesn't update in sidebar until you switch to that tab)
 - [ ] Sidebar tab reorder can get stuck in dragging state (dimmed tab + blue drop indicator line visible) after drag ends
 - [ ] Drag-and-drop files/images into terminal shows URL instead of file path (Ghostty supports dropping files as paths)
@@ -52,11 +59,13 @@
 - [ ] Browser cmd+shift+H ring flashes only once (should flash twice like other shortcuts)
 
 ## Refactoring
+
 - [ ] **P0** Remove all index-based APIs in favor of short ID refs (surface:N, pane:N, workspace:N, window:N)
 - [ ] **P0** CLI commands should be workspace-relative using CMUX_WORKSPACE_ID env var (not focused workspace) so agents in background workspaces don't affect the user's active workspace. Affected: send, send-key, send-panel, send-key-panel, new-split, new-pane, new-surface, close-surface, list-panes, list-pane-surfaces, list-panels, focus-pane, focus-panel, surface-health
 - [ ] **P0** Remove `close-workspace` with no args — require explicit workspace short ID or UUID, with clear error message if missing
 
 ## UI/UX Improvements
+
 - [ ] Show loading indicator in terminal while it's loading
 - [ ] Add question mark icon to learn shortcuts
 - [ ] Notification popover: each button item should show outline outside when focused/hovered
@@ -68,9 +77,11 @@
 - [ ] Add browser icon to the left of the plus button in the tab bar
 
 ## Analytics
+
 - [x] Add PostHog tracking (set `PostHogAnalytics.apiKey` in `Sources/PostHogAnalytics.swift`)
 
 ### Browser Parity Completion (agent-browser port)
+
 - [x] Implement locator family:
   - `browser.find.role`
   - `browser.find.text`

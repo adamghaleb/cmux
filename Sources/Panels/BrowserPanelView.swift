@@ -206,6 +206,7 @@ func resolvedBrowserOmnibarPillBackgroundColor(
 /// View for rendering a browser panel with address bar
 struct BrowserPanelView: View {
     @ObservedObject var panel: BrowserPanel
+    @ObservedObject private var favoritesStore = WebFavoritesStore.shared
     let isFocused: Bool
     let isVisibleInUI: Bool
     let portalPriority: Int
@@ -337,6 +338,22 @@ struct BrowserPanelView: View {
                 .shadow(color: cmuxAccentColor().opacity(focusFlashOpacity * 0.35), radius: 10)
                 .padding(FocusFlashPattern.ringInset)
                 .allowsHitTesting(false)
+        }
+        .overlay(alignment: .bottom) {
+            QuickLaunchBar(
+                projectName: "",
+                accentColor: cmuxAccentColor(),
+                onOpenProjects: {
+                    NotificationCenter.default.post(name: .fadicodeProjectPickerToggled, object: nil)
+                },
+                onOpenWeb: {
+                    NotificationCenter.default.post(name: .fadicodeOpenBrowser, object: nil)
+                },
+                onOpenTerminal: {
+                    NotificationCenter.default.post(name: .fadicodeNewTerminal, object: nil)
+                }
+            )
+            .padding(.bottom, 8)
         }
         .overlay(alignment: .topLeading) {
             if addressBarFocused, !omnibarState.suggestions.isEmpty, omnibarPillFrame.width > 0 {
@@ -501,6 +518,7 @@ struct BrowserPanelView: View {
                 .accessibilityLabel("Browser omnibar")
 
             if !panel.isShowingNewTabPage {
+                favoriteToggleButton
                 browserThemeModeButton
                 developerToolsButton
             }
@@ -589,6 +607,34 @@ struct BrowserPanelView: View {
                 .help(String(localized: "browser.downloadInProgress", defaultValue: "Download in progress"))
             }
         }
+    }
+
+    private var currentURLIsFavorite: Bool {
+        guard let url = panel.currentURL?.absoluteString else { return false }
+        return favoritesStore.isFavorite(url: url)
+    }
+
+    private var favoriteToggleButton: some View {
+        Button(action: {
+            guard let url = panel.currentURL?.absoluteString else { return }
+            if favoritesStore.isFavorite(url: url) {
+                favoritesStore.removeFavorite(url: url)
+            } else {
+                favoritesStore.addFavorite(url: url, title: panel.pageTitle.isEmpty ? nil : panel.pageTitle)
+            }
+        }) {
+            Image(systemName: currentURLIsFavorite ? "star.fill" : "star")
+                .symbolRenderingMode(.monochrome)
+                .font(.system(size: devToolsButtonIconSize, weight: .medium))
+                .foregroundStyle(currentURLIsFavorite ? Color.yellow : devToolsColorOption.color)
+                .frame(width: addressBarButtonSize, height: addressBarButtonSize, alignment: .center)
+        }
+        .buttonStyle(OmnibarAddressButtonStyle())
+        .frame(width: addressBarButtonSize, height: addressBarButtonSize, alignment: .center)
+        .help(currentURLIsFavorite
+            ? String(localized: "browser.removeFavorite", defaultValue: "Remove from Favorites")
+            : String(localized: "browser.addFavorite", defaultValue: "Add to Favorites"))
+        .accessibilityIdentifier("BrowserFavoriteToggleButton")
     }
 
     private var developerToolsButton: some View {
@@ -786,18 +832,112 @@ struct BrowserPanelView: View {
                     }
                 })
             } else {
-                Color(nsColor: browserChromeBackgroundColor)
-                    .contentShape(Rectangle())
-                    .accessibilityIdentifier(browserContentAccessibilityIdentifier)
-                    .onTapGesture {
-                        onRequestPanelFocus()
-                        if addressBarFocused {
-                            addressBarFocused = false
+                ZStack {
+                    Color(nsColor: browserChromeBackgroundColor)
+                        .contentShape(Rectangle())
+                        .accessibilityIdentifier(browserContentAccessibilityIdentifier)
+                        .onTapGesture {
+                            onRequestPanelFocus()
+                            if addressBarFocused {
+                                addressBarFocused = false
+                            }
                         }
-                    }
+
+                    newTabFavoritesGrid
+                }
             }
         }
         .zIndex(0)
+    }
+
+    // MARK: - New Tab Favorites Grid
+
+    private var newTabFavoritesGrid: some View {
+        let hasFavorites = !favoritesStore.favorites.isEmpty
+        let hasRecents = !favoritesStore.recents.isEmpty
+
+        return Group {
+            if hasFavorites || hasRecents {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        if hasFavorites {
+                            newTabBookmarkSection(
+                                title: String(localized: "browser.favorites", defaultValue: "Favorites"),
+                                bookmarks: favoritesStore.favorites
+                            )
+                        }
+                        if hasRecents {
+                            newTabBookmarkSection(
+                                title: String(localized: "browser.recents", defaultValue: "Recents"),
+                                bookmarks: favoritesStore.recents
+                            )
+                        }
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.top, 24)
+                    .padding(.bottom, 16)
+                }
+            }
+        }
+        .environment(\.colorScheme, browserChromeColorScheme)
+    }
+
+    private func newTabBookmarkSection(title: String, bookmarks: [WebBookmark]) -> some View {
+        let columns = [GridItem(.adaptive(minimum: 120, maximum: 160), spacing: 12)]
+
+        return VStack(alignment: .leading, spacing: 10) {
+            Text(title)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .padding(.leading, 4)
+
+            LazyVGrid(columns: columns, spacing: 12) {
+                ForEach(bookmarks) { bookmark in
+                    Button {
+                        panel.navigateSmart(bookmark.url)
+                    } label: {
+                        VStack(spacing: 6) {
+                            Text(bookmarkDisplayInitial(for: bookmark))
+                                .font(.system(size: 16, weight: .bold, design: .rounded))
+                                .foregroundStyle(.primary.opacity(0.7))
+                                .frame(width: 32, height: 32)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .fill(Color.primary.opacity(0.06))
+                                )
+
+                            Text(bookmark.title)
+                                .font(.system(size: 11))
+                                .foregroundStyle(.primary)
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .fill(Color.primary.opacity(0.04))
+                        )
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    private func bookmarkDisplayInitial(for bookmark: WebBookmark) -> String {
+        let title = bookmark.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let first = title.first, first.isLetter {
+            return String(first).uppercased()
+        }
+        // Fall back to the first letter of the host
+        if let url = URL(string: bookmark.url),
+           let host = url.host,
+           let first = host.replacingOccurrences(of: "www.", with: "").first {
+            return String(first).uppercased()
+        }
+        return "?"
     }
 
     private func triggerFocusFlashAnimation() {

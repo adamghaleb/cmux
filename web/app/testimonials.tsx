@@ -39,7 +39,8 @@ export const testimonials = [
     handle: "@asaza_0928",
     avatar: "/avatars/asaza_0928.jpg",
     text: "cmux 良さそうすぎてついにバイバイ VSCode するときなのかもしれない",
-    translation: "cmux looks so good it might finally be time to say goodbye to VSCode",
+    translation:
+      "cmux looks so good it might finally be time to say goodbye to VSCode",
     url: "https://x.com/asaza_0928/status/2026057269075698015",
     platform: "x" as const,
   },
@@ -147,7 +148,11 @@ export const testimonials = [
 
 export type Testimonial = (typeof testimonials)[number];
 
-export function PlatformIcon({ platform }: { platform: "x" | "hn" | "reddit" }) {
+export function PlatformIcon({
+  platform,
+}: {
+  platform: "x" | "hn" | "reddit";
+}) {
   if (platform === "x") {
     return (
       <svg
@@ -175,12 +180,7 @@ export function PlatformIcon({ platform }: { platform: "x" | "hn" | "reddit" }) 
     );
   }
   return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 256 256"
-      className="text-muted"
-    >
+    <svg width="14" height="14" viewBox="0 0 256 256" className="text-muted">
       <rect width="256" height="256" rx="28" fill="#ff6600" />
       <text
         x="128"
@@ -211,11 +211,7 @@ function Initials({ name }: { name: string }) {
   );
 }
 
-export function TestimonialCard({
-  testimonial,
-}: {
-  testimonial: Testimonial;
-}) {
+export function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
   return (
     <a
       href={testimonial.url}
@@ -236,9 +232,7 @@ export function TestimonialCard({
           <Initials name={testimonial.name} />
         )}
         <div className="min-w-0 flex-1">
-          <div className="font-medium text-sm truncate">
-            {testimonial.name}
-          </div>
+          <div className="font-medium text-sm truncate">{testimonial.name}</div>
           {"subtitle" in testimonial && testimonial.subtitle && (
             <div className="text-xs text-muted truncate">
               {testimonial.subtitle}

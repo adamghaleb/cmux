@@ -31,6 +31,7 @@ cmux browser surface:8 get url
 ## Isolation Properties
 
 Each surface has independent:
+
 - cookies
 - localStorage/sessionStorage
 - tab list and active tab

@@ -70,6 +70,7 @@ If the script fails, run `say "cmux release failed"`.
 ## Changelog Guidelines
 
 **Include only end-user visible changes:**
+
 - New features users can see or interact with
 - Bug fixes users would notice (crashes, UI glitches, incorrect behavior)
 - Performance improvements users would feel
@@ -77,6 +78,7 @@ If the script fails, run `say "cmux release failed"`.
 - Breaking changes or removed features
 
 **Exclude internal/developer changes:**
+
 - Setup scripts, build scripts, reload scripts
 - CI/workflow changes
 - Documentation updates (README, CONTRIBUTING, CLAUDE.md)
@@ -89,17 +91,20 @@ If the script fails, run `say "cmux release failed"`.
 Credit the people who made each release happen. This builds community and encourages contributions.
 
 **Per-entry attribution** — append contributor credit after each changelog bullet:
+
 - For code contributions (PR author): `— thanks @user!`
 - For bug reports (issue reporter, if different from PR author): `— thanks @reporter for the report!`
 - Core team (`lawrencecchen`, `austinywang`) contributions get no per-entry callout — core work is the baseline
 
 **Summary section** — add a "Thanks to N contributors!" section at the bottom of each release:
+
 ```markdown
 ### Thanks to N contributors!
 
 - [@user1](https://github.com/user1)
 - [@user2](https://github.com/user2)
 ```
+
 - List all contributors alphabetically by GitHub handle (including core team)
 - Link each handle to their GitHub profile
 - Include everyone: PR authors, issue reporters, anyone whose work is in the release

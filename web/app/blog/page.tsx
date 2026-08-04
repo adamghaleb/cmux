@@ -14,10 +14,7 @@ export default function BlogPage() {
       <div className="space-y-4 mt-6">
         {blogPosts.map((post) => (
           <article key={post.slug}>
-            <Link
-              href={`/blog/${post.slug}`}
-              className="block group"
-            >
+            <Link href={`/blog/${post.slug}`} className="block group">
               <h2 className="text-lg font-medium group-hover:underline">
                 {post.title}
               </h2>

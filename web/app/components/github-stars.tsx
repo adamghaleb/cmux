@@ -48,10 +48,11 @@ export function GitHubStarsBadge({
       href="https://github.com/manaflow-ai/cmux"
       target="_blank"
       rel="noopener noreferrer"
-      onClick={() =>
-        posthog.capture("cmuxterm_github_clicked", { location })
+      onClick={() => posthog.capture("cmuxterm_github_clicked", { location })}
+      className={
+        className ??
+        "inline-flex items-center gap-1.5 pr-1 text-sm text-muted hover:text-foreground transition-colors animate-fade-in"
       }
-      className={className ?? "inline-flex items-center gap-1.5 pr-1 text-sm text-muted hover:text-foreground transition-colors animate-fade-in"}
     >
       {GITHUB_ICON}
       <span className="text-xs tabular-nums">{formatStars(stars)}</span>

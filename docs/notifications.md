@@ -102,6 +102,7 @@ command -v cmux &>/dev/null && cmux notify --title "Codex" --body "$MSG" || osas
 ```
 
 Then use:
+
 ```toml
 notify = ["bash", "~/.local/bin/codex-notify.sh"]
 ```
@@ -111,12 +112,12 @@ notify = ["bash", "~/.local/bin/codex-notify.sh"]
 Create `.opencode/plugins/cmux-notify.js`:
 
 ```javascript
-export const CmuxNotificationPlugin = async ({ $, }) => {
+export const CmuxNotificationPlugin = async ({ $ }) => {
   const notify = async (title, body) => {
     try {
       await $`command -v cmux && cmux notify --title ${title} --body ${body}`;
     } catch {
-      await $`osascript -e ${"display notification \"" + body + "\" with title \"" + title + "\""}`;
+      await $`osascript -e ${'display notification "' + body + '" with title "' + title + '"'}`;
     }
   };
 
@@ -134,11 +135,11 @@ export const CmuxNotificationPlugin = async ({ $, }) => {
 
 cmux sets these in child shells:
 
-| Variable | Description |
-|----------|-------------|
-| `CMUX_SOCKET_PATH` | Path to control socket |
-| `CMUX_TAB_ID` | UUID of the current tab |
-| `CMUX_PANEL_ID` | UUID of the current panel |
+| Variable           | Description               |
+| ------------------ | ------------------------- |
+| `CMUX_SOCKET_PATH` | Path to control socket    |
+| `CMUX_TAB_ID`      | UUID of the current tab   |
+| `CMUX_PANEL_ID`    | UUID of the current panel |
 
 ## CLI Commands
 

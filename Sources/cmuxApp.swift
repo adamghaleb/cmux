@@ -233,7 +233,7 @@ struct cmuxApp: App {
             }
 
             CommandGroup(replacing: .appInfo) {
-                Button(String(localized: "menu.app.about", defaultValue: "About cmux")) {
+                Button(String(localized: "menu.app.about", defaultValue: "About Fadicode")) {
                     showAboutPanel()
                 }
                 Button(String(localized: "menu.app.ghosttySettings", defaultValue: "Ghostty Settings…")) {
@@ -831,7 +831,7 @@ struct cmuxApp: App {
 
     private func closePanelOrWindow() {
         if let window = NSApp.keyWindow,
-           window.identifier?.rawValue == "cmux.settings" {
+           window.identifier?.rawValue == "fadicode.settings" {
             window.performClose(nil)
             return
         }
@@ -876,9 +876,9 @@ private enum SettingsAboutWindowKind: String, CaseIterable, Identifiable {
     var windowIdentifier: String {
         switch self {
         case .settings:
-            return "cmux.settings"
+            return "fadicode.settings"
         case .about:
-            return "cmux.about"
+            return "fadicode.about"
         }
     }
 
@@ -1135,7 +1135,7 @@ private final class SettingsAboutTitlebarDebugStore: ObservableObject {
 
     private func ensureToolbar(on window: NSWindow, kind: SettingsAboutWindowKind) {
         guard window.toolbar == nil else { return }
-        let identifier = NSToolbar.Identifier("cmux.debug.titlebar.\(kind.rawValue)")
+        let identifier = NSToolbar.Identifier("fadicode.debug.titlebar.\(kind.rawValue)")
         let toolbar = NSToolbar(identifier: identifier)
         toolbar.allowsUserCustomization = false
         toolbar.autosavesConfiguration = false
@@ -1172,7 +1172,7 @@ private final class SettingsAboutTitlebarDebugWindowController: NSWindowControll
         window.titlebarAppearsTransparent = false
         window.isMovableByWindowBackground = true
         window.isReleasedWhenClosed = false
-        window.identifier = NSUserInterfaceItemIdentifier("cmux.settingsAboutTitlebarDebug")
+        window.identifier = NSUserInterfaceItemIdentifier("fadicode.settingsAboutTitlebarDebug")
         window.center()
         window.contentView = NSHostingView(rootView: SettingsAboutTitlebarDebugView())
         AppDelegate.shared?.applyWindowDecorations(to: window)
@@ -1236,7 +1236,7 @@ private struct SettingsAboutTitlebarDebugView: View {
             VStack(alignment: .leading, spacing: 10) {
                 Toggle("Enable Debug Overrides", isOn: overridesEnabled)
 
-                Text("When disabled, cmux uses normal default titlebar behavior for this window.")
+                Text("When disabled, Fadicode uses normal default titlebar behavior for this window.")
                     .font(.caption)
                     .foregroundColor(.secondary)
 
@@ -1398,7 +1398,7 @@ private final class DebugWindowControlsWindowController: NSWindowController, NSW
         window.titlebarAppearsTransparent = false
         window.isMovableByWindowBackground = true
         window.isReleasedWhenClosed = false
-        window.identifier = NSUserInterfaceItemIdentifier("cmux.debugWindowControls")
+        window.identifier = NSUserInterfaceItemIdentifier("fadicode.debugWindowControls")
         window.center()
         window.contentView = NSHostingView(rootView: DebugWindowControlsView())
         AppDelegate.shared?.applyWindowDecorations(to: window)
@@ -1685,7 +1685,7 @@ private final class AboutWindowController: NSWindowController, NSWindowDelegate 
             defer: false
         )
         window.isReleasedWhenClosed = false
-        window.identifier = NSUserInterfaceItemIdentifier("cmux.about")
+        window.identifier = NSUserInterfaceItemIdentifier("fadicode.about")
         window.center()
         window.contentView = NSHostingView(rootView: AboutPanelView())
         SettingsAboutTitlebarDebugStore.shared.applyCurrentOptions(to: window, for: .about)
@@ -1719,7 +1719,7 @@ private final class AcknowledgmentsWindowController: NSWindowController, NSWindo
         )
         window.isReleasedWhenClosed = false
         window.title = String(localized: "about.licenses.windowTitle", defaultValue: "Third-Party Licenses")
-        window.identifier = NSUserInterfaceItemIdentifier("cmux.licenses")
+        window.identifier = NSUserInterfaceItemIdentifier("fadicode.licenses")
         window.center()
         window.contentView = NSHostingView(rootView: AcknowledgmentsView())
         super.init(window: window)
@@ -1768,7 +1768,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             defer: false
         )
         window.isReleasedWhenClosed = false
-        window.identifier = NSUserInterfaceItemIdentifier("cmux.settings")
+        window.identifier = NSUserInterfaceItemIdentifier("fadicode.settings")
         window.center()
         window.contentView = NSHostingView(rootView: SettingsRootView())
         SettingsAboutTitlebarDebugStore.shared.applyCurrentOptions(to: window, for: .settings)
@@ -1808,7 +1808,7 @@ enum SettingsNavigationTarget: String {
 }
 
 enum SettingsNavigationRequest {
-    static let notificationName = Notification.Name("cmux.settings.navigate")
+    static let notificationName = Notification.Name("fadicode.settings.navigate")
     private static let targetKey = "target"
 
     static func post(_ target: SettingsNavigationTarget) {
@@ -1840,7 +1840,7 @@ private final class SidebarDebugWindowController: NSWindowController, NSWindowDe
         window.titlebarAppearsTransparent = false
         window.isMovableByWindowBackground = true
         window.isReleasedWhenClosed = false
-        window.identifier = NSUserInterfaceItemIdentifier("cmux.sidebarDebug")
+        window.identifier = NSUserInterfaceItemIdentifier("fadicode.sidebarDebug")
         window.center()
         window.contentView = NSHostingView(rootView: SidebarDebugView())
         AppDelegate.shared?.applyWindowDecorations(to: window)
@@ -1886,7 +1886,7 @@ private struct AboutPanelView: View {
 
             VStack(alignment: .center, spacing: 32) {
                 VStack(alignment: .center, spacing: 8) {
-                    Text(String(localized: "about.appName", defaultValue: "cmux"))
+                    Text(String(localized: "about.appName", defaultValue: "fadicode"))
                         .bold()
                         .font(.title)
                     Text(String(localized: "about.description", defaultValue: "A Ghostty-based terminal with vertical tabs\nand a notification panel for macOS."))
@@ -2233,7 +2233,7 @@ private final class MenuBarExtraDebugWindowController: NSWindowController, NSWin
         window.titlebarAppearsTransparent = false
         window.isMovableByWindowBackground = true
         window.isReleasedWhenClosed = false
-        window.identifier = NSUserInterfaceItemIdentifier("cmux.menubarDebug")
+        window.identifier = NSUserInterfaceItemIdentifier("fadicode.menubarDebug")
         window.center()
         window.contentView = NSHostingView(rootView: MenuBarExtraDebugView())
         AppDelegate.shared?.applyWindowDecorations(to: window)
@@ -2403,7 +2403,7 @@ private final class BackgroundDebugWindowController: NSWindowController, NSWindo
         window.titlebarAppearsTransparent = false
         window.isMovableByWindowBackground = true
         window.isReleasedWhenClosed = false
-        window.identifier = NSUserInterfaceItemIdentifier("cmux.backgroundDebug")
+        window.identifier = NSUserInterfaceItemIdentifier("fadicode.backgroundDebug")
         window.center()
         window.contentView = NSHostingView(rootView: BackgroundDebugView())
         AppDelegate.shared?.applyWindowDecorations(to: window)
@@ -2498,12 +2498,12 @@ private struct BackgroundDebugView: View {
         let window: NSWindow? = {
             if let key = NSApp.keyWindow,
                let raw = key.identifier?.rawValue,
-               raw == "cmux.main" || raw.hasPrefix("cmux.main.") {
+               raw == "fadicode.main" || raw.hasPrefix("fadicode.main.") {
                 return key
             }
             return NSApp.windows.first(where: {
                 guard let raw = $0.identifier?.rawValue else { return false }
-                return raw == "cmux.main" || raw.hasPrefix("cmux.main.")
+                return raw == "fadicode.main" || raw.hasPrefix("fadicode.main.")
             })
         }()
         guard let window else { return }
@@ -2817,7 +2817,7 @@ enum ClaudeCodeIntegrationSettings {
 
 enum TelemetrySettings {
     static let sendAnonymousTelemetryKey = "sendAnonymousTelemetry"
-    static let defaultSendAnonymousTelemetry = true
+    static let defaultSendAnonymousTelemetry = false
 
     static func isEnabled(defaults: UserDefaults = .standard) -> Bool {
         if defaults.object(forKey: sendAnonymousTelemetryKey) == nil {
@@ -2828,6 +2828,39 @@ enum TelemetrySettings {
 
     // Freeze telemetry enablement once per launch. Settings changes apply on next restart.
     static let enabledForCurrentLaunch = isEnabled()
+}
+
+enum ProjectRootSettings {
+    static let key = "FadicodeProjectRoots"
+    /// Default fallback roots used when the user has not configured any.
+    static let builtInRoots: [String] = {
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        return [
+            home + "/Documents",
+            home + "/Projects",
+            home + "/Developer",
+            home + "/Code",
+        ]
+    }()
+
+    /// Resolve the comma-separated string stored in UserDefaults into an array of
+    /// absolute paths (expanding `~` to the real home directory).
+    static func roots(defaults: UserDefaults = .standard) -> [String] {
+        guard let raw = defaults.string(forKey: key), !raw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return builtInRoots
+        }
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        return raw
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .map { $0.replacingOccurrences(of: "~", with: home) }
+    }
+
+    /// Comma-separated default value suitable for showing in the UI.
+    static var defaultDisplayValue: String {
+        "~/Documents, ~/Projects, ~/Developer, ~/Code"
+    }
 }
 
 struct SettingsView: View {
@@ -2879,6 +2912,20 @@ struct SettingsView: View {
     @AppStorage("sidebarShowLog") private var sidebarShowLog = true
     @AppStorage("sidebarShowProgress") private var sidebarShowProgress = true
     @AppStorage("sidebarShowStatusPills") private var sidebarShowMetadata = true
+    @AppStorage("FadicodeShadersEnabled") private var shadersEnabled = true
+    @AppStorage("FadicodePixelPetEnabled") private var pixelPetEnabled = true
+    @AppStorage("FadicodeVisualPreset") private var visualPreset = 0
+    @AppStorage("FadicodePixelationEnabled") private var pixelationEnabled = true
+    @AppStorage("FadicodePosterizationEnabled") private var posterizationEnabled = true
+    @AppStorage("FadicodeAutoColorEnabled") private var autoColorEnabled = true
+    @AppStorage(ProjectRootSettings.key) private var projectRootsText = ""
+    @AppStorage("FadicodeBadgeVisibility") private var badgeVisibility = "always"
+    @AppStorage("FadicodeBorderGlowEnabled") private var borderGlowEnabled = true
+    @AppStorage("FadicodeCompletionSoundEnabled") private var completionSoundEnabled = true
+    @AppStorage("FadicodeLLMSummariesEnabled") private var llmSummariesEnabled = false
+    @AppStorage("FadicodeAnthropicAPIKey") private var anthropicAPIKey = ""
+    @AppStorage("QuickTerminalPosition") private var quickTerminalPosition = "top"
+    @AppStorage("QuickTerminalSizePercent") private var quickTerminalSize: Double = 0.4
     @ObservedObject private var notificationStore = TerminalNotificationStore.shared
     @State private var shortcutResetToken = UUID()
     @State private var topBlurOpacity: Double = 0
@@ -3222,7 +3269,7 @@ struct SettingsView: View {
                         SettingsCardRow(
                             String(localized: "settings.app.language", defaultValue: "Language"),
                             subtitle: appLanguage != LanguageSettings.languageAtLaunch.rawValue
-                                ? String(localized: "settings.app.language.restartSubtitle", defaultValue: "Restart cmux to apply")
+                                ? String(localized: "settings.app.language.restartSubtitle", defaultValue: "Restart Fadicode to apply")
                                 : nil,
                             controlWidth: pickerColumnWidth
                         ) {
@@ -3400,7 +3447,7 @@ struct SettingsView: View {
                             String(localized: "settings.app.telemetry", defaultValue: "Send anonymous telemetry"),
                             subtitle: sendAnonymousTelemetry != telemetryValueAtLaunch
                                 ? String(localized: "settings.app.telemetry.subtitleChanged", defaultValue: "Change takes effect on next launch.")
-                                : String(localized: "settings.app.telemetry.subtitle", defaultValue: "Share anonymized crash and usage data to help improve cmux.")
+                                : String(localized: "settings.app.telemetry.subtitle", defaultValue: "Share anonymized crash and usage data to help improve Fadicode.")
                         ) {
                             Toggle("", isOn: $sendAnonymousTelemetry)
                                 .labelsHidden()
@@ -3472,7 +3519,7 @@ struct SettingsView: View {
                         SettingsCardDivider()
 
                         SettingsCardRow(
-                            String(localized: "settings.app.openSidebarPRLinks", defaultValue: "Open Sidebar PR Links in cmux Browser"),
+                            String(localized: "settings.app.openSidebarPRLinks", defaultValue: "Open Sidebar PR Links in Fadicode Browser"),
                             subtitle: openSidebarPullRequestLinksInCmuxBrowser
                                 ? String(localized: "settings.app.openSidebarPRLinks.subtitleOn", defaultValue: "Clicks open inside cmux browser.")
                                 : String(localized: "settings.app.openSidebarPRLinks.subtitleOff", defaultValue: "Clicks open in your default browser.")
@@ -3935,6 +3982,162 @@ struct SettingsView: View {
                         .foregroundColor(.secondary)
                         .padding(.leading, 2)
                         .accessibilityIdentifier("ShortcutRecordingHint")
+
+                    SettingsSectionHeader(title: "Fadicode")
+                    SettingsCard {
+                        SettingsCardRow("Enable Shaders") {
+                            Toggle("", isOn: $shadersEnabled)
+                                .labelsHidden()
+                                .controlSize(.small)
+                        }
+
+                        SettingsCardDivider()
+
+                        SettingsCardRow("Enable Pixel Pet") {
+                            Toggle("", isOn: $pixelPetEnabled)
+                                .labelsHidden()
+                                .controlSize(.small)
+                        }
+
+                        SettingsCardDivider()
+
+                        SettingsCardRow("Auto-Color by Project") {
+                            Toggle("", isOn: $autoColorEnabled)
+                                .labelsHidden()
+                                .controlSize(.small)
+                        }
+
+                        SettingsCardDivider()
+
+                        SettingsCardRow(
+                            String(localized: "settings.fadicode.projectRoots", defaultValue: "Project Root Directories"),
+                            subtitle: String(localized: "settings.fadicode.projectRoots.subtitle", defaultValue: "Comma-separated list of directories scanned for projects. Use ~ for home.")
+                        ) {
+                            TextField(
+                                ProjectRootSettings.defaultDisplayValue,
+                                text: $projectRootsText
+                            )
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 280)
+                            .font(.system(size: 11, design: .monospaced))
+                            .accessibilityIdentifier("ProjectRootsTextField")
+                        }
+
+                        SettingsCardDivider()
+
+                        SettingsPickerRow(
+                            String(localized: "settings.fadicode.badgeVisibility", defaultValue: "Project Badge"),
+                            subtitle: String(localized: "settings.fadicode.badgeVisibility.subtitle", defaultValue: "When to show the project name badge"),
+                            controlWidth: 120,
+                            selection: $badgeVisibility
+                        ) {
+                            Text(String(localized: "settings.fadicode.badgeVisibility.always", defaultValue: "Always")).tag("always")
+                            Text(String(localized: "settings.fadicode.badgeVisibility.hover", defaultValue: "On Hover")).tag("hover")
+                            Text(String(localized: "settings.fadicode.badgeVisibility.never", defaultValue: "Never")).tag("never")
+                        }
+
+                        SettingsCardDivider()
+
+                        SettingsCardRow(String(localized: "settings.fadicode.borderGlow", defaultValue: "Border Glow")) {
+                            Toggle("", isOn: $borderGlowEnabled)
+                                .labelsHidden()
+                                .controlSize(.small)
+                        }
+
+                        SettingsCardDivider()
+
+                        SettingsCardRow(String(localized: "settings.fadicode.completionSound", defaultValue: "Completion Sound")) {
+                            Toggle("", isOn: $completionSoundEnabled)
+                                .labelsHidden()
+                                .controlSize(.small)
+                        }
+
+                        SettingsCardDivider()
+
+                        SettingsPickerRow(
+                            String(localized: "settings.fadicode.visualPreset", defaultValue: "Visual Preset"),
+                            subtitle: String(localized: "settings.fadicode.visualPreset.subtitle", defaultValue: "Applied shader visual style"),
+                            controlWidth: 196,
+                            selection: $visualPreset
+                        ) {
+                            Text(String(localized: "settings.fadicode.visualPreset.pixelGrid", defaultValue: "Pixel Grid")).tag(0)
+                            Text(String(localized: "settings.fadicode.visualPreset.cleanPixel", defaultValue: "Clean Pixel")).tag(1)
+                            Text(String(localized: "settings.fadicode.visualPreset.honeycomb", defaultValue: "Honeycomb")).tag(2)
+                            Text(String(localized: "settings.fadicode.visualPreset.halftone", defaultValue: "Halftone")).tag(3)
+                            Text(String(localized: "settings.fadicode.visualPreset.crt", defaultValue: "CRT")).tag(4)
+                            Text(String(localized: "settings.fadicode.visualPreset.neon", defaultValue: "Neon")).tag(5)
+                        }
+
+                        SettingsCardDivider()
+
+                        SettingsCardRow(String(localized: "settings.fadicode.pixelation", defaultValue: "Pixelation")) {
+                            Toggle("", isOn: $pixelationEnabled)
+                                .labelsHidden()
+                                .controlSize(.small)
+                        }
+
+                        SettingsCardDivider()
+
+                        SettingsCardRow(String(localized: "settings.fadicode.posterization", defaultValue: "Posterization")) {
+                            Toggle("", isOn: $posterizationEnabled)
+                                .labelsHidden()
+                                .controlSize(.small)
+                        }
+                    }
+
+                    SettingsSectionHeader(title: String(localized: "settings.section.llmSummaries", defaultValue: "LLM Summaries"))
+                    SettingsCard {
+                        SettingsCardRow(String(localized: "settings.fadicode.llmSummaries", defaultValue: "Enable AI Summaries")) {
+                            Toggle("", isOn: $llmSummariesEnabled)
+                                .labelsHidden()
+                                .controlSize(.small)
+                        }
+
+                        Text(String(localized: "settings.fadicode.llmSummaries.description", defaultValue: "When enabled, terminal content is sent to the Anthropic API to generate activity summaries. Requires your own API key."))
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .padding(.horizontal, 12)
+                            .padding(.bottom, 8)
+
+                        if llmSummariesEnabled {
+                            SettingsCardDivider()
+
+                            SettingsCardRow(String(localized: "settings.fadicode.anthropicAPIKey", defaultValue: "Anthropic API Key")) {
+                                SecureField("sk-ant-...", text: $anthropicAPIKey)
+                                    .textFieldStyle(.roundedBorder)
+                                    .frame(width: 220)
+                                    .font(.system(size: 11, design: .monospaced))
+                            }
+                        }
+                    }
+
+                    SettingsSectionHeader(title: String(localized: "settings.section.quickTerminal", defaultValue: "Quick Terminal"))
+                    SettingsCard {
+                        SettingsPickerRow(
+                            String(localized: "settings.quickTerminal.position", defaultValue: "Position"),
+                            subtitle: String(localized: "settings.quickTerminal.position.subtitle", defaultValue: "Screen edge for the drop-down terminal"),
+                            controlWidth: 100,
+                            selection: $quickTerminalPosition
+                        ) {
+                            Text(String(localized: "settings.quickTerminal.position.top", defaultValue: "Top")).tag("top")
+                            Text(String(localized: "settings.quickTerminal.position.bottom", defaultValue: "Bottom")).tag("bottom")
+                            Text(String(localized: "settings.quickTerminal.position.left", defaultValue: "Left")).tag("left")
+                            Text(String(localized: "settings.quickTerminal.position.right", defaultValue: "Right")).tag("right")
+                        }
+
+                        SettingsCardDivider()
+
+                        SettingsCardRow(String(localized: "settings.quickTerminal.size", defaultValue: "Size")) {
+                            HStack(spacing: 8) {
+                                Slider(value: $quickTerminalSize, in: 0.2...0.9, step: 0.05)
+                                    .frame(width: 120)
+                                Text("\(Int(quickTerminalSize * 100))%")
+                                    .font(.system(size: 11, design: .monospaced))
+                                    .foregroundColor(.secondary)
+                                    .frame(width: 36, alignment: .trailing)
+                            }
+                        }
+                    }
 
                     SettingsSectionHeader(title: String(localized: "settings.section.reset", defaultValue: "Reset"))
                     SettingsCard {
@@ -4536,13 +4739,13 @@ private struct SettingsRootView: View {
     }
 
     private func configureSettingsWindow(_ window: NSWindow) {
-        window.identifier = NSUserInterfaceItemIdentifier("cmux.settings")
+        window.identifier = NSUserInterfaceItemIdentifier("fadicode.settings")
         applyCurrentSettingsWindowStyle(to: window)
 
         let accessories = window.titlebarAccessoryViewControllers
         for index in accessories.indices.reversed() {
             guard let identifier = accessories[index].view.identifier?.rawValue else { continue }
-            guard identifier.hasPrefix("cmux.") else { continue }
+            guard identifier.hasPrefix("fadicode.") else { continue }
             window.removeTitlebarAccessoryViewController(at: index)
         }
         AppDelegate.shared?.applyWindowDecorations(to: window)

@@ -14,16 +14,21 @@ Keep this workflow focused on existing debug windows and menu entries. Do not ad
    - The `Debug` menu only exists in DEBUG builds (`./scripts/reload.sh --tag ...`).
    - Release builds (`reloadp.sh`, `reloads.sh`) do not show this menu.
 2. Keep these actions available in `Menu("Debug Windows")`:
+
 - `Sidebar Debug…`
 - `Background Debug…`
 - `Menu Bar Extra Debug…`
 - `Open All Debug Windows`
+
 3. Reuse existing per-window copy buttons (`Copy Config`) in each debug window before adding new UI.
 4. For one combined payload, run:
+
 ```bash
 skills/cmux-debug-windows/scripts/debug_windows_snapshot.sh --copy
 ```
+
 5. After code edits, run build + tagged reload:
+
 ```bash
 xcodebuild -project GhosttyTabs.xcodeproj -scheme cmux -configuration Debug -destination 'platform=macOS' build
 ./scripts/reload.sh --tag <tag>
@@ -39,11 +44,13 @@ xcodebuild -project GhosttyTabs.xcodeproj -scheme cmux -configuration Debug -des
 - `scripts/debug_windows_snapshot.sh`
 
 Purpose:
+
 - Reads current debug-related defaults values.
 - Prints one combined snapshot for sidebar/background/menu bar extra.
 - Optionally copies it to clipboard.
 
 Examples:
+
 ```bash
 skills/cmux-debug-windows/scripts/debug_windows_snapshot.sh
 skills/cmux-debug-windows/scripts/debug_windows_snapshot.sh --copy

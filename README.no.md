@@ -70,83 +70,83 @@ Alt er skriptbart gjennom CLI og socket API — opprett arbeidsomrader/faner, de
 
 ### Arbeidsomrader
 
-| Snarvei | Handling |
-|----------|--------|
-| ⌘ N | Nytt arbeidsomrade |
-| ⌘ 1–8 | Hopp til arbeidsomrade 1–8 |
-| ⌘ 9 | Hopp til siste arbeidsomrade |
-| ⌃ ⌘ ] | Neste arbeidsomrade |
-| ⌃ ⌘ [ | Forrige arbeidsomrade |
-| ⌘ ⇧ W | Lukk arbeidsomrade |
-| ⌘ B | Vis/skjul sidefelt |
+| Snarvei | Handling                     |
+| ------- | ---------------------------- |
+| ⌘ N     | Nytt arbeidsomrade           |
+| ⌘ 1–8   | Hopp til arbeidsomrade 1–8   |
+| ⌘ 9     | Hopp til siste arbeidsomrade |
+| ⌃ ⌘ ]   | Neste arbeidsomrade          |
+| ⌃ ⌘ [   | Forrige arbeidsomrade        |
+| ⌘ ⇧ W   | Lukk arbeidsomrade           |
+| ⌘ B     | Vis/skjul sidefelt           |
 
 ### Overflater
 
-| Snarvei | Handling |
-|----------|--------|
-| ⌘ T | Ny overflate |
-| ⌘ ⇧ ] | Neste overflate |
-| ⌘ ⇧ [ | Forrige overflate |
-| ⌃ Tab | Neste overflate |
-| ⌃ ⇧ Tab | Forrige overflate |
-| ⌃ 1–8 | Hopp til overflate 1–8 |
-| ⌃ 9 | Hopp til siste overflate |
-| ⌘ W | Lukk overflate |
+| Snarvei | Handling                 |
+| ------- | ------------------------ |
+| ⌘ T     | Ny overflate             |
+| ⌘ ⇧ ]   | Neste overflate          |
+| ⌘ ⇧ [   | Forrige overflate        |
+| ⌃ Tab   | Neste overflate          |
+| ⌃ ⇧ Tab | Forrige overflate        |
+| ⌃ 1–8   | Hopp til overflate 1–8   |
+| ⌃ 9     | Hopp til siste overflate |
+| ⌘ W     | Lukk overflate           |
 
 ### Delte paneler
 
-| Snarvei | Handling |
-|----------|--------|
-| ⌘ D | Del til hoyre |
-| ⌘ ⇧ D | Del nedover |
+| Snarvei     | Handling                |
+| ----------- | ----------------------- |
+| ⌘ D         | Del til hoyre           |
+| ⌘ ⇧ D       | Del nedover             |
 | ⌥ ⌘ ← → ↑ ↓ | Fokuser panel i retning |
-| ⌘ ⇧ H | Blink fokusert panel |
+| ⌘ ⇧ H       | Blink fokusert panel    |
 
 ### Nettleser
 
-| Snarvei | Handling |
-|----------|--------|
-| ⌘ ⇧ L | Apne nettleser i deling |
-| ⌘ L | Fokuser adressefeltet |
-| ⌘ [ | Tilbake |
-| ⌘ ] | Fremover |
-| ⌘ R | Last inn siden pa nytt |
-| ⌥ ⌘ I | Apne utviklerverktoy |
+| Snarvei | Handling                |
+| ------- | ----------------------- |
+| ⌘ ⇧ L   | Apne nettleser i deling |
+| ⌘ L     | Fokuser adressefeltet   |
+| ⌘ [     | Tilbake                 |
+| ⌘ ]     | Fremover                |
+| ⌘ R     | Last inn siden pa nytt  |
+| ⌥ ⌘ I   | Apne utviklerverktoy    |
 
 ### Varsler
 
-| Snarvei | Handling |
-|----------|--------|
-| ⌘ I | Vis varselpanel |
-| ⌘ ⇧ U | Hopp til nyeste uleste |
+| Snarvei | Handling               |
+| ------- | ---------------------- |
+| ⌘ I     | Vis varselpanel        |
+| ⌘ ⇧ U   | Hopp til nyeste uleste |
 
 ### Sok
 
-| Snarvei | Handling |
-|----------|--------|
-| ⌘ F | Sok |
+| Snarvei     | Handling            |
+| ----------- | ------------------- |
+| ⌘ F         | Sok                 |
 | ⌘ G / ⌘ ⇧ G | Sok neste / forrige |
-| ⌘ ⇧ F | Skjul sokelinje |
-| ⌘ E | Bruk utvalg til sok |
+| ⌘ ⇧ F       | Skjul sokelinje     |
+| ⌘ E         | Bruk utvalg til sok |
 
 ### Terminal
 
-| Snarvei | Handling |
-|----------|--------|
-| ⌘ K | Tøm rullingshistorikk |
-| ⌘ C | Kopier (med utvalg) |
-| ⌘ V | Lim inn |
+| Snarvei   | Handling                     |
+| --------- | ---------------------------- |
+| ⌘ K       | Tøm rullingshistorikk        |
+| ⌘ C       | Kopier (med utvalg)          |
+| ⌘ V       | Lim inn                      |
 | ⌘ + / ⌘ - | Øk / reduser skriftstørrelse |
-| ⌘ 0 | Tilbakestill skriftstørrelse |
+| ⌘ 0       | Tilbakestill skriftstørrelse |
 
 ### Vindu
 
-| Snarvei | Handling |
-|----------|--------|
-| ⌘ ⇧ N | Nytt vindu |
-| ⌘ , | Innstillinger |
-| ⌘ ⇧ , | Last inn konfigurasjon pa nytt |
-| ⌘ Q | Avslutt |
+| Snarvei | Handling                       |
+| ------- | ------------------------------ |
+| ⌘ ⇧ N   | Nytt vindu                     |
+| ⌘ ,     | Innstillinger                  |
+| ⌘ ⇧ ,   | Last inn konfigurasjon pa nytt |
+| ⌘ Q     | Avslutt                        |
 
 ## Lisens
 

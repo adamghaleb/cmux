@@ -1,6 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useSyncExternalStore } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useSyncExternalStore,
+} from "react";
 
 type DevValues = {
   headerTx: number;
@@ -36,8 +42,12 @@ const defaults: DevValues = {
 let snapshot = { ...defaults };
 const listeners = new Set<() => void>();
 
-function getSnapshot() { return snapshot; }
-function getServerSnapshot() { return defaults; }
+function getSnapshot() {
+  return snapshot;
+}
+function getServerSnapshot() {
+  return defaults;
+}
 
 function setStore(patch: Partial<DevValues>) {
   snapshot = { ...snapshot, ...patch };
@@ -46,7 +56,9 @@ function setStore(patch: Partial<DevValues>) {
 
 function subscribe(cb: () => void) {
   listeners.add(cb);
-  return () => { listeners.delete(cb); };
+  return () => {
+    listeners.delete(cb);
+  };
 }
 
 export function useDevValues() {
@@ -121,17 +133,26 @@ export function DevPanel() {
     applyToDOM({ ...snapshot, ...patch });
   }, []);
 
-  const onPointerDown = useCallback((e: React.PointerEvent) => {
-    if ((e.target as HTMLElement).closest("input, button, label")) return;
-    setDragging(true);
-    dragOffset.current = { x: e.clientX - pos.x, y: e.clientY - pos.y };
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-  }, [pos]);
+  const onPointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      if ((e.target as HTMLElement).closest("input, button, label")) return;
+      setDragging(true);
+      dragOffset.current = { x: e.clientX - pos.x, y: e.clientY - pos.y };
+      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    },
+    [pos],
+  );
 
-  const onPointerMove = useCallback((e: React.PointerEvent) => {
-    if (!dragging) return;
-    setPos({ x: e.clientX - dragOffset.current.x, y: e.clientY - dragOffset.current.y });
-  }, [dragging]);
+  const onPointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      if (!dragging) return;
+      setPos({
+        x: e.clientX - dragOffset.current.x,
+        y: e.clientY - dragOffset.current.y,
+      });
+    },
+    [dragging],
+  );
 
   const onPointerUp = useCallback(() => setDragging(false), []);
 
@@ -142,7 +163,11 @@ export function DevPanel() {
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
-      style={{ left: pos.x, top: pos.y, cursor: dragging ? "grabbing" : "grab" }}
+      style={{
+        left: pos.x,
+        top: pos.y,
+        cursor: dragging ? "grabbing" : "grab",
+      }}
       className="fixed z-[9999] bg-[#222] text-white text-xs rounded-xl p-4 space-y-3 font-mono shadow-lg select-none"
     >
       <div className="flex items-center justify-between gap-4">
@@ -151,44 +176,110 @@ export function DevPanel() {
       </div>
 
       <Section label="Header">
-        <Row label="tx" value={vals.headerTx} onChange={(v) => update({ headerTx: v })} min={-50} max={50} step={1} unit="px" />
+        <Row
+          label="tx"
+          value={vals.headerTx}
+          onChange={(v) => update({ headerTx: v })}
+          min={-50}
+          max={50}
+          step={1}
+          unit="px"
+        />
       </Section>
 
       <Section label="Cursor">
         <div className="flex items-center gap-3">
-          <Row label="top" value={vals.cursorTop} onChange={(v) => update({ cursorTop: v })} min={-5} max={5} step={0.5} unit="px" />
+          <Row
+            label="top"
+            value={vals.cursorTop}
+            onChange={(v) => update({ cursorTop: v })}
+            min={-5}
+            max={5}
+            step={0.5}
+            unit="px"
+          />
           <label className="flex items-center gap-2 text-white/70 cursor-pointer">
-            <input type="checkbox" checked={vals.cursorBlink} onChange={(e) => update({ cursorBlink: e.target.checked })} />
+            <input
+              type="checkbox"
+              checked={vals.cursorBlink}
+              onChange={(e) => update({ cursorBlink: e.target.checked })}
+            />
             blink
           </label>
         </div>
       </Section>
 
       <Section label="Subtitle">
-        <Row label="line-h" value={vals.subtitleLh} onChange={(v) => update({ subtitleLh: v })} min={1} max={2.5} step={0.025} unit="" w={16} />
+        <Row
+          label="line-h"
+          value={vals.subtitleLh}
+          onChange={(v) => update({ subtitleLh: v })}
+          min={1}
+          max={2.5}
+          step={0.025}
+          unit=""
+          w={16}
+        />
       </Section>
 
       <Section label="Download buttons">
-        <Row label="above" value={vals.downloadAbove} onChange={(v) => update({ downloadAbove: v })} />
-        <Row label="below" value={vals.downloadBelow} onChange={(v) => update({ downloadBelow: v })} />
+        <Row
+          label="above"
+          value={vals.downloadAbove}
+          onChange={(v) => update({ downloadAbove: v })}
+        />
+        <Row
+          label="below"
+          value={vals.downloadBelow}
+          onChange={(v) => update({ downloadBelow: v })}
+        />
       </Section>
 
       <Section label="Features">
-        <Row label="line-h" value={vals.featuresLh} onChange={(v) => update({ featuresLh: v })} min={1} max={2.5} step={0.025} unit="" w={16} />
-        <Row label="pt" value={vals.featuresPt} onChange={(v) => update({ featuresPt: v })} />
-        <Row label="pb" value={vals.featuresPb} onChange={(v) => update({ featuresPb: v })} />
+        <Row
+          label="line-h"
+          value={vals.featuresLh}
+          onChange={(v) => update({ featuresLh: v })}
+          min={1}
+          max={2.5}
+          step={0.025}
+          unit=""
+          w={16}
+        />
+        <Row
+          label="pt"
+          value={vals.featuresPt}
+          onChange={(v) => update({ featuresPt: v })}
+        />
+        <Row
+          label="pb"
+          value={vals.featuresPb}
+          onChange={(v) => update({ featuresPb: v })}
+        />
       </Section>
 
       <Section label="Community">
-        <Row label="gap" value={vals.communityGap} onChange={(v) => update({ communityGap: v })} />
+        <Row
+          label="gap"
+          value={vals.communityGap}
+          onChange={(v) => update({ communityGap: v })}
+        />
       </Section>
 
       <Section label="FAQ">
-        <Row label="pt" value={vals.faqPt} onChange={(v) => update({ faqPt: v })} />
+        <Row
+          label="pt"
+          value={vals.faqPt}
+          onChange={(v) => update({ faqPt: v })}
+        />
       </Section>
 
       <Section label="Docs">
-        <Row label="pt" value={vals.docsPt} onChange={(v) => update({ docsPt: v })} />
+        <Row
+          label="pt"
+          value={vals.docsPt}
+          onChange={(v) => update({ docsPt: v })}
+        />
       </Section>
 
       <button
@@ -219,18 +310,41 @@ export function DevPanel() {
   );
 }
 
-function Section({ label, children }: { label: string; children: React.ReactNode }) {
+function Section({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="space-y-2">
-      <div className="text-white/40 text-[10px] uppercase tracking-wider">{label}</div>
+      <div className="text-white/40 text-[10px] uppercase tracking-wider">
+        {label}
+      </div>
       {children}
     </div>
   );
 }
 
-function Row({ label, value, onChange, min = 0, max = 128, step = 1, unit = "px", w = 10 }: {
-  label: string; value: number; onChange: (v: number) => void;
-  min?: number; max?: number; step?: number; unit?: string; w?: number;
+function Row({
+  label,
+  value,
+  onChange,
+  min = 0,
+  max = 128,
+  step = 1,
+  unit = "px",
+  w = 10,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  min?: number;
+  max?: number;
+  step?: number;
+  unit?: string;
+  w?: number;
 }) {
   return (
     <div className="flex items-center gap-2">
@@ -245,7 +359,8 @@ function Row({ label, value, onChange, min = 0, max = 128, step = 1, unit = "px"
         className="w-28 accent-blue-500 cursor-pointer"
       />
       <span className="text-right tabular-nums" style={{ width: `${w * 4}px` }}>
-        {Number.isInteger(step) ? value : value.toFixed(step < 0.1 ? 2 : 1)}{unit}
+        {Number.isInteger(step) ? value : value.toFixed(step < 0.1 ? 2 : 1)}
+        {unit}
       </span>
     </div>
   );

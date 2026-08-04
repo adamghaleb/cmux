@@ -52,10 +52,9 @@ export default function CmdShiftUPage() {
       </time>
 
       <p className="mt-6">
-        My favorite cmux feature is <kbd>Cmd+Shift+U</kbd>. I have 17
-        workspaces open right now, each running an agent. I used to click
-        through tabs and the notification panel to figure out what completed.
-        Typing is faster.
+        My favorite cmux feature is <kbd>Cmd+Shift+U</kbd>. I have 17 workspaces
+        open right now, each running an agent. I used to click through tabs and
+        the notification panel to figure out what completed. Typing is faster.
       </p>
 
       <video
@@ -71,11 +70,11 @@ export default function CmdShiftUPage() {
 
       <p>
         <kbd>Cmd+Shift+U</kbd> jumps to the newest unread{" "}
-        <Link href="/docs/notifications">notification</Link>. In practice
-        that means the last agent that finished. It switches to the right
-        workspace, focuses the exact pane, flashes it so you see where to
-        look, and marks it read. If the notification came from another window,
-        that window comes forward.
+        <Link href="/docs/notifications">notification</Link>. In practice that
+        means the last agent that finished. It switches to the right workspace,
+        focuses the exact pane, flashes it so you see where to look, and marks
+        it read. If the notification came from another window, that window comes
+        forward.
       </p>
     </>
   );

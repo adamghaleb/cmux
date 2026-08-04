@@ -68,9 +68,7 @@ function parseChangelog(markdown: string): ChangelogVersion[] {
           currentSection = { heading: "", items: [] };
           current.sections.push(currentSection);
         }
-        current.sections[current.sections.length - 1].items.push(
-          itemMatch[1]
-        );
+        current.sections[current.sections.length - 1].items.push(itemMatch[1]);
       }
       continue;
     }
@@ -157,7 +155,14 @@ function FeatureList({ media }: { media: VersionMedia }) {
   if (!media.features?.length) return null;
 
   return (
-    <div style={{ paddingTop: 20, display: "flex", flexDirection: "column", gap: 24 }}>
+    <div
+      style={{
+        paddingTop: 20,
+        display: "flex",
+        flexDirection: "column",
+        gap: 24,
+      }}
+    >
       {media.features.map((feature, i) => (
         <div key={i}>
           <p style={{ margin: 0, padding: 0 }}>
@@ -178,7 +183,7 @@ function ContributorList({ items }: { items: string[] }) {
     <div className="flex flex-wrap gap-2" style={{ paddingTop: 8 }}>
       {items.map((item, i) => {
         const match = item.match(
-          /\[@([^\]]+)\]\((https:\/\/github\.com\/[^)]+)\)/
+          /\[@([^\]]+)\]\((https:\/\/github\.com\/[^)]+)\)/,
         );
         if (match) {
           return (
@@ -255,7 +260,12 @@ export default function ChangelogPage() {
               key={v.version}
               id={`v${v.version}`}
               className="border-t border-border first:border-t-0"
-              style={{ display: "flex", flexDirection: "column", paddingTop: vi === 0 ? 0 : 40, paddingBottom: 40 }}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                paddingTop: vi === 0 ? 0 : 40,
+                paddingBottom: 40,
+              }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <a
@@ -266,16 +276,21 @@ export default function ChangelogPage() {
                     {v.version}
                   </span>
                 </a>
-                <time
-                  className="text-[13px] text-muted"
-                  dateTime={v.date}
-                >
+                <time className="text-[13px] text-muted" dateTime={v.date}>
                   {formatDate(v.date)}
                 </time>
               </div>
 
               {media?.title && (
-                <div style={{ paddingTop: 12, margin: 0, fontSize: "1.5rem", fontWeight: 700, letterSpacing: "-0.025em" }}>
+                <div
+                  style={{
+                    paddingTop: 12,
+                    margin: 0,
+                    fontSize: "1.5rem",
+                    fontWeight: 700,
+                    letterSpacing: "-0.025em",
+                  }}
+                >
                   {media.title}
                 </div>
               )}
@@ -287,12 +302,22 @@ export default function ChangelogPage() {
               {media && <FeatureList media={media} />}
 
               {v.intro && !media && (
-                <div className="text-[14px] text-muted italic" style={{ paddingTop: 12 }}>
+                <div
+                  className="text-[14px] text-muted italic"
+                  style={{ paddingTop: 12 }}
+                >
                   {v.intro.replace(/^_/, "").replace(/_$/, "")}
                 </div>
               )}
 
-              <div style={{ paddingTop: 20, display: "flex", flexDirection: "column", gap: 16 }}>
+              <div
+                style={{
+                  paddingTop: 20,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 16,
+                }}
+              >
                 {v.sections.map((section, i) => {
                   const isContributors = section.heading
                     .toLowerCase()
@@ -312,9 +337,26 @@ export default function ChangelogPage() {
                       {section.heading && (
                         <SectionBadge heading={section.heading} />
                       )}
-                      <ul style={{ margin: 0, paddingTop: 8, paddingBottom: 0, paddingLeft: 24, listStyle: "disc" }}>
+                      <ul
+                        style={{
+                          margin: 0,
+                          paddingTop: 8,
+                          paddingBottom: 0,
+                          paddingLeft: 24,
+                          listStyle: "disc",
+                        }}
+                      >
                         {section.items.map((item, j) => (
-                          <li key={j} style={{ margin: 0, padding: 0, fontSize: 14, lineHeight: 1.6, color: "var(--muted)" }}>
+                          <li
+                            key={j}
+                            style={{
+                              margin: 0,
+                              padding: 0,
+                              fontSize: 14,
+                              lineHeight: 1.6,
+                              color: "var(--muted)",
+                            }}
+                          >
                             <InlineMarkdown text={item} />
                           </li>
                         ))}

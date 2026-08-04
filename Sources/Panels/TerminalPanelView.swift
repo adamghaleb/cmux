@@ -35,6 +35,26 @@ struct TerminalPanelView: View {
         // This prevents transient teardown/recreate that can momentarily detach the hosted terminal view.
         .id(panel.id)
         .background(Color.clear)
+        .overlay(alignment: .topLeading) {
+            if panel.isReadOnly {
+                HStack(spacing: 4) {
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 10, weight: .semibold))
+                    Text(String(localized: "terminal.readOnly", defaultValue: "Read-Only"))
+                        .font(.system(size: 10, weight: .medium))
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(.ultraThinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .padding(.leading, 8)
+                .padding(.top, 32)
+                .allowsHitTesting(false)
+                .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: panel.isReadOnly)
     }
 }
 

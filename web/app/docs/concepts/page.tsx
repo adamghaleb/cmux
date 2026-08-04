@@ -26,8 +26,8 @@ export default function ConceptsPage() {
 
       <h3>Window</h3>
       <p>
-        A macOS window. Open multiple windows with <code>⌘⇧N</code>. Each
-        window has its own sidebar with independent workspaces.
+        A macOS window. Open multiple windows with <code>⌘⇧N</code>. Each window
+        has its own sidebar with independent workspaces.
       </p>
 
       <h3>Workspace</h3>
@@ -74,9 +74,9 @@ export default function ConceptsPage() {
       </table>
 
       <p>
-        <strong>Shortcuts:</strong> <code>⌘N</code> (new),{" "}
-        <code>⌘1</code>–<code>⌘9</code> (jump), <code>⌘⇧W</code> (close),{" "}
-        <code>⌘⇧[</code> / <code>⌘⇧]</code> (prev/next)
+        <strong>Shortcuts:</strong> <code>⌘N</code> (new), <code>⌘1</code>–
+        <code>⌘9</code> (jump), <code>⌘⇧W</code> (close), <code>⌘⇧[</code> /{" "}
+        <code>⌘⇧]</code> (prev/next)
       </p>
 
       <h3>Pane</h3>
@@ -90,9 +90,8 @@ export default function ConceptsPage() {
       <h3>Surface</h3>
       <p>
         A tab within a pane. Each pane has its own tab bar and can hold multiple
-        surfaces. Created with <code>⌘T</code>, navigated with{" "}
-        <code>⌘[</code> / <code>⌘]</code> or <code>⌃1</code>–
-        <code>⌃9</code>.
+        surfaces. Created with <code>⌘T</code>, navigated with <code>⌘[</code> /{" "}
+        <code>⌘]</code> or <code>⌃1</code>–<code>⌃9</code>.
       </p>
       <p>
         Surfaces are the individual terminal or browser sessions you interact

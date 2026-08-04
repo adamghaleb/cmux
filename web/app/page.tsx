@@ -29,7 +29,11 @@ export default function Home() {
         <p className="text-lg leading-relaxed mb-3 text-foreground">
           The terminal built for <TypingTagline />
         </p>
-        <p className="text-base text-muted" data-dev="subtitle" style={{ lineHeight: 1.5 }}>
+        <p
+          className="text-base text-muted"
+          data-dev="subtitle"
+          style={{ lineHeight: 1.5 }}
+        >
           <Balancer>
             Native macOS app built on Ghostty. Vertical tabs, notification rings
             when agents need attention, split panes, and a socket API for
@@ -38,23 +42,35 @@ export default function Home() {
         </p>
 
         {/* Download */}
-        <div className="flex flex-wrap items-center gap-3" data-dev="download" style={{ marginTop: 21, marginBottom: 16 }}>
+        <div
+          className="flex flex-wrap items-center gap-3"
+          data-dev="download"
+          style={{ marginTop: 21, marginBottom: 16 }}
+        >
           <DownloadButton location="hero" />
           <GitHubButton />
         </div>
 
         {/* Features */}
-        <section data-dev="features" style={{ paddingTop: 12, paddingBottom: 15 }}>
+        <section
+          data-dev="features"
+          style={{ paddingTop: 12, paddingBottom: 15 }}
+        >
           <h2 className="text-xs font-medium text-muted tracking-tight mb-3">
             Features
           </h2>
-          <ul className="space-y-3 text-[15px]" data-dev="features-ul" style={{ lineHeight: 1.275 }}>
+          <ul
+            className="space-y-3 text-[15px]"
+            data-dev="features-ul"
+            style={{ lineHeight: 1.275 }}
+          >
             <li className="flex gap-3">
               <span className="text-muted shrink-0">-</span>
               <span>
                 <strong className="font-medium">Vertical tabs</strong>
                 <span className="text-muted">
-                  : sidebar shows git branch, working directory, ports, and notification text
+                  : sidebar shows git branch, working directory, ports, and
+                  notification text
                 </span>
               </span>
             </li>
@@ -73,7 +89,8 @@ export default function Home() {
               <span>
                 <strong className="font-medium">In-app browser</strong>
                 <span className="text-muted">
-                  : split a browser alongside your terminal with a scriptable API
+                  : split a browser alongside your terminal with a scriptable
+                  API
                 </span>
               </span>
             </li>
@@ -119,7 +136,14 @@ export default function Home() {
               <span>
                 <strong className="font-medium">Keyboard shortcuts</strong>
                 <span className="text-muted">
-                  : <a href="/docs/keyboard-shortcuts" className="underline underline-offset-2 decoration-border hover:decoration-foreground transition-colors">extensive shortcuts</a> for workspaces, splits, browser, and more
+                  :{" "}
+                  <a
+                    href="/docs/keyboard-shortcuts"
+                    className="underline underline-offset-2 decoration-border hover:decoration-foreground transition-colors"
+                  >
+                    extensive shortcuts
+                  </a>{" "}
+                  for workspaces, splits, browser, and more
                 </span>
               </span>
             </li>
@@ -127,7 +151,10 @@ export default function Home() {
         </section>
 
         {/* Screenshot - break out of max-w-2xl to be wider */}
-        <div data-dev="screenshot" className="mb-12 -mx-6 sm:-mx-24 md:-mx-40 lg:-mx-72 xl:-mx-96">
+        <div
+          data-dev="screenshot"
+          className="mb-12 -mx-6 sm:-mx-24 md:-mx-40 lg:-mx-72 xl:-mx-96"
+        >
           <FadeImage
             src={landingImage}
             alt="cmux terminal app screenshot"
@@ -144,64 +171,105 @@ export default function Home() {
           </h2>
           <div className="space-y-5 text-[15px]" style={{ lineHeight: 1.5 }}>
             <div>
-              <p className="font-medium mb-1">How does cmux relate to Ghostty?</p>
+              <p className="font-medium mb-1">
+                How does cmux relate to Ghostty?
+              </p>
               <p className="text-muted">
                 cmux is not a fork of Ghostty. It uses{" "}
-                <a href="https://github.com/ghostty-org/ghostty" className="underline underline-offset-2 decoration-border hover:decoration-foreground transition-colors">libghostty</a>{" "}
-                as a library for terminal rendering, the same way apps use WebKit for web views.
-                Ghostty is a standalone terminal; cmux is a different app built on top of its rendering engine.
+                <a
+                  href="https://github.com/ghostty-org/ghostty"
+                  className="underline underline-offset-2 decoration-border hover:decoration-foreground transition-colors"
+                >
+                  libghostty
+                </a>{" "}
+                as a library for terminal rendering, the same way apps use
+                WebKit for web views. Ghostty is a standalone terminal; cmux is
+                a different app built on top of its rendering engine.
               </p>
             </div>
             <div>
-              <p className="font-medium mb-1">What platforms does it support?</p>
+              <p className="font-medium mb-1">
+                What platforms does it support?
+              </p>
               <p className="text-muted">
                 macOS only, for now. cmux is a native Swift + AppKit app.
               </p>
             </div>
             <div>
-              <p className="font-medium mb-1">What coding agents does cmux work with?</p>
+              <p className="font-medium mb-1">
+                What coding agents does cmux work with?
+              </p>
               <p className="text-muted">
-                All of them. cmux is a terminal, so any agent that runs in a terminal works out of the
-                box: Claude Code, Codex, OpenCode, Gemini CLI, Kiro, Aider, Goose, Amp, Cline,
-                Cursor Agent, and anything else you can launch from the command line.
+                All of them. cmux is a terminal, so any agent that runs in a
+                terminal works out of the box: Claude Code, Codex, OpenCode,
+                Gemini CLI, Kiro, Aider, Goose, Amp, Cline, Cursor Agent, and
+                anything else you can launch from the command line.
               </p>
             </div>
             <div>
               <p className="font-medium mb-1">How do notifications work?</p>
               <p className="text-muted">
-                When a process needs attention, cmux shows notification rings around panes,
-                unread badges in the sidebar, a notification popover, and a macOS desktop
-                notification. These fire automatically via standard terminal escape sequences
-                (OSC 9/99/777), or you can trigger them with the{" "}
-                <a href="/docs/notifications" className="underline underline-offset-2 decoration-border hover:decoration-foreground transition-colors">cmux CLI</a>{" "}
+                When a process needs attention, cmux shows notification rings
+                around panes, unread badges in the sidebar, a notification
+                popover, and a macOS desktop notification. These fire
+                automatically via standard terminal escape sequences (OSC
+                9/99/777), or you can trigger them with the{" "}
+                <a
+                  href="/docs/notifications"
+                  className="underline underline-offset-2 decoration-border hover:decoration-foreground transition-colors"
+                >
+                  cmux CLI
+                </a>{" "}
                 and{" "}
-                <a href="/docs/notifications" className="underline underline-offset-2 decoration-border hover:decoration-foreground transition-colors">Claude Code hooks</a>.
+                <a
+                  href="/docs/notifications"
+                  className="underline underline-offset-2 decoration-border hover:decoration-foreground transition-colors"
+                >
+                  Claude Code hooks
+                </a>
+                .
               </p>
             </div>
             <div>
-              <p className="font-medium mb-1">Can I customize keyboard shortcuts?</p>
+              <p className="font-medium mb-1">
+                Can I customize keyboard shortcuts?
+              </p>
               <p className="text-muted">
-                Terminal keybindings are read from your Ghostty config
-                file (<code className="text-xs bg-code-bg px-1.5 py-0.5 rounded">~/.config/ghostty/config</code>).
-                cmux-specific shortcuts (workspaces, splits, browser, notifications) can be
-                customized in Settings. See the{" "}
-                <a href="/docs/keyboard-shortcuts" className="underline underline-offset-2 decoration-border hover:decoration-foreground transition-colors">default shortcuts</a>{" "}
+                Terminal keybindings are read from your Ghostty config file (
+                <code className="text-xs bg-code-bg px-1.5 py-0.5 rounded">
+                  ~/.config/ghostty/config
+                </code>
+                ). cmux-specific shortcuts (workspaces, splits, browser,
+                notifications) can be customized in Settings. See the{" "}
+                <a
+                  href="/docs/keyboard-shortcuts"
+                  className="underline underline-offset-2 decoration-border hover:decoration-foreground transition-colors"
+                >
+                  default shortcuts
+                </a>{" "}
                 for a full list.
               </p>
             </div>
             <div>
               <p className="font-medium mb-1">How does it compare to tmux?</p>
               <p className="text-muted">
-                tmux is a terminal multiplexer that runs inside any terminal. cmux is a native macOS app
-                with a GUI: vertical tabs, split panes, an embedded browser, and a socket API are all
-                built in. No config files or prefix keys needed.
+                tmux is a terminal multiplexer that runs inside any terminal.
+                cmux is a native macOS app with a GUI: vertical tabs, split
+                panes, an embedded browser, and a socket API are all built in.
+                No config files or prefix keys needed.
               </p>
             </div>
             <div>
               <p className="font-medium mb-1">Is cmux free?</p>
               <p className="text-muted">
                 Yes, cmux is free to use. The source code is available on{" "}
-                <a href="https://github.com/manaflow-ai/cmux" className="underline underline-offset-2 decoration-border hover:decoration-foreground transition-colors">GitHub</a>.
+                <a
+                  href="https://github.com/manaflow-ai/cmux"
+                  className="underline underline-offset-2 decoration-border hover:decoration-foreground transition-colors"
+                >
+                  GitHub
+                </a>
+                .
               </p>
             </div>
           </div>
@@ -212,7 +280,16 @@ export default function Home() {
           <h2 className="text-xs font-medium text-muted tracking-tight mb-3">
             Community
           </h2>
-          <ul data-dev="community-ul" className="text-[15px]" style={{ lineHeight: 1.5, display: "flex", flexDirection: "column", gap: 16 }}>
+          <ul
+            data-dev="community-ul"
+            className="text-[15px]"
+            style={{
+              lineHeight: 1.5,
+              display: "flex",
+              flexDirection: "column",
+              gap: 16,
+            }}
+          >
             {testimonials.map((t) => (
               <li key={t.url}>
                 <span>
@@ -226,10 +303,12 @@ export default function Home() {
                       &quot;{t.text}&quot;
                     </span>
                     {"translation" in t && t.translation && (
-                      <span className="text-muted/60 text-xs italic"> — {t.translation}</span>
+                      <span className="text-muted/60 text-xs italic">
+                        {" "}
+                        — {t.translation}
+                      </span>
                     )}
-                  </a>
-                  {" "}
+                  </a>{" "}
                   <a
                     href={t.url}
                     target="_blank"
@@ -246,7 +325,8 @@ export default function Home() {
                         className="rounded-full inline-block"
                       />
                     )}
-                    {t.name}{"subtitle" in t && t.subtitle ? `, ${t.subtitle}` : ""}
+                    {t.name}
+                    {"subtitle" in t && t.subtitle ? `, ${t.subtitle}` : ""}
                   </a>
                 </span>
               </li>
@@ -273,9 +353,7 @@ export default function Home() {
             View Changelog
           </a>
         </div>
-
       </main>
-
     </div>
   );
 }

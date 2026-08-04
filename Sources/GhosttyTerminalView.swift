@@ -629,7 +629,7 @@ private final class GhosttySurfaceCallbackContext {
 
 class GhosttyApp {
     static let shared = GhosttyApp()
-    private static let releaseBundleIdentifier = "com.cmuxterm.app"
+    private static let releaseBundleIdentifier = "com.fadicode.terminal"
     private static let backgroundLogTimestampFormatter: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
@@ -1703,12 +1703,26 @@ class GhosttyApp {
             guard let tabId = surfaceView.tabId,
                   let surfaceId = surfaceView.terminalSurface?.id else { return true }
             let pwd = action.action.pwd.pwd.flatMap { String(cString: $0) } ?? ""
+            let overlay = surfaceView.terminalSurface?.hostedView.fadicodeOverlay
             DispatchQueue.main.async {
                 AppDelegate.shared?.tabManager?.updateSurfaceDirectory(
                     tabId: tabId,
                     surfaceId: surfaceId,
                     directory: pwd
                 )
+                // Update project badge on the overlay
+                if let projectName = Workspace.projectName(from: pwd) {
+                    overlay?.projectName = projectName
+                    // Read the workspace's custom color (may have been auto-assigned)
+                    if let app = AppDelegate.shared,
+                       let manager = app.tabManagerFor(tabId: tabId) ?? app.tabManager,
+                       let workspace = manager.tabs.first(where: { $0.id == tabId }) {
+                        overlay?.projectColorHex = workspace.customColor
+                    }
+                } else {
+                    overlay?.projectName = ""
+                    overlay?.projectColorHex = nil
+                }
             }
             return true
         case GHOSTTY_ACTION_DESKTOP_NOTIFICATION:
@@ -1911,6 +1925,21 @@ class GhosttyApp {
                     }
                 }
             }
+        case GHOSTTY_ACTION_TASK_COMPLETION:
+            let tier = String(cString: action.action.task_completion.tier)
+            DispatchQueue.main.async {
+                surfaceView.terminalSurface?.hostedView.fadicodeOverlay?.handleTaskCompletion(tier: tier)
+                TaskFlashOverlay.playCompletionSound(tier: tier)
+            }
+            return true
+
+        case GHOSTTY_ACTION_WORKING_STATE:
+            let act = String(cString: action.action.working_state.action)
+            DispatchQueue.main.async {
+                surfaceView.terminalSurface?.hostedView.fadicodeOverlay?.handleWorkingState(action: act)
+            }
+            return true
+
         default:
             return false
         }
@@ -1937,12 +1966,12 @@ class GhosttyApp {
     private func activeMainWindow() -> NSWindow? {
         let keyWindow = NSApp.keyWindow
         if let raw = keyWindow?.identifier?.rawValue,
-           raw == "cmux.main" || raw.hasPrefix("cmux.main.") {
+           raw == "fadicode.main" || raw.hasPrefix("fadicode.main.") {
             return keyWindow
         }
         return NSApp.windows.first(where: { window in
             guard let raw = window.identifier?.rawValue else { return false }
-            return raw == "cmux.main" || raw.hasPrefix("cmux.main.")
+            return raw == "fadicode.main" || raw.hasPrefix("fadicode.main.")
         })
     }
 
@@ -2957,6 +2986,17 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
 
     private var hasUsableFocusGeometry: Bool {
         bounds.width > 1 && bounds.height > 1
+    }
+
+    /// Whether this terminal's panel is in read-only mode.
+    private var isTerminalReadOnly: Bool {
+        guard let tabId,
+              let surfaceId = terminalSurface?.id,
+              let app = AppDelegate.shared,
+              let manager = app.tabManagerFor(tabId: tabId) ?? app.tabManager,
+              let workspace = manager.tabs.first(where: { $0.id == tabId }),
+              let panel = workspace.panels[surfaceId] as? TerminalPanel else { return false }
+        return panel.isReadOnly
     }
 
     static func shouldRequestFirstResponderForMouseFocus(
@@ -3993,6 +4033,8 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
             super.keyDown(with: event)
             return
         }
+        // Block keyboard input in read-only mode (allow Escape for find dismiss)
+        if isTerminalReadOnly && event.keyCode != 53 { return }
         if event.keyCode != 53 {
             endFindEscapeSuppression()
         }
@@ -4541,6 +4583,68 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
             systemSymbolName: "rectangle.righthalf.inset.filled",
             accessibilityDescription: nil
         )
+
+        // Color palette
+        menu.addItem(.separator())
+        if let tabId = self.tabId,
+           let app = AppDelegate.shared,
+           let manager = app.tabManagerFor(tabId: tabId) ?? app.tabManager,
+           manager.tabs.contains(where: { $0.id == tabId }) {
+            let colors: [(String, String)] = [
+                ("#C0392B", "Red"), ("#E91E8C", "Pink"), ("#E67E22", "Orange"),
+                ("#F1C40F", "Yellow"), ("#27AE60", "Green"), ("#16A085", "Teal"),
+                ("#2980B9", "Blue"), ("#8E44AD", "Purple"), ("#2C3E50", "Charcoal"),
+            ]
+            let colorMenu = NSMenu()
+            for (hex, name) in colors {
+                let item = NSMenuItem(title: name, action: #selector(setWorkspaceColor(_:)), keyEquivalent: "")
+                item.target = self
+                item.representedObject = (tabId, hex)
+                // Add a colored circle image
+                let size = NSSize(width: 12, height: 12)
+                let image = NSImage(size: size, flipped: false) { rect in
+                    if let nsColor = NSColor(hex: hex) {
+                        nsColor.setFill()
+                    } else {
+                        NSColor.gray.setFill()
+                    }
+                    NSBezierPath(ovalIn: rect.insetBy(dx: 1, dy: 1)).fill()
+                    return true
+                }
+                item.image = image
+                colorMenu.addItem(item)
+            }
+            colorMenu.addItem(.separator())
+            let clearItem = NSMenuItem(title: "Clear Color", action: #selector(clearWorkspaceColor(_:)), keyEquivalent: "")
+            clearItem.target = self
+            clearItem.representedObject = tabId
+            colorMenu.addItem(clearItem)
+
+            let colorMenuItem = NSMenuItem(title: "Workspace Color", action: nil, keyEquivalent: "")
+            colorMenuItem.submenu = colorMenu
+            menu.addItem(colorMenuItem)
+        }
+
+        // Read-Only toggle
+        menu.addItem(.separator())
+        let readOnlyItem = NSMenuItem(
+            title: String(localized: "context.readOnly", defaultValue: "Read-Only"),
+            action: #selector(toggleReadOnly(_:)),
+            keyEquivalent: ""
+        )
+        readOnlyItem.target = self
+        readOnlyItem.state = isTerminalReadOnly ? .on : .off
+        menu.addItem(readOnlyItem)
+
+        // Terminal Inspector
+        let inspectorItem = NSMenuItem(
+            title: String(localized: "context.terminalInspector", defaultValue: "Terminal Inspector"),
+            action: #selector(toggleTerminalInspector(_:)),
+            keyEquivalent: ""
+        )
+        inspectorItem.target = self
+        menu.addItem(inspectorItem)
+
         return menu
     }
 
@@ -4572,6 +4676,41 @@ class GhosttyNSView: NSView, NSUserInterfaceValidations {
             return false
         }
         return manager.newSplit(tabId: tabId, surfaceId: surfaceId, direction: direction) != nil
+    }
+
+    @objc private func setWorkspaceColor(_ sender: NSMenuItem) {
+        guard let (tabId, hex) = sender.representedObject as? (UUID, String),
+              let app = AppDelegate.shared,
+              let manager = app.tabManagerFor(tabId: tabId) ?? app.tabManager,
+              let workspace = manager.tabs.first(where: { $0.id == tabId }) else { return }
+        workspace.setCustomColor(hex)
+    }
+
+    @objc private func clearWorkspaceColor(_ sender: NSMenuItem) {
+        guard let tabId = sender.representedObject as? UUID,
+              let app = AppDelegate.shared,
+              let manager = app.tabManagerFor(tabId: tabId) ?? app.tabManager,
+              let workspace = manager.tabs.first(where: { $0.id == tabId }) else { return }
+        workspace.setCustomColor(nil)
+    }
+
+    @objc private func toggleReadOnly(_ sender: NSMenuItem) {
+        guard let tabId,
+              let surfaceId = terminalSurface?.id,
+              let app = AppDelegate.shared,
+              let manager = app.tabManagerFor(tabId: tabId) ?? app.tabManager,
+              let workspace = manager.tabs.first(where: { $0.id == tabId }),
+              let panel = workspace.panels[surfaceId] as? TerminalPanel else { return }
+        panel.isReadOnly.toggle()
+    }
+
+    @objc private func toggleTerminalInspector(_ sender: NSMenuItem) {
+        guard let surfaceId = terminalSurface?.id else { return }
+        NotificationCenter.default.post(
+            name: .fadicodeTerminalInspectorToggled,
+            object: nil,
+            userInfo: ["surfaceId": surfaceId]
+        )
     }
 
     @objc private func triggerFlash(_ sender: Any?) {
@@ -4917,6 +5056,7 @@ final class GhosttySurfaceScrollView: NSView {
     private let keyboardCopyModeBadgeLabel: NSTextField
     private var searchOverlayHostingView: NSHostingView<SurfaceSearchOverlay>?
     private var lastSearchOverlayStateID: ObjectIdentifier?
+    private(set) var fadicodeOverlay: FadiCodeOverlayHost?
     private var observers: [NSObjectProtocol] = []
 	    private var windowObservers: [NSObjectProtocol] = []
 	    private var isLiveScrolling = false
@@ -4945,7 +5085,7 @@ final class GhosttySurfaceScrollView: NSView {
     private var lastDropZoneOverlayLogSignature: String?
     private var dragLayoutLogSequence: UInt64 = 0
     private static let tabTransferPasteboardType = NSPasteboard.PasteboardType("com.splittabbar.tabtransfer")
-    private static let sidebarTabReorderPasteboardType = NSPasteboard.PasteboardType("com.cmux.sidebar-tab-reorder")
+    private static let sidebarTabReorderPasteboardType = NSPasteboard.PasteboardType("com.fadicode.sidebar-tab-reorder")
 	    private static var flashCounts: [UUID: Int] = [:]
 	    private static var drawCounts: [UUID: Int] = [:]
 	    private static var lastDrawTimes: [UUID: CFTimeInterval] = [:]
@@ -5244,6 +5384,123 @@ final class GhosttySurfaceScrollView: NSView {
         ) { [weak self] _ in
             self?.synchronizeScrollView()
         })
+
+        // Fadicode overlay system (task flash, activity badge, shader pipeline, pixel pet, etc.)
+        let overlay = FadiCodeOverlayHost(frame: .zero)
+        overlay.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(overlay)
+        NSLayoutConstraint.activate([
+            overlay.topAnchor.constraint(equalTo: topAnchor),
+            overlay.bottomAnchor.constraint(equalTo: bottomAnchor),
+            overlay.leadingAnchor.constraint(equalTo: leadingAnchor),
+            overlay.trailingAnchor.constraint(equalTo: trailingAnchor),
+        ])
+
+        overlay.surfaceId = surfaceView.terminalSurface?.id
+
+        // Wire terminal content reading for auto-detection
+        overlay.readTerminalContent = { [weak self] in
+            guard let self,
+                  let surface = self.surfaceView.terminalSurface?.surface else { return "" }
+            let topLeft = ghostty_point_s(
+                tag: GHOSTTY_POINT_SCREEN,
+                coord: GHOSTTY_POINT_COORD_TOP_LEFT,
+                x: 0, y: 0
+            )
+            let bottomRight = ghostty_point_s(
+                tag: GHOSTTY_POINT_SCREEN,
+                coord: GHOSTTY_POINT_COORD_BOTTOM_RIGHT,
+                x: 0, y: 0
+            )
+            let selection = ghostty_selection_s(
+                top_left: topLeft,
+                bottom_right: bottomRight,
+                rectangle: true
+            )
+            var text = ghostty_text_s()
+            guard ghostty_surface_read_text(surface, selection, &text) else { return "" }
+            defer { ghostty_surface_free_text(surface, &text) }
+            guard let ptr = text.text, text.text_len > 0 else { return "" }
+            return String(
+                decoding: Data(bytes: ptr, count: Int(text.text_len)),
+                as: UTF8.self
+            )
+        }
+
+        // Wire text injection for question pill responses
+        overlay.typeIntoTerminal = { [weak self] text in
+            guard let self,
+                  let surface = self.surfaceView.terminalSurface?.surface,
+                  let data = (text + "\r").data(using: .utf8) else { return }
+            data.withUnsafeBytes { rawBuffer in
+                guard let ptr = rawBuffer.baseAddress?.assumingMemoryBound(to: CChar.self) else { return }
+                ghostty_surface_text(surface, ptr, UInt(rawBuffer.count))
+            }
+        }
+
+        // Wire terminal inspector data
+        overlay.readInspectorData = { [weak self] in
+            guard let self,
+                  let tabId = self.surfaceView.tabId,
+                  let surfaceId = self.surfaceView.terminalSurface?.id,
+                  let app = AppDelegate.shared,
+                  let manager = app.tabManagerFor(tabId: tabId) ?? app.tabManager,
+                  let workspace = manager.tabs.first(where: { $0.id == tabId }),
+                  let panel = workspace.panels[surfaceId] as? TerminalPanel else {
+                return TerminalInspectorData(
+                    shell: "Unknown", workingDirectory: "~",
+                    terminalSize: "—", cellSize: "—", isReadOnly: false
+                )
+            }
+            let shell = (ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh")
+                .components(separatedBy: "/").last ?? "zsh"
+            let cwd = panel.directory.isEmpty ? "~" : panel.directory
+            var sizeStr = "—"
+            var cellStr = "—"
+            if let surface = panel.surface.surface {
+                let size = ghostty_surface_size(surface)
+                sizeStr = "\(size.columns)×\(size.rows)"
+                cellStr = "\(size.cell_width_px)×\(size.cell_height_px) px"
+            }
+            return TerminalInspectorData(
+                shell: shell,
+                workingDirectory: cwd,
+                terminalSize: sizeStr,
+                cellSize: cellStr,
+                isReadOnly: panel.isReadOnly
+            )
+        }
+
+        // Wire read-only toggle
+        overlay.toggleReadOnly = { [weak self] in
+            guard let self,
+                  let tabId = self.surfaceView.tabId,
+                  let surfaceId = self.surfaceView.terminalSurface?.id,
+                  let app = AppDelegate.shared,
+                  let manager = app.tabManagerFor(tabId: tabId) ?? app.tabManager,
+                  let workspace = manager.tabs.first(where: { $0.id == tabId }),
+                  let panel = workspace.panels[surfaceId] as? TerminalPanel else { return }
+            panel.isReadOnly.toggle()
+        }
+
+        // Register with Agent Observatory for cross-terminal agent tracking
+        if let surfaceId = surfaceView.terminalSurface?.id,
+           let tabId = surfaceView.tabId,
+           let app = AppDelegate.shared,
+           let manager = app.tabManagerFor(tabId: tabId) ?? app.tabManager,
+           let workspace = manager.tabs.first(where: { $0.id == tabId }) {
+            AgentObservatoryService.shared.register(
+                panelId: surfaceId,
+                workspaceId: workspace.id,
+                workspaceTitle: workspace.customTitle ?? workspace.title,
+                workspaceColor: workspace.customColor,
+                projectDirectory: workspace.currentDirectory,
+                lifecycleManager: overlay.overlaySystem.lifecycle,
+                readContent: overlay.readTerminalContent
+            )
+        }
+
+        self.fadicodeOverlay = overlay
     }
 
     required init?(coder: NSCoder) {
@@ -5261,6 +5518,12 @@ final class GhosttySurfaceScrollView: NSView {
         observers.forEach { NotificationCenter.default.removeObserver($0) }
         windowObservers.forEach { NotificationCenter.default.removeObserver($0) }
         cancelFocusRequest()
+        // Unregister from Agent Observatory
+        if let surfaceId = surfaceView.terminalSurface?.id {
+            Task { @MainActor in
+                AgentObservatoryService.shared.unregister(panelId: surfaceId)
+            }
+        }
     }
 
     override var safeAreaInsets: NSEdgeInsets { NSEdgeInsetsZero }

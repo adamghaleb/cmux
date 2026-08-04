@@ -55,12 +55,14 @@ export default function ShowHNLaunchPage() {
       </div>
 
       <h1>Launching cmux on Show HN</h1>
-      <time dateTime="2026-02-21" className="text-sm text-muted">February 21, 2026</time>
+      <time dateTime="2026-02-21" className="text-sm text-muted">
+        February 21, 2026
+      </time>
 
       <p className="mt-6">
         We posted cmux on{" "}
-        <a href="https://news.ycombinator.com/item?id=47079718">Show HN</a>{" "}
-        on Feb 19:
+        <a href="https://news.ycombinator.com/item?id=47079718">Show HN</a> on
+        Feb 19:
       </p>
 
       <blockquote className="border-l-2 border-border pl-4 my-6 text-muted space-y-3 text-[15px]">
@@ -69,23 +71,23 @@ export default function ShowHNLaunchPage() {
           Ghostty with a bunch of split panes, and relying on native macOS
           notifications to know when an agent needed me. But Claude Code&apos;s
           notification body is always just &quot;Claude is waiting for your
-          input&quot; with no context, and with enough tabs open, I couldn&apos;t
-          even read the titles anymore.
+          input&quot; with no context, and with enough tabs open, I
+          couldn&apos;t even read the titles anymore.
         </p>
         <p>
-          I tried a few coding orchestrators but most of them were Electron/Tauri
-          apps and the performance bugged me. I also just prefer the terminal
-          since GUI orchestrators lock you into their workflow. So I built cmux as
-          a native macOS app in Swift/AppKit. It uses libghostty for terminal
-          rendering and reads your existing Ghostty config for themes, fonts,
-          colors, and more.
+          I tried a few coding orchestrators but most of them were
+          Electron/Tauri apps and the performance bugged me. I also just prefer
+          the terminal since GUI orchestrators lock you into their workflow. So
+          I built cmux as a native macOS app in Swift/AppKit. It uses libghostty
+          for terminal rendering and reads your existing Ghostty config for
+          themes, fonts, colors, and more.
         </p>
         <p>
-          The main additions are the sidebar and notification system. The sidebar
-          has vertical tabs that show git branch, working directory, listening
-          ports, and the latest notification text for each workspace. The
-          notification system picks up terminal sequences (OSC 9/99/777) and has a
-          CLI (cmux notify) you can wire into agent hooks for Claude Code,
+          The main additions are the sidebar and notification system. The
+          sidebar has vertical tabs that show git branch, working directory,
+          listening ports, and the latest notification text for each workspace.
+          The notification system picks up terminal sequences (OSC 9/99/777) and
+          has a CLI (cmux notify) you can wire into agent hooks for Claude Code,
           OpenCode, etc. When an agent is waiting, its pane gets a blue ring and
           the tab lights up in the sidebar, so I can tell which one needs me
           across splits and tabs. Cmd+Shift+U jumps to the most recent unread.
@@ -98,13 +100,12 @@ export default function ShowHNLaunchPage() {
         </p>
         <p>
           Everything is scriptable through the CLI and socket API: create
-          workspaces/tabs, split panes, send keystrokes, open URLs in the browser.
+          workspaces/tabs, split panes, send keystrokes, open URLs in the
+          browser.
         </p>
       </blockquote>
 
-      <p>
-        At peak it hit #2 on Hacker News. Mitchell Hashimoto shared it:
-      </p>
+      <p>At peak it hit #2 on Hacker News. Mitchell Hashimoto shared it:</p>
 
       <Tweet id="2024913161238053296" />
 
@@ -122,7 +123,9 @@ export default function ShowHNLaunchPage() {
           really appreciate Mitchell Hashimoto creating libghostty; it feels
           like an exciting time to be a terminal user.
         </p>
-        <p>Some feedback (since you were asking for it elsewhere in the thread!):</p>
+        <p>
+          Some feedback (since you were asking for it elsewhere in the thread!):
+        </p>
         <ul className="list-disc pl-5 space-y-1">
           <li>
             It&apos;s not obvious/easy to open browser dev tools (cmd-alt-i
@@ -150,47 +153,45 @@ export default function ShowHNLaunchPage() {
         </ul>
         <p className="text-xs">
           —{" "}
-          <a href="https://news.ycombinator.com/item?id=47083596" className="hover:text-foreground transition-colors">
+          <a
+            href="https://news.ycombinator.com/item?id=47083596"
+            className="hover:text-foreground transition-colors"
+          >
             johnthedebs
           </a>
         </p>
       </blockquote>
 
-      <p>
-        Surprisingly, cmux went viral in Japan:
-      </p>
+      <p>Surprisingly, cmux went viral in Japan:</p>
 
       <Tweet id="2025129675262251026" />
 
       <p>
         Translation: &quot;This looks good. A Ghostty-based terminal app
         designed so you don&apos;t get lost running multiple CLIs like Claude
-        Code in parallel. The waiting-for-input panel gets a blue frame, and
-        it has its own notification system.&quot;
+        Code in parallel. The waiting-for-input panel gets a blue frame, and it
+        has its own notification system.&quot;
       </p>
 
-      <p>
-        And semi-viral in China:
-      </p>
+      <p>And semi-viral in China:</p>
 
       <Tweet id="2024867449947275444" />
 
       <p>
-        Another exciting thing was seeing people build on top of the cmux
-        CLI. sasha built a pi-cmux extension that shows model info, token
-        usage, and agent state in the sidebar:
+        Another exciting thing was seeing people build on top of the cmux CLI.
+        sasha built a pi-cmux extension that shows model info, token usage, and
+        agent state in the sidebar:
       </p>
 
       <Tweet id="2024978414822916358" />
 
       <p>
         Everything in cmux is scriptable through the CLI: creating workspaces,
-        sending keystrokes, controlling the browser, reading notifications.
-        Part of the cmux philosophy is being programmable and composable, so
-        people can customize the way they work with coding agents. The
-        state of the art for coding agents is changing fast, and you don&apos;t
-        want to be locked into an inflexible GUI orchestrator that can&apos;t
-        keep up.
+        sending keystrokes, controlling the browser, reading notifications. Part
+        of the cmux philosophy is being programmable and composable, so people
+        can customize the way they work with coding agents. The state of the art
+        for coding agents is changing fast, and you don&apos;t want to be locked
+        into an inflexible GUI orchestrator that can&apos;t keep up.
       </p>
 
       <p>
@@ -206,7 +207,6 @@ export default function ShowHNLaunchPage() {
           className="w-full rounded-xl"
         />
       </div>
-
     </>
   );
 }

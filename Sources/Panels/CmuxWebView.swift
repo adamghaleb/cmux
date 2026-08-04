@@ -945,7 +945,10 @@ final class CmuxWebView: WKWebView {
                         "browser.ctxdl.file trace=\(traceID) stage=readSuccess bytes=\(data.count) path=\(url.path)"
                     )
                     let filename = suggestedFilename?.trimmingCharacters(in: .whitespacesAndNewlines)
-                    let saveName = (filename?.isEmpty == false ? filename! : url.lastPathComponent.isEmpty ? "download" : url.lastPathComponent)
+                    let saveName: String = {
+                        if let name = filename, !name.isEmpty { return name }
+                        return url.lastPathComponent.isEmpty ? "download" : url.lastPathComponent
+                    }()
                     let savePanel = NSSavePanel()
                     savePanel.nameFieldStringValue = saveName
                     savePanel.canCreateDirectories = true
@@ -1110,7 +1113,7 @@ final class CmuxWebView: WKWebView {
         NSPasteboard.PasteboardType("public.text"),
         NSPasteboard.PasteboardType("public.plain-text"),
         NSPasteboard.PasteboardType("com.splittabbar.tabtransfer"),
-        NSPasteboard.PasteboardType("com.cmux.sidebar-tab-reorder"),
+        NSPasteboard.PasteboardType("com.fadicode.sidebar-tab-reorder"),
     ]
 
     static func shouldRejectInternalPaneDrag(_ pasteboardTypes: [NSPasteboard.PasteboardType]?) -> Bool {

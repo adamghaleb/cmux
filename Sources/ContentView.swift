@@ -100,6 +100,7 @@ struct ShortcutHintPillBackground: View {
 enum WindowGlassEffect {
     private static var glassViewKey: UInt8 = 0
     private static var tintOverlayKey: UInt8 = 0
+    private static var originalContentViewKey: UInt8 = 0
 
     static var isAvailable: Bool {
         NSClassFromString("NSGlassEffectView") != nil
@@ -147,6 +148,9 @@ enum WindowGlassEffect {
         }
 
         glassView.autoresizingMask = [.width, .height]
+
+        // Store reference to the original contentView so remove() can restore it
+        objc_setAssociatedObject(window, &originalContentViewKey, originalContentView, .OBJC_ASSOCIATION_RETAIN)
 
         if usingGlassEffectView {
             // NSGlassEffectView is a full replacement for the contentView.
@@ -221,10 +225,32 @@ enum WindowGlassEffect {
     }
 
     static func remove(from window: NSWindow) {
-        // Note: Removing would require restoring original contentView structure
-        // For now, just clear the reference
+        guard let glassView = objc_getAssociatedObject(window, &glassViewKey) as? NSView else { return }
+
+        if glassView.className == "NSGlassEffectView" || glassView === window.contentView {
+            // NSGlassEffectView path: the glass view replaced window.contentView,
+            // and the original contentView was re-added as a subview of the glass.
+            // Restore the original contentView as the window's contentView.
+            if let originalContentView = objc_getAssociatedObject(window, &originalContentViewKey) as? NSView {
+                originalContentView.removeFromSuperview()
+                originalContentView.translatesAutoresizingMaskIntoConstraints = true
+                originalContentView.frame = glassView.bounds
+                originalContentView.autoresizingMask = [.width, .height]
+                window.contentView = originalContentView
+            }
+        } else {
+            // NSVisualEffectView fallback path: the glass view was inserted as a
+            // subview behind the content. Remove it and any tint overlay.
+            if let tintOverlay = objc_getAssociatedObject(window, &tintOverlayKey) as? NSView {
+                tintOverlay.removeFromSuperview()
+            }
+            glassView.removeFromSuperview()
+        }
+
+        // Clear all associated references
         objc_setAssociatedObject(window, &glassViewKey, nil, .OBJC_ASSOCIATION_RETAIN)
         objc_setAssociatedObject(window, &tintOverlayKey, nil, .OBJC_ASSOCIATION_RETAIN)
+        objc_setAssociatedObject(window, &originalContentViewKey, nil, .OBJC_ASSOCIATION_RETAIN)
     }
 }
 
@@ -804,7 +830,7 @@ final class FileDropOverlayView: NSView {
 
 var fileDropOverlayKey: UInt8 = 0
 private var commandPaletteWindowOverlayKey: UInt8 = 0
-let commandPaletteOverlayContainerIdentifier = NSUserInterfaceItemIdentifier("cmux.commandPalette.overlay.container")
+let commandPaletteOverlayContainerIdentifier = NSUserInterfaceItemIdentifier("fadicode.commandPalette.overlay.container")
 
 enum CommandPaletteOverlayPromotionPolicy {
     static func shouldPromote(previouslyVisible: Bool, isVisible: Bool) -> Bool {
@@ -1976,7 +2002,7 @@ struct ContentView: View {
     @AppStorage("debugTitlebarLeadingExtra") private var debugTitlebarLeadingExtra: Double = 0
 
     @State private var titlebarLeadingInset: CGFloat = 12
-    private var windowIdentifier: String { "cmux.main.\(windowId.uuidString)" }
+    private var windowIdentifier: String { "fadicode.main.\(windowId.uuidString)" }
     private var fakeTitlebarTextColor: Color {
         _ = titlebarThemeGeneration
         let ghosttyBackground = GhosttyApp.shared.defaultBackgroundColor
@@ -2807,7 +2833,7 @@ struct ContentView: View {
     }
 
     private func setTitlebarControlsHidden(_ hidden: Bool, in window: NSWindow) {
-        let controlsId = NSUserInterfaceItemIdentifier("cmux.titlebarControls")
+        let controlsId = NSUserInterfaceItemIdentifier("fadicode.titlebarControls")
         for accessory in window.titlebarAccessoryViewControllers {
             if accessory.view.identifier == controlsId {
                 accessory.isHidden = hidden
@@ -7299,16 +7325,28 @@ private enum FeedbackComposerClient {
         request.httpBody = body
 
         let data: Data
-        let response: URLResponse
+        let httpResponse: HTTPURLResponse
         do {
-            (data, response) = try await URLSession.shared.data(for: request)
+            (data, httpResponse) = try await fetchWithRetry(
+                request: request,
+                maxAttempts: 3,
+                baseDelay: 1.0
+            )
+        } catch let error as HTTPRetryError {
+            switch error {
+            case .clientError(let statusCode, let responseData):
+                if let payload = try? JSONSerialization.jsonObject(with: responseData) as? [String: Any],
+                   let errorMessage = payload["error"] as? String,
+                   errorMessage.isEmpty == false {
+                    NSLog("feedback.submit.rejected status=%@ error=%@", String(statusCode), errorMessage)
+                }
+                throw FeedbackComposerSubmissionError.rejected(statusCode: statusCode)
+            case .serverError(let statusCode, _):
+                throw FeedbackComposerSubmissionError.rejected(statusCode: statusCode)
+            }
         } catch let error as URLError {
             throw FeedbackComposerSubmissionError.transport(error)
         } catch {
-            throw FeedbackComposerSubmissionError.invalidResponse
-        }
-
-        guard let httpResponse = response as? HTTPURLResponse else {
             throw FeedbackComposerSubmissionError.invalidResponse
         }
 
@@ -7474,8 +7512,8 @@ private enum FeedbackComposerClient {
 }
 
 enum SidebarDragLifecycleNotification {
-    static let stateDidChange = Notification.Name("cmux.sidebarDragStateDidChange")
-    static let requestClear = Notification.Name("cmux.sidebarDragRequestClear")
+    static let stateDidChange = Notification.Name("fadicode.sidebarDragStateDidChange")
+    static let requestClear = Notification.Name("fadicode.sidebarDragRequestClear")
     static let tabIdKey = "tabId"
     static let reasonKey = "reason"
 
@@ -10633,10 +10671,10 @@ private final class SidebarDragAutoScrollController: ObservableObject {
 }
 
 private enum SidebarTabDragPayload {
-    static let typeIdentifier = "com.cmux.sidebar-tab-reorder"
+    static let typeIdentifier = "com.fadicode.sidebar-tab-reorder"
     static let dropContentType = UTType(exportedAs: typeIdentifier)
     static let dropContentTypes: [UTType] = [dropContentType]
-    private static let prefix = "cmux.sidebar-tab."
+    private static let prefix = "fadicode.sidebar-tab."
 
     static func provider(for tabId: UUID) -> NSItemProvider {
         let provider = NSItemProvider()

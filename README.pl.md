@@ -70,83 +70,83 @@ Wszystko jest skryptowalne przez CLI i socket API — tworzenie przestrzeni robo
 
 ### Przestrzenie robocze
 
-| Skrót | Akcja |
-|----------|--------|
-| ⌘ N | Nowa przestrzeń robocza |
-| ⌘ 1–8 | Przejdź do przestrzeni roboczej 1–8 |
-| ⌘ 9 | Przejdź do ostatniej przestrzeni roboczej |
-| ⌃ ⌘ ] | Następna przestrzeń robocza |
-| ⌃ ⌘ [ | Poprzednia przestrzeń robocza |
-| ⌘ ⇧ W | Zamknij przestrzeń roboczą |
-| ⌘ B | Przełącz pasek boczny |
+| Skrót | Akcja                                     |
+| ----- | ----------------------------------------- |
+| ⌘ N   | Nowa przestrzeń robocza                   |
+| ⌘ 1–8 | Przejdź do przestrzeni roboczej 1–8       |
+| ⌘ 9   | Przejdź do ostatniej przestrzeni roboczej |
+| ⌃ ⌘ ] | Następna przestrzeń robocza               |
+| ⌃ ⌘ [ | Poprzednia przestrzeń robocza             |
+| ⌘ ⇧ W | Zamknij przestrzeń roboczą                |
+| ⌘ B   | Przełącz pasek boczny                     |
 
 ### Powierzchnie
 
-| Skrót | Akcja |
-|----------|--------|
-| ⌘ T | Nowa powierzchnia |
-| ⌘ ⇧ ] | Następna powierzchnia |
-| ⌘ ⇧ [ | Poprzednia powierzchnia |
-| ⌃ Tab | Następna powierzchnia |
-| ⌃ ⇧ Tab | Poprzednia powierzchnia |
-| ⌃ 1–8 | Przejdź do powierzchni 1–8 |
-| ⌃ 9 | Przejdź do ostatniej powierzchni |
-| ⌘ W | Zamknij powierzchnię |
+| Skrót   | Akcja                            |
+| ------- | -------------------------------- |
+| ⌘ T     | Nowa powierzchnia                |
+| ⌘ ⇧ ]   | Następna powierzchnia            |
+| ⌘ ⇧ [   | Poprzednia powierzchnia          |
+| ⌃ Tab   | Następna powierzchnia            |
+| ⌃ ⇧ Tab | Poprzednia powierzchnia          |
+| ⌃ 1–8   | Przejdź do powierzchni 1–8       |
+| ⌃ 9     | Przejdź do ostatniej powierzchni |
+| ⌘ W     | Zamknij powierzchnię             |
 
 ### Podzielone Panele
 
-| Skrót | Akcja |
-|----------|--------|
-| ⌘ D | Podziel w prawo |
-| ⌘ ⇧ D | Podziel w dół |
-| ⌥ ⌘ ← → ↑ ↓ | Fokus panelu kierunkowo |
-| ⌘ ⇧ H | Mignij fokusowanym panelem |
+| Skrót       | Akcja                      |
+| ----------- | -------------------------- |
+| ⌘ D         | Podziel w prawo            |
+| ⌘ ⇧ D       | Podziel w dół              |
+| ⌥ ⌘ ← → ↑ ↓ | Fokus panelu kierunkowo    |
+| ⌘ ⇧ H       | Mignij fokusowanym panelem |
 
 ### Przeglądarka
 
-| Skrót | Akcja |
-|----------|--------|
+| Skrót | Akcja                          |
+| ----- | ------------------------------ |
 | ⌘ ⇧ L | Otwórz przeglądarkę w podziale |
-| ⌘ L | Fokus na pasku adresu |
-| ⌘ [ | Wstecz |
-| ⌘ ] | Do przodu |
-| ⌘ R | Przeładuj stronę |
+| ⌘ L   | Fokus na pasku adresu          |
+| ⌘ [   | Wstecz                         |
+| ⌘ ]   | Do przodu                      |
+| ⌘ R   | Przeładuj stronę               |
 | ⌥ ⌘ I | Otwórz Narzędzia Deweloperskie |
 
 ### Powiadomienia
 
-| Skrót | Akcja |
-|----------|--------|
-| ⌘ I | Pokaż panel powiadomień |
+| Skrót | Akcja                                   |
+| ----- | --------------------------------------- |
+| ⌘ I   | Pokaż panel powiadomień                 |
 | ⌘ ⇧ U | Przejdź do najnowszego nieprzeczytanego |
 
 ### Szukaj
 
-| Skrót | Akcja |
-|----------|--------|
-| ⌘ F | Szukaj |
-| ⌘ G / ⌘ ⇧ G | Znajdź następny / poprzedni |
-| ⌘ ⇧ F | Ukryj pasek wyszukiwania |
-| ⌘ E | Użyj zaznaczenia do wyszukiwania |
+| Skrót       | Akcja                            |
+| ----------- | -------------------------------- |
+| ⌘ F         | Szukaj                           |
+| ⌘ G / ⌘ ⇧ G | Znajdź następny / poprzedni      |
+| ⌘ ⇧ F       | Ukryj pasek wyszukiwania         |
+| ⌘ E         | Użyj zaznaczenia do wyszukiwania |
 
 ### Terminal
 
-| Skrót | Akcja |
-|----------|--------|
-| ⌘ K | Wyczyść scrollback |
-| ⌘ C | Kopiuj (z zaznaczeniem) |
-| ⌘ V | Wklej |
+| Skrót     | Akcja                               |
+| --------- | ----------------------------------- |
+| ⌘ K       | Wyczyść scrollback                  |
+| ⌘ C       | Kopiuj (z zaznaczeniem)             |
+| ⌘ V       | Wklej                               |
 | ⌘ + / ⌘ - | Zwiększ / zmniejsz rozmiar czcionki |
-| ⌘ 0 | Resetuj rozmiar czcionki |
+| ⌘ 0       | Resetuj rozmiar czcionki            |
 
 ### Okno
 
-| Skrót | Akcja |
-|----------|--------|
-| ⌘ ⇧ N | Nowe okno |
-| ⌘ , | Ustawienia |
+| Skrót | Akcja                  |
+| ----- | ---------------------- |
+| ⌘ ⇧ N | Nowe okno              |
+| ⌘ ,   | Ustawienia             |
 | ⌘ ⇧ , | Przeładuj konfigurację |
-| ⌘ Q | Zakończ |
+| ⌘ Q   | Zakończ                |
 
 ## Licencja
 

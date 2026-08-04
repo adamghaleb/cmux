@@ -7,14 +7,24 @@ const RELEASE_ASSET_GUARD_STATE = Object.freeze({
   COMPLETE: "complete",
 });
 
-function evaluateReleaseAssetGuard({ existingAssetNames, immutableAssetNames = IMMUTABLE_RELEASE_ASSETS }) {
+function evaluateReleaseAssetGuard({
+  existingAssetNames,
+  immutableAssetNames = IMMUTABLE_RELEASE_ASSETS,
+}) {
   const immutableAssets = immutableAssetNames || IMMUTABLE_RELEASE_ASSETS;
   const existing = new Set(existingAssetNames || []);
-  const conflicts = immutableAssets.filter((assetName) => existing.has(assetName));
-  const missingImmutableAssets = immutableAssets.filter((assetName) => !existing.has(assetName));
+  const conflicts = immutableAssets.filter((assetName) =>
+    existing.has(assetName),
+  );
+  const missingImmutableAssets = immutableAssets.filter(
+    (assetName) => !existing.has(assetName),
+  );
 
   let guardState = RELEASE_ASSET_GUARD_STATE.CLEAR;
-  if (conflicts.length === immutableAssets.length && immutableAssets.length > 0) {
+  if (
+    conflicts.length === immutableAssets.length &&
+    immutableAssets.length > 0
+  ) {
     guardState = RELEASE_ASSET_GUARD_STATE.COMPLETE;
   } else if (conflicts.length > 0) {
     guardState = RELEASE_ASSET_GUARD_STATE.PARTIAL;

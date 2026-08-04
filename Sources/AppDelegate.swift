@@ -1555,11 +1555,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     private var lastSocketListenerUnhealthyCaptureAt: Date = .distantPast
     private static let socketListenerUnhealthyCaptureCooldown: TimeInterval = 60
     private let sessionPersistenceQueue = DispatchQueue(
-        label: "com.cmuxterm.app.sessionPersistence",
+        label: "com.fadicode.terminal.sessionPersistence",
         qos: .utility
     )
     private nonisolated static let launchServicesRegistrationQueue = DispatchQueue(
-        label: "com.cmuxterm.app.launchServicesRegistration",
+        label: "com.fadicode.terminal.launchServicesRegistration",
         qos: .utility
     )
     private nonisolated static func enqueueLaunchServicesRegistrationWork(_ work: @escaping @Sendable () -> Void) {
@@ -1668,7 +1668,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
             _ = NSLocale.preferredLanguages
 
             SentrySDK.start { options in
-                options.dsn = "https://ecba1ec90ecaee02a102fba931b6d2b3@o4507547940749312.ingest.us.sentry.io/4510796264636416"
+                options.dsn = "" // Disabled — private fork, no crash reporting
                 #if DEBUG
                 options.environment = "development"
                 options.debug = true
@@ -1688,10 +1688,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
                 // Avoid recursively capturing failed requests from Sentry's own ingestion endpoint.
                 options.enableCaptureFailedRequests = false
             }
-        }
-
-        if telemetryEnabled && !isRunningUnderXCTest {
-            PostHogAnalytics.shared.startIfNeeded()
         }
 
         let forceDuplicateLaunchObserver = env["CMUX_UI_TEST_ENABLE_DUPLICATE_LAUNCH_OBSERVER"] == "1"
@@ -1719,9 +1715,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         if !isRunningUnderXCTest {
             configureUserNotifications()
             setupMenuBarExtra()
+            setupFadicodeMenu()
+            setupFadicodeQuickLaunchObservers()
             // Sparkle updater is started lazily on first manual check. This avoids any
             // first-launch permission prompts and keeps cmux aligned with the update pill UI.
         }
+
+        // Clean up orphaned scrollback replay temp files from previous sessions.
+        // The shell integration normally deletes each file after replaying, but files
+        // can be left behind if the shell integration doesn't load or the app crashes.
+        DispatchQueue.global(qos: .utility).async {
+            SessionScrollbackReplayStore.cleanupStaleReplayFiles()
+        }
+
         titlebarAccessoryController.start()
         windowDecorationsController.start()
         installMainWindowKeyObserver()
@@ -1804,10 +1810,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         sentryBreadcrumb("app.didBecomeActive", category: "lifecycle", data: [
             "tabCount": tabManager?.tabs.count ?? 0
         ])
-        if TelemetrySettings.enabledForCurrentLaunch && !isRunningUnderXCTestCached {
-            PostHogAnalytics.shared.trackActive(reason: "didBecomeActive")
-        }
-
         guard let notificationStore else { return }
         notificationStore.handleApplicationDidBecomeActive()
         guard let tabManager else { return }
@@ -1836,11 +1838,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         TerminalController.shared.stop()
         VSCodeServeWebController.shared.stop()
         BrowserHistoryStore.shared.flushPendingSaves()
-        if TelemetrySettings.enabledForCurrentLaunch {
-            PostHogAnalytics.shared.flush()
-        }
         notificationStore?.clearAll()
         enableSuddenTerminationIfNeeded()
+
+        // Remove all scrollback replay temp files. They are ephemeral and
+        // regenerated from the persisted session snapshot on next launch.
+        SessionScrollbackReplayStore.removeAllReplayFiles()
     }
 
     func applicationWillResignActive(_ notification: Notification) {
@@ -3867,13 +3870,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
            let window = ctx.window {
             return window
         }
-        let expectedIdentifier = "cmux.main.\(windowId.uuidString)"
+        let expectedIdentifier = "fadicode.main.\(windowId.uuidString)"
         return NSApp.windows.first(where: { $0.identifier?.rawValue == expectedIdentifier })
     }
 
     private func mainWindowId(from window: NSWindow) -> UUID? {
         guard let raw = window.identifier?.rawValue else { return nil }
-        let prefix = "cmux.main."
+        let prefix = "fadicode.main."
         guard raw.hasPrefix(prefix) else { return nil }
         let suffix = String(raw.dropFirst(prefix.count))
         return UUID(uuidString: suffix)
@@ -3953,8 +3956,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
             return context.windowId
         }
         guard let rawIdentifier = window.identifier?.rawValue,
-              rawIdentifier.hasPrefix("cmux.main.") else { return nil }
-        let idPart = String(rawIdentifier.dropFirst("cmux.main.".count))
+              rawIdentifier.hasPrefix("fadicode.main.") else { return nil }
+        let idPart = String(rawIdentifier.dropFirst("fadicode.main.".count))
         return UUID(uuidString: idPart)
     }
 
@@ -4809,6 +4812,298 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         restartSocketListenerIfEnabled(source: "menu.command")
     }
 
+    // MARK: - Fadicode Menu
+
+    private func setupFadicodeMenu() {
+        // Register defaults
+        UserDefaults.standard.register(defaults: [
+            "FadicodeShadersEnabled": true,
+            "FadicodePixelPetEnabled": true,
+            "FadicodePixelationEnabled": true,
+            "FadicodePosterizationEnabled": true,
+            "FadicodeVisualPreset": 0,
+            "FadicodeAutoColorEnabled": true,
+            "FadicodeBadgeVisibility": "always",
+            "FadicodeBorderGlowEnabled": true,
+            "FadicodeCompletionSoundEnabled": true,
+        ])
+
+        guard let mainMenu = NSApp.mainMenu else { return }
+
+        let fadicodeMenu = NSMenu(title: "Fadicode")
+
+        // Shaders toggle
+        let shadersItem = NSMenuItem(
+            title: String(localized: "menu.fadicode.toggleShaders", defaultValue: "Enable Shaders"),
+            action: #selector(toggleFadicodeShaders(_:)),
+            keyEquivalent: ""
+        )
+        shadersItem.target = self
+        fadicodeMenu.addItem(shadersItem)
+
+        // Pixel Pet toggle
+        let petItem = NSMenuItem(
+            title: String(localized: "menu.fadicode.togglePixelPet", defaultValue: "Enable Pixel Pet"),
+            action: #selector(toggleFadicodePixelPet(_:)),
+            keyEquivalent: ""
+        )
+        petItem.target = self
+        fadicodeMenu.addItem(petItem)
+
+        fadicodeMenu.addItem(.separator())
+
+        // Visual Style presets submenu
+        let styleSubmenu = NSMenu(title: String(localized: "menu.fadicode.visualStyle", defaultValue: "Visual Style"))
+        let presets: [(String, Int)] = [
+            (String(localized: "menu.fadicode.visualPreset.pixelGrid", defaultValue: "Pixel Grid"), 0),
+            (String(localized: "menu.fadicode.visualPreset.cleanPixel", defaultValue: "Clean Pixel"), 1),
+            (String(localized: "menu.fadicode.visualPreset.honeycomb", defaultValue: "Honeycomb"), 2),
+            (String(localized: "menu.fadicode.visualPreset.halftone", defaultValue: "Halftone"), 3),
+            (String(localized: "menu.fadicode.visualPreset.crt", defaultValue: "CRT"), 4),
+            (String(localized: "menu.fadicode.visualPreset.neon", defaultValue: "Neon"), 5),
+        ]
+        for (name, tag) in presets {
+            let item = NSMenuItem(
+                title: name,
+                action: #selector(selectFadicodeVisualPreset(_:)),
+                keyEquivalent: ""
+            )
+            item.target = self
+            item.tag = tag
+            styleSubmenu.addItem(item)
+        }
+        let styleItem = NSMenuItem(
+            title: String(localized: "menu.fadicode.visualStyle", defaultValue: "Visual Style"),
+            action: nil,
+            keyEquivalent: ""
+        )
+        styleItem.submenu = styleSubmenu
+        fadicodeMenu.addItem(styleItem)
+
+        fadicodeMenu.addItem(.separator())
+
+        // Float on Top toggle
+        let floatItem = NSMenuItem(
+            title: String(localized: "menu.fadicode.floatOnTop", defaultValue: "Float on Top"),
+            action: #selector(toggleFloatOnTop(_:)),
+            keyEquivalent: "t"
+        )
+        floatItem.keyEquivalentModifierMask = [.command, .control]
+        floatItem.target = self
+        fadicodeMenu.addItem(floatItem)
+
+        fadicodeMenu.addItem(.separator())
+
+        // Layout presets submenu
+        let layoutSubmenu = NSMenu(title: "Layout")
+        let layout2Top1Bottom = NSMenuItem(
+            title: String(localized: "menu.fadicode.layout.2top1bottom", defaultValue: "2 Top, 1 Bottom"),
+            action: #selector(applyLayout2Top1Bottom(_:)),
+            keyEquivalent: ""
+        )
+        layout2Top1Bottom.target = self
+        layoutSubmenu.addItem(layout2Top1Bottom)
+
+        let layout1Left2Right = NSMenuItem(
+            title: String(localized: "menu.fadicode.layout.1left2right", defaultValue: "1 Left, 2 Right"),
+            action: #selector(applyLayout1Left2Right(_:)),
+            keyEquivalent: ""
+        )
+        layout1Left2Right.target = self
+        layoutSubmenu.addItem(layout1Left2Right)
+
+        let layoutGrid = NSMenuItem(
+            title: String(localized: "menu.fadicode.layout.grid2x2", defaultValue: "Grid 2×2"),
+            action: #selector(applyLayoutGrid2x2(_:)),
+            keyEquivalent: ""
+        )
+        layoutGrid.target = self
+        layoutSubmenu.addItem(layoutGrid)
+
+        let layoutItem = NSMenuItem(
+            title: String(localized: "menu.fadicode.layout", defaultValue: "Layout"),
+            action: nil,
+            keyEquivalent: ""
+        )
+        layoutItem.submenu = layoutSubmenu
+        fadicodeMenu.addItem(layoutItem)
+
+        fadicodeMenu.addItem(.separator())
+
+        // Project picker
+        let projectPickerItem = NSMenuItem(
+            title: String(localized: "menu.fadicode.projectPicker", defaultValue: "Project Picker"),
+            action: #selector(toggleFadicodeProjectPicker(_:)),
+            keyEquivalent: "o"
+        )
+        projectPickerItem.keyEquivalentModifierMask = [.command, .control]
+        projectPickerItem.target = self
+        fadicodeMenu.addItem(projectPickerItem)
+
+        // Quick Terminal
+        let quickTerminalItem = NSMenuItem(
+            title: String(localized: "menu.fadicode.quickTerminal", defaultValue: "Quick Terminal"),
+            action: #selector(toggleQuickTerminal(_:)),
+            keyEquivalent: "`"
+        )
+        quickTerminalItem.keyEquivalentModifierMask = [.control]
+        quickTerminalItem.target = self
+        fadicodeMenu.addItem(quickTerminalItem)
+
+        // Debug overlay
+        let debugItem = NSMenuItem(
+            title: String(localized: "menu.fadicode.debugOverlay", defaultValue: "Debug Overlay"),
+            action: #selector(toggleFadicodeDebugOverlay(_:)),
+            keyEquivalent: "d"
+        )
+        debugItem.keyEquivalentModifierMask = [.command, .shift]
+        debugItem.target = self
+        fadicodeMenu.addItem(debugItem)
+
+        let fadicodeMenuItem = NSMenuItem(title: "Fadicode", action: nil, keyEquivalent: "")
+        fadicodeMenuItem.submenu = fadicodeMenu
+        // Insert before the last menu item (Help or Window)
+        let insertIndex = max(mainMenu.items.count - 1, 0)
+        mainMenu.insertItem(fadicodeMenuItem, at: insertIndex)
+    }
+
+    @objc private func toggleFadicodeShaders(_ sender: NSMenuItem) {
+        let key = "FadicodeShadersEnabled"
+        let current = UserDefaults.standard.bool(forKey: key)
+        UserDefaults.standard.set(!current, forKey: key)
+        NotificationCenter.default.post(name: .fadicodeOverlaySettingsChanged, object: nil)
+    }
+
+    @objc private func toggleFadicodePixelPet(_ sender: NSMenuItem) {
+        let key = "FadicodePixelPetEnabled"
+        let current = UserDefaults.standard.bool(forKey: key)
+        UserDefaults.standard.set(!current, forKey: key)
+        NotificationCenter.default.post(name: .fadicodeOverlaySettingsChanged, object: nil)
+    }
+
+    @objc private func selectFadicodeVisualPreset(_ sender: NSMenuItem) {
+        UserDefaults.standard.set(sender.tag, forKey: "FadicodeVisualPreset")
+        NotificationCenter.default.post(name: .fadicodeOverlaySettingsChanged, object: nil)
+    }
+
+    @objc private func toggleFadicodeProjectPicker(_ sender: NSMenuItem) {
+        NotificationCenter.default.post(name: .fadicodeProjectPickerToggled, object: nil)
+    }
+
+    @objc private func toggleFadicodeDebugOverlay(_ sender: NSMenuItem) {
+        NotificationCenter.default.post(name: .fadicodeDebugOverlayToggled, object: nil)
+    }
+
+    @objc private func toggleQuickTerminal(_ sender: Any?) {
+        QuickTerminalController.shared.toggle()
+    }
+
+    /// Set up observers for quick-launch bar notifications (browser, terminal).
+    func setupFadicodeQuickLaunchObservers() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(fadicodeOpenBrowser),
+            name: .fadicodeOpenBrowser,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(fadicodeNewTerminal),
+            name: .fadicodeNewTerminal,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(fadicodeOpenObservatory),
+            name: .fadicodeOpenObservatory,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(fadicodeObservatoryFocusPanel(_:)),
+            name: .fadicodeObservatoryFocusPanel,
+            object: nil
+        )
+    }
+
+    @objc private func fadicodeOpenObservatory() {
+        guard let tabManager else { return }
+        // Find selected workspace and create observatory tab
+        if let workspace = tabManager.selectedWorkspace,
+           let paneId = workspace.bonsplitController.focusedPaneId {
+            workspace.newObservatorySurface(inPane: paneId, focus: true)
+        }
+    }
+
+    @objc private func fadicodeOpenBrowser() {
+        // Convert the focused terminal into a browser (in-place replacement).
+        // Falls back to a new browser tab if the focused panel is already a browser.
+        if let panelId = tabManager?.convertCurrentToBrowser() {
+            _ = focusBrowserAddressBar(panelId: panelId)
+        }
+    }
+
+    @objc private func fadicodeNewTerminal() {
+        _ = tabManager?.addTab(select: true)
+    }
+
+    @objc private func fadicodeObservatoryFocusPanel(_ notification: Notification) {
+        guard let tabManager,
+              let userInfo = notification.userInfo,
+              let workspaceId = userInfo["workspaceId"] as? UUID,
+              let panelId = userInfo["panelId"] as? UUID else { return }
+
+        // Find the workspace and select it
+        if let workspace = tabManager.tabs.first(where: { $0.id == workspaceId }) {
+            tabManager.selectWorkspace(workspace)
+
+            // Find the surface ID for this panel and select the tab
+            if let surfaceId = workspace.surfaceIdFromPanelId(panelId) {
+                workspace.bonsplitController.selectTab(surfaceId)
+            }
+        }
+    }
+
+    @objc func toggleFloatOnTop(_ sender: NSMenuItem) {
+        guard let window = NSApp.keyWindow else { return }
+        if window.level == .floating {
+            window.level = .normal
+        } else {
+            window.level = .floating
+        }
+    }
+
+    @objc func applyLayout2Top1Bottom(_ sender: Any?) {
+        applyLayoutPreset { manager, workspace in
+            guard let focusedId = workspace.focusedPanelId else { return }
+            guard manager.newSplit(tabId: workspace.id, surfaceId: focusedId, direction: .down) != nil else { return }
+            _ = manager.newSplit(tabId: workspace.id, surfaceId: focusedId, direction: .right)
+        }
+    }
+
+    @objc func applyLayout1Left2Right(_ sender: Any?) {
+        applyLayoutPreset { manager, workspace in
+            guard let focusedId = workspace.focusedPanelId else { return }
+            guard let rightId = manager.newSplit(tabId: workspace.id, surfaceId: focusedId, direction: .right) else { return }
+            _ = manager.newSplit(tabId: workspace.id, surfaceId: rightId, direction: .down)
+        }
+    }
+
+    @objc func applyLayoutGrid2x2(_ sender: Any?) {
+        applyLayoutPreset { manager, workspace in
+            guard let focusedId = workspace.focusedPanelId else { return }
+            guard let rightId = manager.newSplit(tabId: workspace.id, surfaceId: focusedId, direction: .right) else { return }
+            _ = manager.newSplit(tabId: workspace.id, surfaceId: focusedId, direction: .down)
+            _ = manager.newSplit(tabId: workspace.id, surfaceId: rightId, direction: .down)
+        }
+    }
+
+    private func applyLayoutPreset(_ configure: (TabManager, Workspace) -> Void) {
+        guard let tabManager,
+              let workspace = tabManager.selectedTab else { return }
+        configure(tabManager, workspace)
+    }
+
     private func setupMenuBarExtra() {
         let store = TerminalNotificationStore.shared
         menuBarExtraController = MenuBarExtraController(
@@ -5472,7 +5767,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         func hasMainTerminalWindow() -> Bool {
             NSApp.windows.contains { window in
                 guard let raw = window.identifier?.rawValue else { return false }
-                return raw == "cmux.main" || raw.hasPrefix("cmux.main.")
+                return raw == "fadicode.main" || raw.hasPrefix("fadicode.main.")
             }
         }
 
@@ -6820,6 +7115,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
             return true
         }
 
+        // Fadicode project picker: Cmd+Shift+P
+        if matchShortcut(
+            event: event,
+            shortcut: StoredShortcut(key: "p", command: true, shift: true, option: false, control: false)
+        ) {
+            NotificationCenter.default.post(name: .fadicodeProjectPickerToggled, object: nil)
+            return true
+        }
+
+        // Fadicode debug overlay: Cmd+Shift+D
+        if matchShortcut(
+            event: event,
+            shortcut: StoredShortcut(key: "d", command: true, shift: true, option: false, control: false)
+        ) {
+            NotificationCenter.default.post(name: .fadicodeDebugOverlayToggled, object: nil)
+            return true
+        }
+
         // Surface navigation: Cmd+Shift+] / Cmd+Shift+[
         if matchShortcut(event: event, shortcut: KeyboardShortcutSettings.shortcut(for: .nextSurface)) {
             tabManager?.selectNextSurface()
@@ -6877,7 +7190,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
             shortcut: StoredShortcut(key: "t", command: true, shift: false, option: true, control: false)
         ) {
             if let targetWindow = event.window ?? NSApp.keyWindow ?? NSApp.mainWindow,
-               targetWindow.identifier?.rawValue == "cmux.settings" {
+               targetWindow.identifier?.rawValue == "fadicode.settings" {
                 targetWindow.performClose(nil)
             } else {
                 let responder = event.window?.firstResponder
@@ -6901,7 +7214,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
             shortcut: StoredShortcut(key: "w", command: true, shift: false, option: false, control: false)
         ) {
             if let targetWindow = event.window ?? NSApp.keyWindow ?? NSApp.mainWindow,
-               targetWindow.identifier?.rawValue == "cmux.settings" {
+               targetWindow.identifier?.rawValue == "fadicode.settings" {
                 targetWindow.performClose(nil)
             } else {
                 let responder = event.window?.firstResponder
@@ -7926,7 +8239,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     }
 
     func validateMenuItem(_ item: NSMenuItem) -> Bool {
-        updateController.validateMenuItem(item)
+        // Fadicode menu item state
+        switch item.action {
+        case #selector(toggleFadicodeShaders(_:)):
+            item.state = UserDefaults.standard.bool(forKey: "FadicodeShadersEnabled") ? .on : .off
+            return true
+        case #selector(toggleFadicodePixelPet(_:)):
+            item.state = UserDefaults.standard.bool(forKey: "FadicodePixelPetEnabled") ? .on : .off
+            return true
+        case #selector(selectFadicodeVisualPreset(_:)):
+            let current = UserDefaults.standard.integer(forKey: "FadicodeVisualPreset")
+            item.state = item.tag == current ? .on : .off
+            return true
+        case #selector(toggleFloatOnTop(_:)):
+            item.state = NSApp.keyWindow?.level == .floating ? .on : .off
+            return NSApp.keyWindow != nil
+        default:
+            break
+        }
+        return updateController.validateMenuItem(item)
     }
 
 
@@ -8263,7 +8594,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
             return true
         }
         guard let raw = window.identifier?.rawValue else { return false }
-        return raw == "cmux.main" || raw.hasPrefix("cmux.main.")
+        return raw == "fadicode.main" || raw.hasPrefix("fadicode.main.")
     }
 
     private func contextContainingTabId(_ tabId: UUID) -> MainWindowContext? {
@@ -8282,7 +8613,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
     func closeMainWindowContainingTabId(_ tabId: UUID) {
         guard let context = contextContainingTabId(tabId) else { return }
-        let expectedIdentifier = "cmux.main.\(context.windowId.uuidString)"
+        let expectedIdentifier = "fadicode.main.\(context.windowId.uuidString)"
         let window: NSWindow? = context.window ?? NSApp.windows.first(where: { $0.identifier?.rawValue == expectedIdentifier })
         window?.performClose(nil)
     }
@@ -8330,7 +8661,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     }
 
     private func openNotificationInContext(_ context: MainWindowContext, tabId: UUID, surfaceId: UUID?, notificationId: UUID?) -> Bool {
-        let expectedIdentifier = "cmux.main.\(context.windowId.uuidString)"
+        let expectedIdentifier = "fadicode.main.\(context.windowId.uuidString)"
         let window: NSWindow? = context.window ?? NSApp.windows.first(where: { $0.identifier?.rawValue == expectedIdentifier })
         guard let window else {
 #if DEBUG
@@ -8537,7 +8868,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 @MainActor
 final class MenuBarExtraController: NSObject, NSMenuDelegate {
     private let statusItem: NSStatusItem
-    private let menu = NSMenu(title: "cmux")
+    private let menu = NSMenu(title: "fadicode")
     private let notificationStore: TerminalNotificationStore
     private let onShowNotifications: () -> Void
     private let onOpenNotification: (TerminalNotification) -> Void

@@ -46,17 +46,24 @@ if [[ $# -ne 1 ]]; then
 fi
 
 TAG="$1"
-SIGN_HASH="A050CC7E193C8221BDBA204E731B046CDCCC1B30"
 ENTITLEMENTS="cmux.entitlements"
 APP_PATH="build/Build/Products/Release/cmux.app"
 
 # --- Pre-flight ---
 source ~/.secrets/cmuxterm.env
 export SPARKLE_PRIVATE_KEY
+
+# Signing identity: prefer APPLE_SIGNING_IDENTITY from env/secrets, fall back to CODE_SIGN_IDENTITY
+SIGN_HASH="${APPLE_SIGNING_IDENTITY:-${CODE_SIGN_IDENTITY:-}}"
+if [ -z "$SIGN_HASH" ]; then
+  echo "ERROR: No signing identity found. Set APPLE_SIGNING_IDENTITY or CODE_SIGN_IDENTITY." >&2
+  exit 1
+fi
+
 for tool in zig xcodebuild create-dmg xcrun codesign ditto gh; do
   command -v "$tool" >/dev/null || { echo "MISSING: $tool" >&2; exit 1; }
 done
-echo "Pre-flight checks passed"
+echo "Pre-flight checks passed (signing identity: ${SIGN_HASH:0:12}...)"
 
 # --- Build GhosttyKit (if needed) ---
 if [ ! -d "GhosttyKit.xcframework" ]; then
@@ -174,7 +181,7 @@ cask "cmux" do
     strategy :github_latest
   end
 
-  depends_on macos: ">= :ventura"
+  depends_on macos: ">= :sonoma"
 
   app "cmux.app"
   binary "#{appdir}/cmux.app/Contents/Resources/bin/cmux"
