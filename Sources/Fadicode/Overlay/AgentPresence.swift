@@ -221,14 +221,21 @@ final class AgentPresence {
     private var scopeCache: [Int32: ScopeEntry] = [:]
     private var liveSurfaceIDs: Set<String> = []
     private var lastScan: Date = .distantPast
+    /// Guards against piling up overlapping background scans.
+    private var scanInFlight = false
 
     private init() {}
 
     /// True when a live agent process carries this surface's binding token.
-    /// Cheap to call at poll frequency: results are cached and rescanned at most
-    /// every `rescanInterval`.
+    ///
+    /// NEVER scans on the calling thread. `LifecycleManager.poll()` runs on the
+    /// main thread at 10Hz, and a full process-table walk (proc_listallpids plus
+    /// a KERN_PROCARGS2 sysctl per candidate) is far too expensive to sit in
+    /// that path — doing so stalled the UI for seconds at a time. This is a pure
+    /// read of the last completed scan; refreshes happen on a utility queue.
+    /// upstream: PR#6798 — "no file I/O and no parsing on the main actor".
     func isAgentLive(surfaceID: UUID) -> Bool {
-        refreshIfNeeded()
+        scheduleRefreshIfNeeded()
         let key = surfaceID.uuidString.uppercased()
         lock.lock()
         defer { lock.unlock() }
@@ -245,13 +252,27 @@ final class AgentPresence {
 
     // MARK: - Scan
 
-    private func refreshIfNeeded() {
+    /// Kicks a scan onto a background queue at most once per `rescanInterval`,
+    /// and at most one at a time. Returns immediately — callers always read the
+    /// previous result. Presence changes on human timescales, so being one
+    /// interval stale is harmless; blocking the UI is not.
+    private func scheduleRefreshIfNeeded() {
         lock.lock()
-        let due = Date().timeIntervalSince(lastScan) >= rescanInterval
-        if due { lastScan = Date() }
+        let due = Date().timeIntervalSince(lastScan) >= rescanInterval && !scanInFlight
+        if due {
+            lastScan = Date()
+            scanInFlight = true
+        }
         lock.unlock()
         guard due else { return }
-        scan()
+
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            guard let self else { return }
+            self.scan()
+            self.lock.lock()
+            self.scanInFlight = false
+            self.lock.unlock()
+        }
     }
 
     private func scan() {
