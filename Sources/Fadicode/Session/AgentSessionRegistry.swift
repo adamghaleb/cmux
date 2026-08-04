@@ -181,7 +181,16 @@ final class AgentSessionRegistry: ObservableObject {
         if let transcriptPath = event.transcriptPath, !transcriptPath.isEmpty {
             record.transcriptPath = transcriptPath
         }
-        if let pid = event.agentPID, pid > 0 {
+        // upstream: PR#6798 — only trust the hook-reported pid at SessionStart,
+        // or to fill a binding we don't have yet. `agentPID` comes from the
+        // hook's `$PPID`, which is only reliably the agent process at session
+        // start; a wrapper process can report a different parent on later
+        // hooks. Re-binding on every event let that thrash the exit watcher
+        // (teardown + rebind per hook) and could flip a live session to
+        // `ended` mid-run when the stale pid died.
+        if let pid = event.agentPID, pid > 0,
+            event.name == .sessionStart || record.pid == nil
+        {
             record.pid = pid
         }
 
