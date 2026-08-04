@@ -50,12 +50,17 @@ final class FadiCodeOverlaySystem: ObservableObject {
         // ObservableObject — SwiftUI views observe them independently to avoid
         // broadcasting every change to the entire overlay tree (GitHub #17).
 
-        // Start LLM summary polling when active, stop when not
-        lifecycle.$state
+        // Start LLM summary polling only while the DETERMINISTIC authority says
+        // the agent is working. Previously this keyed off a lifecycle state
+        // that the text heuristic could invent, so a noisy shell could ship
+        // terminal content to the Anthropic API for a session that did not
+        // exist. Now it follows AgentSessionState.
+        // upstream: PR#6798
+        lifecycle.$agentState
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] state in
+            .sink { [weak self] agentState in
                 guard let self else { return }
-                if state.isActive {
+                if agentState?.isWorking == true {
                     self.startSummaryPolling()
                 } else {
                     self.stopSummaryPolling()

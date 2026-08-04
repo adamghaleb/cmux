@@ -261,31 +261,27 @@ enum ActivityCategory: String, CaseIterable {
 
 // MARK: - Content Detection Helpers
 
-/// Static helpers for detecting Claude Code activity in terminal content.
-/// Moved from OverlayStateMachine to avoid dependency on the old monolith.
+/// Presentation helpers for terminal content.
+///
+/// # Gate 2 deletion (upstream: PR#6798)
+///
+/// This enum used to be the fork's activity ORACLE. It answered "is Claude
+/// working", "is Claude waiting for the user" and "is Claude Code even present"
+/// by matching braille spinner glyphs, tool-name banners and prompt shapes in
+/// the last N lines, and it hashed the screen (spinner glyphs stripped) so a
+/// 10Hz poll could tell "something changed" from "the spinner ticked".
+///
+/// Upstream deleted every signal of that class on purpose — its spec is
+/// explicit: "Never from terminal-title string matching. Never from
+/// newest-file-by-mtime scans. Never from any signal that can mis-attribute."
+/// Keeping the text heuristics alongside the deterministic source would have
+/// kept the flicker, because both would still be voting.
+///
+/// Deleted here: `stableContentHash`, `spinnerPattern`, `isWaitingForUser`,
+/// `isClaudeCodePresent`, `isClaudeActivelyWorking`.
+/// What survives is presentation-only: ANSI stripping and mapping an activity
+/// summary phrase to a display label.
 enum ContentDetection {
-
-    /// Braille spinner chars and other animated glyphs.
-    private static let spinnerPattern: NSRegularExpression = {
-        // Pattern is a compile-time constant; failure here is a programmer error.
-        guard let regex = try? NSRegularExpression(
-            pattern: "[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏⣾⣽⣻⢿⡿⣟⣯⣷◐◓◑◒▖▘▝▗⣀⣤⣶⣿⠿⠛⠉⠁◰◳◲◱]",
-            options: []
-        ) else {
-            assertionFailure("Invalid spinnerPattern regex")
-            return NSRegularExpression()
-        }
-        return regex
-    }()
-
-    /// Strip spinner/animated chars for stable hashing.
-    static func stableContentHash(_ content: String) -> Int {
-        let range = NSRange(content.startIndex..., in: content)
-        let stripped = spinnerPattern.stringByReplacingMatches(
-            in: content, options: [], range: range, withTemplate: ""
-        )
-        return stripped.hashValue
-    }
 
     /// Strip ANSI escape codes.
     private static let ansiPattern: NSRegularExpression = {
@@ -304,71 +300,6 @@ enum ContentDetection {
         return ansiPattern.stringByReplacingMatches(
             in: text, options: [], range: range, withTemplate: ""
         )
-    }
-
-    /// Check if terminal content indicates Claude is waiting for user input.
-    static func isWaitingForUser(_ content: String) -> Bool {
-        let clean = stripAnsi(content)
-
-        if clean.contains("Allow") && (clean.contains("Yes") || clean.contains("always") || clean.contains("Deny")) { return true }
-        if clean.contains("Enter to select") || clean.contains("to navigate") { return true }
-        if clean.contains("approve this plan") || clean.contains("Do you want to proceed")
-            || clean.contains("Would you like to proceed") { return true }
-
-        let lines = clean.components(separatedBy: "\n")
-        let tailLines = lines.suffix(8).compactMap { line -> String? in
-            let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
-            return trimmed.isEmpty ? nil : trimmed
-        }
-        guard let lastLine = tailLines.last else { return false }
-
-        if lastLine.contains("❯") || lastLine.contains("$") { return true }
-        if lastLine.hasPrefix(">") { return true }
-        if lastLine.hasSuffix("> ") || lastLine.hasSuffix(": ") { return true }
-        if lastLine.contains("(y/n)") || lastLine.contains("(Y/n)") { return true }
-
-        let tail = tailLines.suffix(4).joined(separator: " ")
-        if tail.contains("Yes, allow") || tail.contains("No, deny") { return true }
-        if tail.contains("Allow once") || tail.contains("Allow always") { return true }
-
-        return false
-    }
-
-    /// Broad check: is Claude Code output visible? Used for initial detection.
-    static func isClaudeCodePresent(in content: String) -> Bool {
-        if isClaudeActivelyWorking(in: content) { return true }
-
-        let lines = content.components(separatedBy: "\n")
-        let recent = lines.suffix(60).joined(separator: "\n")
-
-        let toolNames = ["Bash(", "Read(", "Grep(", "Glob(", "Edit(", "Write(",
-                         "Task(", "LSP(", "Explore(", "WebFetch(", "WebSearch(",
-                         "NotebookEdit(", "Skill(", "AskUser("]
-        for tool in toolNames {
-            if recent.contains(tool) { return true }
-        }
-
-        if recent.contains("Tool:") || recent.contains("tool)") { return true }
-        if recent.contains("plan mode") || recent.contains("Plan:") || recent.contains(".claude/plans/") { return true }
-        return false
-    }
-
-    /// Strict check: is Claude Code *actively* working right now?
-    /// Only matches ephemeral indicators that disappear when Claude stops.
-    static func isClaudeActivelyWorking(in content: String) -> Bool {
-        let lines = content.components(separatedBy: "\n")
-        let recent = lines.suffix(30).joined(separator: "\n")
-
-        let spinners: [Character] = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏", "⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"]
-        for s in spinners {
-            if recent.contains(s) { return true }
-        }
-
-        if recent.contains("Calculating") { return true }
-        if recent.contains("more tool use") { return true }
-        if recent.contains("ctrl+b to run in back") { return true }
-        if recent.contains("Thinking…") || recent.contains("Thinking...") { return true }
-        return false
     }
 
     /// Map summary string to phase category.

@@ -29,6 +29,16 @@ struct CompletionHistoryEntry: Identifiable {
 ///
 /// **Privacy**: API calls are gated behind the `FadicodeLLMSummariesEnabled` user default.
 /// Terminal content is only sent when the user has explicitly opted in via Settings.
+///
+/// # Gate 2 contract (upstream: PR#6798)
+///
+/// This type is PRESENTATION ONLY. It answers "what phrase should the activity
+/// badge show", never "is the agent working". Nothing here may be read back as
+/// a lifecycle signal — the authority is `AgentSessionRegistry`, and callers
+/// are gated on `AgentSessionState.isWorking` before they ever reach this
+/// class (see `FadiCodeOverlaySystem`). That gate is also a privacy
+/// improvement: the old text heuristic could decide a plain shell was "active"
+/// and ship its contents off-machine for summarizing.
 @MainActor
 class ClaudeActivitySummary {
     static let shared = ClaudeActivitySummary()
