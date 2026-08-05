@@ -89,6 +89,7 @@
 					F5000010A1B2C3D4E5F60718 /* AgentBindingAssertionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5000011A1B2C3D4E5F60718 /* AgentBindingAssertionTests.swift */; };
 					F5000067A1B2C3D4E5F60067 /* SupervisedAgentHookAuthTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5000068A1B2C3D4E5F60068 /* SupervisedAgentHookAuthTests.swift */; };
 					F5000012A1B2C3D4E5F60718 /* CmuxCLIPathLinkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5000013A1B2C3D4E5F60718 /* CmuxCLIPathLinkTests.swift */; };
+					F5000014A1B2C3D4E5F60718 /* ShaderFocusRoutingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5000015A1B2C3D4E5F60718 /* ShaderFocusRoutingTests.swift */; };
 					F6000000A1B2C3D4E5F60718 /* AppDelegateShortcutRoutingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6000001A1B2C3D4E5F60718 /* AppDelegateShortcutRoutingTests.swift */; };
 					F7000000A1B2C3D4E5F60718 /* WorkspaceContentViewVisibilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7000001A1B2C3D4E5F60718 /* WorkspaceContentViewVisibilityTests.swift */; };
 					F8000000A1B2C3D4E5F60718 /* SocketControlPasswordStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8000001A1B2C3D4E5F60718 /* SocketControlPasswordStoreTests.swift */; };
@@ -120,6 +121,8 @@
 		FAD1AA03 /* NetworkRetry.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAD1AA04 /* NetworkRetry.swift */; };
 		FAD1AB03 /* MainThreadProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAD1AB04 /* MainThreadProbe.swift */; };
 		FC00001C /* ShaderDirector.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC10001C /* ShaderDirector.swift */; };
+		FC000F69 /* OverlayFocusObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100F69 /* OverlayFocusObserver.swift */; };
+		FC000F6A /* SurfaceColorStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100F6A /* SurfaceColorStore.swift */; };
 		FC0000F1 /* AgentPresence.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC1000F1 /* AgentPresence.swift */; };
 		FC0000F2 /* AgentSessionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC1000F2 /* AgentSessionState.swift */; };
 		FC0000F3 /* AgentHookEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC1000F3 /* AgentHookEvent.swift */; };
@@ -350,6 +353,7 @@
 					F5000011A1B2C3D4E5F60718 /* AgentBindingAssertionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentBindingAssertionTests.swift; sourceTree = "<group>"; };
 					F5000068A1B2C3D4E5F60068 /* SupervisedAgentHookAuthTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupervisedAgentHookAuthTests.swift; sourceTree = "<group>"; };
 					F5000013A1B2C3D4E5F60718 /* CmuxCLIPathLinkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CmuxCLIPathLinkTests.swift; sourceTree = "<group>"; };
+					F5000015A1B2C3D4E5F60718 /* ShaderFocusRoutingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShaderFocusRoutingTests.swift; sourceTree = "<group>"; };
 				F6000001A1B2C3D4E5F60718 /* AppDelegateShortcutRoutingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegateShortcutRoutingTests.swift; sourceTree = "<group>"; };
 				F7000001A1B2C3D4E5F60718 /* WorkspaceContentViewVisibilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceContentViewVisibilityTests.swift; sourceTree = "<group>"; };
 				F8000001A1B2C3D4E5F60718 /* SocketControlPasswordStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocketControlPasswordStoreTests.swift; sourceTree = "<group>"; };
@@ -387,6 +391,8 @@
 		FAD1AA04 /* NetworkRetry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkRetry.swift; sourceTree = "<group>"; };
 		FAD1AB04 /* MainThreadProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainThreadProbe.swift; sourceTree = "<group>"; };
 		FC10001C /* ShaderDirector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShaderDirector.swift; sourceTree = "<group>"; };
+		FC100F69 /* OverlayFocusObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayFocusObserver.swift; sourceTree = "<group>"; };
+		FC100F6A /* SurfaceColorStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SurfaceColorStore.swift; sourceTree = "<group>"; };
 		FC1000F1 /* AgentPresence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentPresence.swift; sourceTree = "<group>"; };
 		FC1000F2 /* AgentSessionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentSessionState.swift; sourceTree = "<group>"; };
 		FC1000F3 /* AgentHookEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentHookEvent.swift; sourceTree = "<group>"; };
@@ -704,6 +710,7 @@
 					F5000011A1B2C3D4E5F60718 /* AgentBindingAssertionTests.swift */,
 					F5000068A1B2C3D4E5F60068 /* SupervisedAgentHookAuthTests.swift */,
 					F5000013A1B2C3D4E5F60718 /* CmuxCLIPathLinkTests.swift */,
+					F5000015A1B2C3D4E5F60718 /* ShaderFocusRoutingTests.swift */,
 					F6000001A1B2C3D4E5F60718 /* AppDelegateShortcutRoutingTests.swift */,
 					F7000001A1B2C3D4E5F60718 /* WorkspaceContentViewVisibilityTests.swift */,
 					F8000001A1B2C3D4E5F60718 /* SocketControlPasswordStoreTests.swift */,
@@ -783,6 +790,8 @@
 				FC10001A /* QuestionDetectionController.swift */,
 				FC10001B /* PixelPetController.swift */,
 				FC10001C /* ShaderDirector.swift */,
+				FC100F69 /* OverlayFocusObserver.swift */,
+				FC100F6A /* SurfaceColorStore.swift */,
 				FC1000F1 /* AgentPresence.swift */,
 			);
 			path = Overlay;
@@ -1122,6 +1131,8 @@
 				FAD1AA03 /* NetworkRetry.swift in Sources */,
 				FAD1AB03 /* MainThreadProbe.swift in Sources */,
 				FC00001C /* ShaderDirector.swift in Sources */,
+				FC000F69 /* OverlayFocusObserver.swift in Sources */,
+				FC000F6A /* SurfaceColorStore.swift in Sources */,
 				FC0000F1 /* AgentPresence.swift in Sources */,
 				FC0000F2 /* AgentSessionState.swift in Sources */,
 				FC0000F3 /* AgentHookEvent.swift in Sources */,
@@ -1249,6 +1260,7 @@
 					F5000010A1B2C3D4E5F60718 /* AgentBindingAssertionTests.swift in Sources */,
 					F5000067A1B2C3D4E5F60067 /* SupervisedAgentHookAuthTests.swift in Sources */,
 					F5000012A1B2C3D4E5F60718 /* CmuxCLIPathLinkTests.swift in Sources */,
+					F5000014A1B2C3D4E5F60718 /* ShaderFocusRoutingTests.swift in Sources */,
 					F6000000A1B2C3D4E5F60718 /* AppDelegateShortcutRoutingTests.swift in Sources */,
 					F7000000A1B2C3D4E5F60718 /* WorkspaceContentViewVisibilityTests.swift in Sources */,
 					F8000000A1B2C3D4E5F60718 /* SocketControlPasswordStoreTests.swift in Sources */,

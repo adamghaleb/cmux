@@ -1886,6 +1886,8 @@ class TerminalController {
             return v2Result(id: id, self.v2SurfaceClearHistory(params: params))
         case "surface.trigger_flash":
             return v2Result(id: id, self.v2SurfaceTriggerFlash(params: params))
+        case "surface.set_color":
+            return v2Result(id: id, self.v2SurfaceSetColor(params: params))
 
         // Panes
         case "pane.list":
@@ -2230,6 +2232,7 @@ class TerminalController {
             "surface.read_text",
             "surface.clear_history",
             "surface.trigger_flash",
+            "surface.set_color",
             "pane.list",
             "pane.focus",
             "pane.surfaces",
@@ -4880,6 +4883,65 @@ class TerminalController {
             return nil
         }
         return decoded
+    }
+
+    /// Colour ONE surface, independently of its workspace.
+    ///
+    /// `workspace.action set_color` paints a whole workspace; this gives a
+    /// single terminal its own identity hue, which is what makes a split where
+    /// each pane is a different colour possible at all.
+    /// Pass `color: null` to hand the surface back to the workspace default.
+    ///
+    /// Not a focus-intent verb: per the socket focus policy it must not
+    /// activate the window or change the selected workspace.
+    private func v2SurfaceSetColor(params: [String: Any]) -> V2CallResult {
+        guard let tabManager = v2ResolveTabManager(params: params) else {
+            return .err(code: "unavailable", message: "TabManager not available", data: nil)
+        }
+
+        // Distinguish "absent" (invalid) from "explicitly null" (clear).
+        let hasColorKey = params.index(forKey: "color") != nil
+        let requestedColor = v2String(params, "color")
+        guard hasColorKey else {
+            return .err(code: "invalid_params", message: "Missing color (pass null to clear)", data: nil)
+        }
+        if let requestedColor, SurfaceColorStore.normalize(requestedColor) == nil {
+            return .err(
+                code: "invalid_params",
+                message: "Unreadable color; expected #rrggbb",
+                data: ["color": requestedColor]
+            )
+        }
+
+        var result: V2CallResult = .err(code: "internal_error", message: "Failed to set color", data: nil)
+        v2MainSync {
+            guard let ws = v2ResolveWorkspace(params: params, tabManager: tabManager) else {
+                result = .err(code: "not_found", message: "Workspace not found", data: nil)
+                return
+            }
+            let surfaceId = v2UUID(params, "surface_id") ?? ws.focusedPanelId
+            guard let surfaceId else {
+                result = .err(code: "not_found", message: "No focused surface", data: nil)
+                return
+            }
+            guard ws.panels[surfaceId] != nil else {
+                result = .err(
+                    code: "not_found",
+                    message: "Surface not found",
+                    data: ["surface_id": surfaceId.uuidString]
+                )
+                return
+            }
+
+            SurfaceColorStore.shared.setColor(requestedColor, for: surfaceId)
+            result = .ok([
+                "surface_id": surfaceId.uuidString,
+                "surface_ref": v2Ref(kind: .surface, uuid: surfaceId),
+                "color": v2OrNull(SurfaceColorStore.shared.color(for: surfaceId)),
+                "workspace_id": ws.id.uuidString
+            ])
+        }
+        return result
     }
 
     private func v2SurfaceTriggerFlash(params: [String: Any]) -> V2CallResult {

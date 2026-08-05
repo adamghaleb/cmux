@@ -13,8 +13,17 @@ final class ShaderDirector: ObservableObject, VisualController {
     @Published private(set) var shaderTuning: ShaderTuning = ShaderTuning()
     @Published private(set) var shaderChangeCount: Int = 0
 
-    /// User-toggled focus state — controls shader intensity.
-    @Published var shaderFocused: Bool = true
+    /// Whether the window hosting this overlay currently has the user's focus.
+    ///
+    /// Drives the entire unfocused treatment: full palette instead of the
+    /// vivid-only top stops, `.normal` instead of `.screen` blending, a dimmed
+    /// terminal and a thinner grid. Written only by ``setFocused(_:)``, which is
+    /// fed by `WindowFocusObserver` from `FadiCodeOverlayHost`.
+    ///
+    /// This was `var` with no writer anywhere in the codebase, which made every
+    /// unfocused branch dead code. `private(set)` is what keeps it honest.
+    /// See fadi-orchestrator#69.
+    @Published private(set) var shaderFocused: Bool = true
     /// True while the window is being live-resized.
     @Published var shaderResizing: Bool = false
 
@@ -67,7 +76,32 @@ final class ShaderDirector: ObservableObject, VisualController {
             "mode": "\(shaderMode)",
             "tier": shaderSession.isSessionActive ? shaderSession.currentTier.debugName : "---",
             "changes": "\(shaderChangeCount)",
+            "focus": shaderFocused ? "focused" : "unfocused",
         ]
+    }
+
+    // MARK: - Window Focus
+
+    /// Route real window focus into the shader treatment.
+    ///
+    /// Idempotent: repeated calls with the same verdict do not republish, so a
+    /// noisy stream of AppKit notifications cannot thrash SwiftUI. Always
+    /// applies on the main thread — `@Published` drives view updates and the
+    /// observer can call in from a workspace notification.
+    func setFocused(_ focused: Bool) {
+        if Thread.isMainThread {
+            applyFocus(focused)
+        } else {
+            DispatchQueue.main.async { [weak self] in self?.applyFocus(focused) }
+        }
+    }
+
+    private func applyFocus(_ focused: Bool) {
+        guard focused != shaderFocused else { return }
+        shaderFocused = focused
+        #if DEBUG
+        dlog("[SD] focus -> \(focused ? "focused" : "unfocused")")
+        #endif
     }
 
     // MARK: - Event Handlers

@@ -35,6 +35,11 @@ struct ShaderOverlayView: View {
     @State private var shaderOpacity: Double = 0.0
     private var intensity: Double { shaderOpacity }
     @State private var activeGridOpacity: Double = 2.5
+    /// Continuous 1 = focused → 0 = unfocused. Exists so the two focus-driven
+    /// properties that are not opacities — blend mode and palette stop count —
+    /// cross over inside the animation instead of popping the instant window
+    /// focus changes. See fadi-orchestrator#69.
+    @State private var focusBlend: Double = 1.0
     @State private var startDate: Date = .now
     @State private var timeOffset: TimeInterval = 0
     @State private var frozenForResize: Bool = false
@@ -66,12 +71,18 @@ struct ShaderOverlayView: View {
     private static let lineShaderIndices: Set<Int> = [39, 46, 58]
 
     /// Pack RGB into a single Int for change detection.
+    ///
+    /// Packed 8 bits per channel. The previous scheme multiplied a 0...10000
+    /// green by 10_000 and a 0...10000 red by 100_000_000, so the two ranges
+    /// overlapped and distinct colours could hash equal — a change that
+    /// collided would silently never regenerate the palette.
     private var themeColorKey: Int {
-        guard let tc = themeColor else { return 0 }
+        guard let tc = themeColor else { return -1 }
         let c = tc.usingColorSpace(.sRGB) ?? tc
-        return Int(c.redComponent * 10000) * 100_000_000
-             + Int(c.greenComponent * 10000) * 10_000
-             + Int(c.blueComponent * 10000)
+        let r = Int((c.redComponent * 255).rounded())
+        let g = Int((c.greenComponent * 255).rounded())
+        let b = Int((c.blueComponent * 255).rounded())
+        return (r << 16) | (g << 8) | b
     }
 
     var body: some View {
@@ -102,7 +113,7 @@ struct ShaderOverlayView: View {
             }
         }
         .opacity(shaderOpacity)
-        .blendMode(director.shaderFocused ? .screen : .normal)
+        .blendMode(focusBlend > 0.5 ? .screen : .normal)
         .allowsHitTesting(false)
         .onChange(of: director.shaderActive) { active in
             if active {
@@ -116,10 +127,12 @@ struct ShaderOverlayView: View {
                 let dimTarget = director.shaderFocused ? focusedDim : unfocusedDim
                 let shaderTarget = director.shaderFocused ? focusedShader : unfocusedShader
                 let gridTarget = director.shaderFocused ? pixelSize * focusedGridRatio : pixelSize * gridRatio
+                let blendTarget: Double = director.shaderFocused ? 1.0 : 0.0
                 withAnimation(reduceMotion ? nil : .easeIn(duration: 0.4)) {
                     dimOpacity = dimTarget
                     shaderOpacity = shaderTarget
                     activeGridOpacity = gridTarget
+                    focusBlend = blendTarget
                 }
             } else {
                 withAnimation(reduceMotion ? nil : .easeOut(duration: 0.5)) {
@@ -129,19 +142,21 @@ struct ShaderOverlayView: View {
             }
         }
         .onChange(of: director.shaderFocused) { focused in
-            guard director.shaderActive else { return }
-            if focused {
-                withAnimation(reduceMotion ? nil : .easeOut(duration: 0.2)) {
-                    dimOpacity = focusedDim
-                    shaderOpacity = focusedShader
-                    activeGridOpacity = pixelSize * focusedGridRatio
-                }
-            } else {
-                withAnimation(reduceMotion ? nil : .easeIn(duration: 0.2)) {
-                    dimOpacity = unfocusedDim
-                    shaderOpacity = unfocusedShader
-                    activeGridOpacity = pixelSize * gridRatio
-                }
+            guard director.shaderActive else {
+                // Keep the blend truthful even while the shader is hidden, so
+                // it does not cross-fade from a stale value when it comes back.
+                focusBlend = focused ? 1.0 : 0.0
+                return
+            }
+            // Returning to the window should feel prompt; leaving it can bloom.
+            let curve: Animation = focused
+                ? .easeOut(duration: 0.28)
+                : .easeInOut(duration: 0.42)
+            withAnimation(reduceMotion ? nil : curve) {
+                dimOpacity = focused ? focusedDim : unfocusedDim
+                shaderOpacity = focused ? focusedShader : unfocusedShader
+                activeGridOpacity = pixelSize * (focused ? focusedGridRatio : gridRatio)
+                focusBlend = focused ? 1.0 : 0.0
             }
         }
         .onChange(of: director.shaderMode) { newMode in
@@ -172,8 +187,14 @@ struct ShaderOverlayView: View {
                 frozenForResize = false
             }
         }
-        .onChange(of: themeColorKey) { _ in
-            lastPaletteColorKey = themeColorKey
+        // Two-parameter `onChange`. The deprecated single-parameter form fires
+        // its action from the *previous* body's closure, so `regeneratePalette`
+        // read the previous `themeColor` and the palette sat exactly one change
+        // behind — the shader "sticking to the colour it started off as".
+        // `director` reads were immune because it is a reference; `themeColor`
+        // is a plain `let` on the struct, so it was not.
+        .onChange(of: themeColorKey) { _, newKey in
+            lastPaletteColorKey = newKey
             regeneratePalette(animate: director.shaderActive)
         }
         .onAppear {
@@ -185,6 +206,7 @@ struct ShaderOverlayView: View {
             previousTuning = director.shaderTuning
             transitionStart = .distantPast
             activeGridOpacity = director.shaderFocused ? pixelSize * focusedGridRatio : pixelSize * gridRatio
+            focusBlend = director.shaderFocused ? 1.0 : 0.0
             lastPaletteColorKey = themeColorKey
             regeneratePalette()
             if director.shaderActive {
@@ -260,11 +282,16 @@ struct ShaderOverlayView: View {
         Float(visualPreset)
     }
 
-    /// Palette count: focused strips top 2 stops (vivid only), unfocused uses full palette.
+    /// Palette count: focused strips the top 2 stops (vivid only), unfocused uses
+    /// the full palette — this is the "more vibrant when you tab out" Adam asked for.
+    ///
+    /// Interpolated across ``focusBlend`` rather than switched. The shader
+    /// truncates to `int`, so an 8-stop palette steps 8 → 7 → 6 over the
+    /// transition instead of jumping.
     private var effectivePaletteCount: Float {
-        let count = paletteCount
-        if director.shaderFocused { return Float(max(count - 2, 2)) }
-        return Float(count)
+        let full = Double(paletteCount)
+        let stripped = Double(max(paletteCount - 2, 2))
+        return Float(full + (stripped - full) * focusBlend)
     }
 
     private func rawShaderLayer(modeIndex: Int, elapsed: Double, size: CGSize, contrast: Double = 1.0, brightness: Double = 0.0) -> some View {

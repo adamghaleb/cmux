@@ -1,16 +1,65 @@
 import Foundation
 
 /// Optional status indicator shown alongside the pet.
-/// These are text-based since the cat sprite sheet doesn't include icon frames.
+///
+/// These are SF Symbols, not emoji. Emoji carried a large ascender box that made
+/// the glyph float away from the sprite, they ignored the session tint, they
+/// could not animate, and they violated the project's own "no emoji as UI" rule.
+/// SF Symbols give a fixed vector box, native symbol effects, and correct
+/// optical weight at every display size. See fadi-orchestrator#70.
 public enum PetStatusIndicator: String, CaseIterable {
-    case pencil  = "✏️"
-    case gear    = "⚙️"
-    case heart   = "❤️"
-    case zzz     = "💤"
+    case pencil   = "pencil"
+    case gear     = "gearshape.fill"
+    case heart    = "heart.fill"
+    case zzz      = "zzz"
     /// The agent is blocked on the user. The one state the pet must never be
     /// wrong about, because it is the only one that asks Adam to do something.
     /// upstream: PR#6798 — ChatAgentState.needsAttention
-    case question = "❓"
+    case question = "questionmark.circle.fill"
+
+    /// The SF Symbol name to render.
+    public var systemImage: String { rawValue }
+
+    /// How this indicator should move.
+    ///
+    /// Kept as data rather than branching in the view: the view applies all
+    /// three effects with `isActive:` gates, which keeps the view's type stable
+    /// (SwiftUI cannot switch between differently-typed symbol effects inline).
+    public enum Motion {
+        /// A steady throb — ongoing, unhurried work.
+        case pulse
+        /// A discrete knock, repeated — activity with a beat to it.
+        case bounce
+        /// Layers illuminate in sequence. Only meaningful on multi-layer
+        /// symbols such as `zzz`.
+        case variableColor
+    }
+
+    public var motion: Motion {
+        switch self {
+        case .pencil:   return .bounce
+        case .gear:     return .pulse
+        case .heart:    return .bounce
+        case .zzz:      return .variableColor
+        case .question: return .bounce
+        }
+    }
+
+    /// Spoken description for VoiceOver. The glyph alone conveys nothing.
+    public var accessibilityLabel: String {
+        switch self {
+        case .pencil:
+            return String(localized: "accessibility.pet.writing", defaultValue: "Agent is writing")
+        case .gear:
+            return String(localized: "accessibility.pet.thinking", defaultValue: "Agent is thinking")
+        case .heart:
+            return String(localized: "accessibility.pet.happy", defaultValue: "Agent finished happily")
+        case .zzz:
+            return String(localized: "accessibility.pet.sleeping", defaultValue: "Agent session ended")
+        case .question:
+            return String(localized: "accessibility.pet.needsInput", defaultValue: "Agent needs your input")
+        }
+    }
 
     /// Suggested indicator for each pet state.
     ///

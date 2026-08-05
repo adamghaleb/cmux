@@ -32,6 +32,14 @@ final class FadiCodeOverlayHost: NSView {
     /// Pet animator — created once, driven by PixelPetController mood changes.
     private let petAnimator: PetAnimator? = PetAnimator.bundledDefault()
 
+    /// Supplies the one input `ShaderDirector.shaderFocused` never had.
+    ///
+    /// One per overlay, so focus resolves at both levels Adam asked for: two
+    /// cmux windows side by side each render their own state, and within one
+    /// window only the focused pane of a split stays vivid.
+    /// See fadi-orchestrator#69.
+    private let focusObserver = OverlayFocusObserver()
+
     /// Whether the debug overlay is visible (stored in projectBadgeState for SwiftUI observability).
     var debugOverlayVisible: Bool {
         get { projectBadgeState.debugOverlayVisible }
@@ -51,12 +59,30 @@ final class FadiCodeOverlayHost: NSView {
             projectBadgeState.projectName = projectName
         }
     }
+    /// The workspace's colour. A *default*: this surface's own colour, if it has
+    /// one, wins over it. See `SurfaceColorStore`.
     var projectColorHex: String? {
         didSet {
             guard projectColorHex != oldValue else { return }
-            projectBadgeState.projectColorHex = projectColorHex
+            refreshEffectiveColor()
         }
     }
+
+    /// Push the winning colour into the SwiftUI layer.
+    ///
+    /// Everything tinted by the session hue — the shader palette, the surface
+    /// wash, the pet — reads `projectBadgeState.projectColorHex`, so resolving
+    /// precedence in exactly one place keeps them from disagreeing.
+    private func refreshEffectiveColor() {
+        let surfaceHex = surfaceId.flatMap { SurfaceColorStore.shared.color(for: $0) }
+        let effective = SurfaceColorStore.effectiveHex(
+            surfaceHex: surfaceHex,
+            workspaceHex: projectColorHex
+        )
+        guard effective != projectBadgeState.projectColorHex else { return }
+        projectBadgeState.projectColorHex = effective
+    }
+
     private let projectBadgeState = ProjectBadgeState()
 
     /// The surface ID this overlay host is attached to (for scoped notifications).
@@ -67,6 +93,13 @@ final class FadiCodeOverlayHost: NSView {
     /// upstream: PR#6798
     var surfaceId: UUID? {
         didSet {
+            // Tell the focus observer which pane it is speaking for. Set here
+            // rather than at init because the host is put in the view hierarchy
+            // before its surface id is known.
+            focusObserver.surfaceID = surfaceId
+            // The surface's own colour can only be resolved once we know which
+            // surface we are.
+            refreshEffectiveColor()
             guard let surfaceId else {
                 overlaySystem.lifecycle.agentPresent = nil
                 Task { @MainActor [weak self] in self?.overlaySystem.lifecycle.unbind() }
@@ -246,6 +279,41 @@ final class FadiCodeOverlayHost: NSView {
             name: .fadicodeTerminalInspectorToggled,
             object: nil
         )
+
+        // Feed real window focus to the shader. The observer only reports
+        // transitions, so this closure runs on genuine focus changes.
+        focusObserver.onChange = { [weak self] focused in
+            self?.overlaySystem.shaderDirector.setFocused(focused)
+        }
+
+        // Re-tint when THIS surface's colour changes. The shader pipeline
+        // already reads the hue every frame, so republishing the effective
+        // colour is enough to re-tint a running effect in place — no restart.
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(surfaceColorChanged(_:)),
+            name: SurfaceColorStore.didChangeNotification,
+            object: nil
+        )
+    }
+
+    @objc private func surfaceColorChanged(_ note: Notification) {
+        guard let changed = note.userInfo?[SurfaceColorStore.surfaceIDKey] as? UUID,
+              changed == surfaceId else { return }
+        refreshEffectiveColor()
+    }
+
+    /// Re-bind the focus observer whenever this overlay changes windows.
+    ///
+    /// Surfaces get moved between windows by tab tear-off and by workspace
+    /// churn, so binding once at init would leave the shader reading a dead
+    /// window's focus. `superview` is the surface's own view subtree — the
+    /// terminal view and this overlay are siblings under it — which is what
+    /// lets the observer ask whether the first responder is in *this* pane.
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        focusObserver.bind(to: window, surfaceRoot: superview)
+        overlaySystem.shaderDirector.setFocused(focusObserver.isFocused)
     }
 
     override func hitTest(_ point: NSPoint) -> NSView? {
