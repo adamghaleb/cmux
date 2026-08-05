@@ -86,8 +86,12 @@ final class CompletionPopupController: ObservableObject, VisualController {
         lastActivityDuration = payload.duration
 
         let content = payload.terminalContent
-        let lines = content.components(separatedBy: "\n")
-        let tail = lines.suffix(100).joined(separator: "\n")
+        let tail = MainThreadProbe.measure(
+            "completionPopup.splitScrollback",
+            extra: { _ in ["bytes": "\(content.utf8.count)"] }
+        ) {
+            content.components(separatedBy: "\n").suffix(100).joined(separator: "\n")
+        }
         guard !tail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
 
         // Show placeholder immediately

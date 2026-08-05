@@ -134,8 +134,10 @@ final class FadiCodeOverlaySystem: ObservableObject {
     private func fetchActivitySummary() {
         guard let readContent = lifecycle.readContent else { return }
         let content = readContent()
-        let lines = content.components(separatedBy: "\n")
-        let tail = lines.suffix(80).joined(separator: "\n")
+        let tail = MainThreadProbe.measure(
+            "summaryPoll.splitScrollback",
+            extra: { _ in ["bytes": "\(content.utf8.count)"] }
+        ) { content.components(separatedBy: "\n").suffix(80).joined(separator: "\n") }
         guard !tail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
 
         // ClaudeActivitySummary is @MainActor; hop explicitly so this compiles
