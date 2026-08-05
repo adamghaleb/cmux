@@ -270,7 +270,10 @@ final class LifecycleManager: ObservableObject {
         let content = readContent()
 
         if let heuristic = ClaudeActivitySummary.shared.heuristicSummary(
-            content.components(separatedBy: "\n").suffix(80).joined(separator: "\n")
+            MainThreadProbe.measure(
+                "lifecyclePoll.splitScrollback",
+                extra: { _ in ["bytes": "\(content.utf8.count)"] }
+            ) { content.components(separatedBy: "\n").suffix(80).joined(separator: "\n") }
         ) {
             if heuristic != activitySummary {
                 activitySummary = heuristic
@@ -302,7 +305,12 @@ final class LifecycleManager: ObservableObject {
         guard needsInput else { return }
         let text = content ?? readContent?() ?? ""
         guard !text.isEmpty else { return }
-        guard let question = ClaudeQuestion.parse(from: text) else { return }
+        let parsed = MainThreadProbe.measure(
+            "questionPill.parse",
+            extra: { _ in ["bytes": "\(text.utf8.count)"] },
+            { ClaudeQuestion.parse(from: text) }
+        )
+        guard let question = parsed else { return }
         guard question != lastQuestion else { return }
         lastQuestion = question
         onQuestionDetected(question)
@@ -333,16 +341,19 @@ final class LifecycleManager: ObservableObject {
     }
 
     private func enterCompleting(tier: TaskTier, duration: TimeInterval) {
+        MainThreadProbe.record("enterCompleting.begin", ms: 0)
         let content = readContent?() ?? ""
         lastTransitionTime = Date()
         state = .completing(tier: tier, since: Date())
         cancelCompletingTimeout()
         startCompletingTimeout()
-        bus.emit(.lifecycleCompleting(LifecycleCompletingPayload(
-            tier: tier,
-            duration: duration,
-            terminalContent: content
-        )))
+        MainThreadProbe.measure("enterCompleting.emit") {
+            bus.emit(.lifecycleCompleting(LifecycleCompletingPayload(
+                tier: tier,
+                duration: duration,
+                terminalContent: content
+            )))
+        }
     }
 
     /// Shader hint for the current turn, from the last summary phrase rather

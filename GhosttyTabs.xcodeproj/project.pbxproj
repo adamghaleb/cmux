@@ -118,6 +118,7 @@
 		FC00001A /* QuestionDetectionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC10001A /* QuestionDetectionController.swift */; };
 		FC00001B /* PixelPetController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC10001B /* PixelPetController.swift */; };
 		FAD1AA03 /* NetworkRetry.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAD1AA04 /* NetworkRetry.swift */; };
+		FAD1AB03 /* MainThreadProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAD1AB04 /* MainThreadProbe.swift */; };
 		FC00001C /* ShaderDirector.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC10001C /* ShaderDirector.swift */; };
 		FC0000F1 /* AgentPresence.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC1000F1 /* AgentPresence.swift */; };
 		FC0000F2 /* AgentSessionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC1000F2 /* AgentSessionState.swift */; };
@@ -384,6 +385,7 @@
 		FC10001A /* QuestionDetectionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuestionDetectionController.swift; sourceTree = "<group>"; };
 		FC10001B /* PixelPetController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelPetController.swift; sourceTree = "<group>"; };
 		FAD1AA04 /* NetworkRetry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkRetry.swift; sourceTree = "<group>"; };
+		FAD1AB04 /* MainThreadProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainThreadProbe.swift; sourceTree = "<group>"; };
 		FC10001C /* ShaderDirector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShaderDirector.swift; sourceTree = "<group>"; };
 		FC1000F1 /* AgentPresence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentPresence.swift; sourceTree = "<group>"; };
 		FC1000F2 /* AgentSessionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentSessionState.swift; sourceTree = "<group>"; };
@@ -760,6 +762,7 @@
 			isa = PBXGroup;
 			children = (
 				FAD1AA04 /* NetworkRetry.swift */,
+				FAD1AB04 /* MainThreadProbe.swift */,
 			);
 			path = Helpers;
 			sourceTree = "<group>";
@@ -1117,6 +1120,7 @@
 				FC00001A /* QuestionDetectionController.swift in Sources */,
 				FC00001B /* PixelPetController.swift in Sources */,
 				FAD1AA03 /* NetworkRetry.swift in Sources */,
+				FAD1AB03 /* MainThreadProbe.swift in Sources */,
 				FC00001C /* ShaderDirector.swift in Sources */,
 				FC0000F1 /* AgentPresence.swift in Sources */,
 				FC0000F2 /* AgentSessionState.swift in Sources */,

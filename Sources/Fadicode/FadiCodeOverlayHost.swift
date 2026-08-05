@@ -636,6 +636,34 @@ private struct FadiCodeOverlayView: View {
 
 // MARK: - Border Glow View
 
+/// The "agent is working" glow around the surface.
+///
+/// # Why this is written the way it is (orchestrator #52)
+///
+/// This view used to pulse by animating the *contents* of the drawing: the
+/// alpha of every stop in a full-surface `LinearGradient` stroke, and the
+/// `radius` of its drop shadow, on a `repeatForever` animation.
+///
+/// Neither of those is a layer-composited property. CoreAnimation cannot
+/// interpolate them on the GPU, so every single display frame it re-rasterized
+/// a window-sized axial gradient and a window-sized blurred shadow through
+/// CoreGraphics **on the main thread** — `CA::Transaction::commit()` ->
+/// `CABackingStoreUpdate_` -> `ripc_DrawShading` -> `rgba64_shade_axial_RGB` /
+/// `rgba64_image_mark`. It ran for as long as an agent was active, and it was
+/// the single largest consumer of main-thread CPU in the app: turning this one
+/// view off took main-thread ping p90 from 45.5 ms to 2.1 ms and removed 100%
+/// of the process's CoreGraphics shading samples.
+///
+/// So: draw the glow ONCE at its bright end, freeze that into a single
+/// offscreen image with `drawingGroup()`, and pulse it by animating `opacity`
+/// — which *is* a layer property, so CoreAnimation animates it on the GPU
+/// without redrawing anything. The look is preserved (opacity 0.5 of the 0.6
+/// stop is the 0.3 the old dim end used); only the shadow radius stops
+/// breathing, which is not visible at 2 pt line width.
+///
+/// Rule of thumb this encodes: a `repeatForever` animation may only drive
+/// opacity, transform, or an explicitly rasterized layer. Never colors,
+/// gradients, blurs or shadow radii on a full-surface view.
 private struct BorderGlowView: View {
     var accentColor: Color?
     @State private var pulse = false
@@ -651,16 +679,21 @@ private struct BorderGlowView: View {
             .strokeBorder(
                 LinearGradient(
                     colors: [
-                        primary.opacity(pulse ? 0.6 : 0.3),
-                        secondary.opacity(pulse ? 0.4 : 0.2),
-                        primary.opacity(pulse ? 0.6 : 0.3)
+                        primary.opacity(0.6),
+                        secondary.opacity(0.4),
+                        primary.opacity(0.6)
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 ),
                 lineWidth: 2
             )
-            .shadow(color: primary.opacity(pulse ? 0.4 : 0.2), radius: pulse ? 12 : 6)
+            .shadow(color: primary.opacity(0.4), radius: 12)
+            // Rasterize the gradient + shadow once; the contents never change,
+            // so this image is produced a single time and then reused.
+            .drawingGroup()
+            // The only animated property, and it is layer-composited.
+            .opacity(pulse ? 1.0 : 0.5)
             .allowsHitTesting(false)
             .onAppear {
                 withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {

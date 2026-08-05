@@ -5462,31 +5462,46 @@ final class GhosttySurfaceScrollView: NSView {
 
         // Wire terminal content reading for auto-detection
         overlay.readTerminalContent = { [weak self] in
-            guard let self,
-                  let surface = self.surfaceView.terminalSurface?.surface else { return "" }
-            let topLeft = ghostty_point_s(
-                tag: GHOSTTY_POINT_SCREEN,
-                coord: GHOSTTY_POINT_COORD_TOP_LEFT,
-                x: 0, y: 0
-            )
-            let bottomRight = ghostty_point_s(
-                tag: GHOSTTY_POINT_SCREEN,
-                coord: GHOSTTY_POINT_COORD_BOTTOM_RIGHT,
-                x: 0, y: 0
-            )
-            let selection = ghostty_selection_s(
-                top_left: topLeft,
-                bottom_right: bottomRight,
-                rectangle: true
-            )
-            var text = ghostty_text_s()
-            guard ghostty_surface_read_text(surface, selection, &text) else { return "" }
-            defer { ghostty_surface_free_text(surface, &text) }
-            guard let ptr = text.text, text.text_len > 0 else { return "" }
-            return String(
-                decoding: Data(bytes: ptr, count: Int(text.text_len)),
-                as: UTF8.self
-            )
+            MainThreadProbe.measure(
+                "readTerminalContent",
+                extra: { ["bytes": "\($0.utf8.count)"] }
+            ) {
+                guard let self,
+                      let surface = self.surfaceView.terminalSurface?.surface else { return "" }
+                // ACTIVE, not SCREEN. `SCREEN` spans the whole scrollback
+                // (PageList: `screen` == pages.first), so this read was O(entire
+                // history) — and `ghostty_surface_read_text` holds the renderer
+                // mutex for the duration, on the main thread. Every caller
+                // (activity heuristic, question pill, completion summary,
+                // observatory last-line) then threw all of it away except the
+                // last 80-100 lines. `ACTIVE` is the live screen area,
+                // independent of scroll position: bounded by rows x cols, which
+                // is exactly what "presentation only" needs.
+                // orchestrator #52
+                let topLeft = ghostty_point_s(
+                    tag: GHOSTTY_POINT_ACTIVE,
+                    coord: GHOSTTY_POINT_COORD_TOP_LEFT,
+                    x: 0, y: 0
+                )
+                let bottomRight = ghostty_point_s(
+                    tag: GHOSTTY_POINT_ACTIVE,
+                    coord: GHOSTTY_POINT_COORD_BOTTOM_RIGHT,
+                    x: 0, y: 0
+                )
+                let selection = ghostty_selection_s(
+                    top_left: topLeft,
+                    bottom_right: bottomRight,
+                    rectangle: true
+                )
+                var text = ghostty_text_s()
+                guard ghostty_surface_read_text(surface, selection, &text) else { return "" }
+                defer { ghostty_surface_free_text(surface, &text) }
+                guard let ptr = text.text, text.text_len > 0 else { return "" }
+                return String(
+                    decoding: Data(bytes: ptr, count: Int(text.text_len)),
+                    as: UTF8.self
+                )
+            }
         }
 
         // Wire text injection for question pill responses
