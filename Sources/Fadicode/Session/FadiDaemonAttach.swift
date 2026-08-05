@@ -27,14 +27,36 @@ enum FadiDaemonAttach {
     /// hand it a secret. The app mints one per attach report, sends it over
     /// fadid's own 0700/0600 socket, and accepts `agent_bind` back only from
     /// whoever can quote it — one verb, one surface, no ambient authority.
+    ///
+    /// orchestrator #67 adds a second key for the same token: the surface
+    /// ALIAS (`<daemon-session-id>-0`). A hook event from a supervised pane is
+    /// named by the alias — the pane cannot know this app's surface UUID, and
+    /// the registry re-keys aliases onto real surfaces already (#62). Keying
+    /// the capability the same way lets `agent_hook` be authorized without a
+    /// main-actor registry lookup on the socket thread, and without widening
+    /// what the token grants: it still names one surface.
     private static let tokenLock = NSLock()
     private static var tokensBySurface: [String: String] = [:]
 
+    /// The `CMUX_SURFACE_ID` fadid injects into a supervised pane. Mirrors
+    /// `session.SurfaceAliasSuffix` on the daemon side.
+    static func surfaceAlias(daemonSessionID: String) -> String {
+        daemonSessionID + "-0"
+    }
+
     /// Mints (or re-mints) the token for a surface and returns it.
-    static func mintToken(forSurface surfaceKey: String) -> String {
+    ///
+    /// - Parameters:
+    ///   - surfaceKey: This app's surface UUID.
+    ///   - aliases: Extra keys the same capability answers to — the supervised
+    ///     pane's binding token. Never a wildcard; each one names this surface.
+    static func mintToken(forSurface surfaceKey: String, aliases: [String] = []) -> String {
         let token = UUID().uuidString + "-" + UUID().uuidString
         tokenLock.lock()
         tokensBySurface[surfaceKey.uppercased()] = token
+        for alias in aliases where !alias.isEmpty {
+            tokensBySurface[alias.uppercased()] = token
+        }
         tokenLock.unlock()
         return token
     }
@@ -50,10 +72,16 @@ enum FadiDaemonAttach {
         return difference == 0
     }
 
-    /// Forgets a surface's token (surface closed).
+    /// Forgets a surface's token (surface closed), including every alias that
+    /// answered to the same capability. An alias that outlived its surface
+    /// would be exactly the ambient authority this design exists to avoid.
     static func revokeToken(forSurface surfaceKey: String) {
         tokenLock.lock()
-        tokensBySurface.removeValue(forKey: surfaceKey.uppercased())
+        if let token = tokensBySurface.removeValue(forKey: surfaceKey.uppercased()) {
+            for (key, value) in tokensBySurface where value == token {
+                tokensBySurface.removeValue(forKey: key)
+            }
+        }
         tokenLock.unlock()
     }
 
@@ -121,7 +149,12 @@ enum FadiDaemonAttach {
         let body: [String: String] = [
             "surface_id": surfaceID.uuidString.uppercased(),
             "app_socket": appSocketPath,
-            "app_token": mintToken(forSurface: surfaceID.uuidString)
+            // One capability, two names: the surface this app knows, and the
+            // alias its supervised pane carries. #62 + #67.
+            "app_token": mintToken(
+                forSurface: surfaceID.uuidString,
+                aliases: [surfaceAlias(daemonSessionID: sessionID)]
+            )
         ]
         guard let json = try? JSONSerialization.data(withJSONObject: body) else { return }
 

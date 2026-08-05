@@ -1292,6 +1292,7 @@ class TerminalController {
                 // else. orchestrator #62
                 if !peerIsCmuxDescendant,
                    !Self.isTokenedAgentBind(trimmed),
+                   !Self.isTokenedAgentHook(trimmed),
                    !Self.isDebugIntrospection(trimmed) {
                     writeSocketResponse(
                         "ERROR: Access denied — only processes started inside cmux can connect",
@@ -1318,8 +1319,38 @@ class TerminalController {
     /// 0600 sockets, and it authorizes exactly one verb about exactly one
     /// surface. orchestrator #62
     nonisolated static func isTokenedAgentBind(_ line: String) -> Bool {
+        isTokenedAgentVerb(line, verb: "agent_bind")
+    }
+
+    /// True when a line is an `agent_hook` carrying a token this app minted
+    /// for the surface it names.
+    ///
+    /// The peer here is `fadid` again, forwarding on behalf of a `claude`
+    /// inside a `tmux -L fadi` pane. That agent can never be an app descendant
+    /// — the tmux server has PPID 1 — and it can never be handed the app's
+    /// socket path either, because the pane's environment is fixed at birth
+    /// and the app's socket is not known until a surface attaches, which is
+    /// strictly later (orchestrator #67).
+    ///
+    /// So the pane is given its supervisor's per-session socket instead, and
+    /// fadid attaches the capability on the way through. The token never
+    /// enters a pane environment, which is why nothing durable can go stale:
+    /// the app's mint stays in memory exactly as #62 left it, and a restart
+    /// simply makes fadid's next forward fail loudly until a surface
+    /// re-attaches and re-arms the whole chain.
+    ///
+    /// Same narrowness as `agent_bind`: one verb, one surface, no ambient
+    /// authority. `CMUX_SOCKET_MODE=automation` remains the only way to widen
+    /// the socket itself, and this does not touch it.
+    nonisolated static func isTokenedAgentHook(_ line: String) -> Bool {
+        isTokenedAgentVerb(line, verb: "agent_hook")
+    }
+
+    /// Shared shape: `<verb> {"surface_id":…,"app_token":…}` where the token
+    /// is one this app minted for that exact surface (or its daemon alias).
+    private nonisolated static func isTokenedAgentVerb(_ line: String, verb: String) -> Bool {
         let parts = line.split(separator: " ", maxSplits: 1).map(String.init)
-        guard parts.count == 2, parts[0].lowercased() == "agent_bind" else { return false }
+        guard parts.count == 2, parts[0].lowercased() == verb else { return false }
         guard let data = parts[1].data(using: .utf8),
               let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let surfaceID = object["surface_id"] as? String,

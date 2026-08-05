@@ -856,6 +856,108 @@ struct CmuxCLIPathInstaller {
         bundle.resourceURL?.appendingPathComponent("bin/cmux", isDirectory: false)
     }
 
+    // MARK: - Launch-time user-path link (orchestrator #65)
+
+    /// The user-writable link the Claude Code hook is pinned to.
+    ///
+    /// `/usr/local/bin` is the palette's install target and needs an admin
+    /// prompt, which cannot happen on launch. `~/.local/bin` is already on this
+    /// machine, is user-owned, and needs no privileges — so the app can keep it
+    /// current by itself, which is the whole point: the hook must not depend on
+    /// anyone remembering to run an install command.
+    static var userPathLinkURL: URL {
+        FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".local/bin/cmux", isDirectory: false)
+    }
+
+    /// Why a link attempt did or did not happen. Exposed so the behaviour is
+    /// testable without a launch.
+    enum UserPathLinkOutcome: Equatable {
+        case linked(destination: String, source: String)
+        case alreadyCurrent
+        case noBundledCLI
+        case skippedTemporaryBuild(source: String)
+        case refusedNonSymlink(destination: String)
+        case failed(message: String)
+    }
+
+    /// Points `~/.local/bin/cmux` at this build's bundled CLI, unless it is
+    /// already correct or the destination is something we must not touch.
+    ///
+    /// Runs off the main thread, throws nothing, and blocks no launch step: a
+    /// failed link is a degraded hook, never a degraded app.
+    static func installUserPathLinkIfNeeded(bundle: Bundle = .main) {
+        let source = defaultBundledCLIURL(bundle: bundle)
+        DispatchQueue.global(qos: .utility).async {
+            let outcome = linkUserPath(sourceURL: source)
+            switch outcome {
+            case .linked(let destination, let source):
+                NSLog("cmux: linked \(destination) -> \(source)")
+            case .refusedNonSymlink(let destination):
+                NSLog("cmux: not replacing non-symlink at \(destination); CLI link left alone")
+            case .failed(let message):
+                NSLog("cmux: could not link CLI: \(message)")
+            case .alreadyCurrent, .noBundledCLI, .skippedTemporaryBuild:
+                break
+            }
+        }
+    }
+
+    /// The synchronous body of `installUserPathLinkIfNeeded`.
+    static func linkUserPath(
+        sourceURL: URL?,
+        destinationURL: URL? = nil,
+        fileManager: FileManager = .default,
+        allowTemporarySource: Bool = false
+    ) -> UserPathLinkOutcome {
+        let destination = destinationURL ?? userPathLinkURL
+        guard let source = sourceURL?.standardizedFileURL,
+              fileManager.fileExists(atPath: source.path) else {
+            return .noBundledCLI
+        }
+        // A build running out of a temp dir is a throwaway. Repointing the link
+        // at one would leave a dangling symlink the moment it is cleaned up —
+        // and a silently dead hook is exactly the failure #65 exists to end.
+        if !allowTemporarySource, isTemporaryLocation(source) {
+            return .skippedTemporaryBuild(source: source.path)
+        }
+
+        // Never escalate: a launch-time step must not raise an admin prompt.
+        // `~/.local/bin` is user-owned, so needing one means something is wrong
+        // and the right answer is to log and stop.
+        let refuseEscalation: PrivilegedInstallHandler = { _, path in
+            throw InstallerError.privilegedCommandFailed(
+                message: "refusing to prompt for admin during launch (\(path.path))")
+        }
+        let installer = CmuxCLIPathInstaller(
+            fileManager: fileManager,
+            destinationURL: destination,
+            bundledCLIURLProvider: { source },
+            expectedBundledCLIPath: source.path,
+            privilegedInstaller: refuseEscalation,
+            privilegedUninstaller: { path in try refuseEscalation(path, path) }
+        )
+        guard !installer.isInstalled() else { return .alreadyCurrent }
+        // Only ever replace nothing, or a symlink we can recognise as a
+        // previous install. Never clobber a real file someone else put here.
+        if let attrs = try? fileManager.attributesOfItem(atPath: destination.path),
+           (attrs[.type] as? FileAttributeType) != .typeSymbolicLink {
+            return .refusedNonSymlink(destination: destination.path)
+        }
+        do {
+            _ = try installer.install()
+            return .linked(destination: destination.path, source: source.path)
+        } catch {
+            return .failed(message: "\(destination.path): \(error)")
+        }
+    }
+
+    private static func isTemporaryLocation(_ url: URL) -> Bool {
+        let path = url.standardizedFileURL.path
+        return ["/tmp/", "/private/tmp/", "/private/var/folders/", "/var/folders/"]
+            .contains { path.hasPrefix($0) }
+    }
+
     private static func defaultBundledCLIExpectedPath(bundle: Bundle = .main) -> String {
         bundle.bundleURL
             .appendingPathComponent("Contents/Resources/bin/cmux", isDirectory: false)
@@ -1648,6 +1750,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         // binding took the whole rail down with it — and did.
         // upstream: PR#6798
         AgentSessionTabRail.shared.start()
+
+        // The Gate 2 hook needs an absolute path to the CLI that exists before
+        // any Claude session starts (orchestrator #65). Hooks run in a bare
+        // environment — no PATH, no shell rc — so "run `cmux`" is not a
+        // contract the app can offer; a stable file on disk is.
+        if !isRunningUnderXCTest {
+            CmuxCLIPathInstaller.installUserPathLinkIfNeeded(bundle: .main)
+        }
 
 #if DEBUG
         // UI tests run on a shared VM user profile, so persisted shortcuts can drift and make
