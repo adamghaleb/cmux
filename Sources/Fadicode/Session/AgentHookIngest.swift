@@ -12,13 +12,26 @@ import Foundation
 // The hook process, not the app, holds the binding token: it inherits
 // `CMUX_SURFACE_ID` from the surface's shell. The socket carries no ambient
 // environment, so the hook command must fold that value into the payload it
-// forwards. The recommended Claude Code settings entry, for every event name in
-// `AgentHookEvent.Name`:
+// forwards. `cmux agent-hook` does exactly that (CLI/cmux.swift), so the
+// Claude Code settings entry for every event name in `AgentHookEvent.Name` is:
 //
-//   {"type": "command",
-//    "command": "jq -c --arg s \"$CMUX_SURFACE_ID\" --arg p \"$PPID\" \
-//                 '. + {surface_id:$s, _ppid:($p|tonumber)}' \
-//                | xargs -0 -I{} cmux-send 'agent_hook {}'"}
+//   {"type": "command", "timeout": 5,
+//    "command": "[ -n \"$CMUX_SURFACE_ID\" ] && [ -S \"$CMUX_SOCKET_PATH\" ] && \
+//                 $HOME/.local/bin/cmux agent-hook --ppid \"$PPID\" \
+//                 >/dev/null 2>&1; exit 0"}
+//
+// (with `$HOME` spelled out — hooks run in a bare environment; see #65). Three
+// properties matter more than elegance here, because this command runs on every
+// tool call of every Claude session on the machine, most of which have nothing
+// to do with this app:
+//
+//   1. the surface test comes FIRST, so a non-Fadicode session pays one `test`;
+//   2. the CLI is named by absolute path, never resolved through PATH;
+//   3. `exit 0` is unconditional, so neither a missing binary nor a stopped app
+//      can ever fail somebody's session.
+//
+// The app keeps `~/.local/bin/cmux` pointed at its bundled CLI on launch
+// (`CmuxCLIPathInstaller.installUserPathLinkIfNeeded`).
 //
 // That keeps the binding deterministic — never a title, never an mtime.
 // An event that arrives with no binding is dropped loudly (upstream principle 3:

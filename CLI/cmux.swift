@@ -596,6 +596,13 @@ private enum CLISocketPathResolver {
 final class SocketClient {
     private let path: String
     private var socketFD: Int32 = -1
+    /// How long `connect()` keeps retrying a missing/refused socket.
+    ///
+    /// Interactive commands want the default grace window (the app may be mid
+    /// launch). The Gate 2 hook path (orchestrator #65) passes 0: it runs on
+    /// every Claude tool call, and when the app is not running a dead socket
+    /// must cost one failed `stat(2)`, not two seconds of sleeping.
+    private let connectRetryWindow: TimeInterval
     private static let connectRetryWindowSeconds: TimeInterval = 2.0
     private static let connectRetryIntervalSeconds: TimeInterval = 0.1
     private static let retriableConnectErrnos: Set<Int32> = [
@@ -615,14 +622,15 @@ final class SocketClient {
         return defaultResponseTimeoutSeconds
     }()
 
-    init(path: String) {
+    init(path: String, connectRetryWindow: TimeInterval = SocketClient.connectRetryWindowSeconds) {
         self.path = path
+        self.connectRetryWindow = connectRetryWindow
     }
 
     func connect() throws {
         if socketFD >= 0 { return }
 
-        let deadline = Date().addingTimeInterval(Self.connectRetryWindowSeconds)
+        let deadline = Date().addingTimeInterval(connectRetryWindow)
         var lastError: CLIError?
 
         while true {
@@ -741,6 +749,29 @@ final class SocketClient {
             response.removeLast()
         }
         return response
+    }
+
+    /// Writes one command and returns without waiting for the reply.
+    ///
+    /// The Gate 2 hook path (orchestrator #65) has nothing to do with the
+    /// answer and must never park a Claude tool call on it — a wedged app
+    /// would otherwise cost every tool call the full response timeout. Closing
+    /// a connected SOCK_STREAM after a complete write still delivers it.
+    func sendOneWay(command: String) throws {
+        guard socketFD >= 0 else { throw CLIError(message: "Not connected") }
+        let bytes = Array((command + "\n").utf8)
+        var offset = 0
+        while offset < bytes.count {
+            let written = bytes.withUnsafeBytes { buf -> Int in
+                Darwin.write(socketFD, buf.baseAddress!.advanced(by: offset), bytes.count - offset)
+            }
+            if written > 0 {
+                offset += written
+                continue
+            }
+            if written < 0, errno == EINTR { continue }
+            throw CLIError(message: "Failed to write to socket")
+        }
     }
 
     func sendV2(method: String, params: [String: Any] = [:]) throws -> [String: Any] {
@@ -899,6 +930,15 @@ struct CMUXCLI {
                 return
             }
             print("Unknown command '\(command)'. Run 'cmux help' to see available commands.")
+            return
+        }
+
+        // Gate 2 hook ingest (orchestrator #65). Dispatched here — before the
+        // shared connect, the auth handshake and the window-focus step — because
+        // this command runs on every tool call of every Claude session on the
+        // machine and owns its own fail-silent contract. See runAgentHook.
+        if command == "agent-hook" {
+            runAgentHook(commandArgs: commandArgs, socketPath: resolvedSocketPath)
             return
         }
 
@@ -4999,6 +5039,28 @@ struct CMUXCLI {
 
             Trigger the app-active handler used by notification focus tests.
             """
+        case "agent-hook":
+            return """
+            Usage: cmux agent-hook [--surface <id>] [--ppid <pid>] [--verbose]
+
+            Forward one Claude Code hook payload (read from stdin) to the app's
+            agent-session authority. Intended to be called from a Claude Code
+            `settings.json` hook, once per hook event.
+
+            Exits 0 unconditionally and prints nothing: it no-ops when no
+            surface binding is present, when stdin is not a hook payload, and
+            when the app is not running.
+
+            Flags:
+              --surface <id>   Binding key (default: $CMUX_SURFACE_ID)
+              --ppid <pid>     The agent's pid; pass the calling shell's $PPID
+              --verbose        Explain what happened on stderr, and wait for
+                               the app's reply (diagnostics only)
+
+            Example (the settings.json hook command):
+              [ -n "$CMUX_SURFACE_ID" ] && [ -S "$CMUX_SOCKET_PATH" ] && \\
+                /path/to/cmux agent-hook --ppid "$PPID" >/dev/null 2>&1; exit 0
+            """
         case "claude-hook":
             return """
             Usage: cmux claude-hook <session-start|active|stop|idle|notification|notify|prompt-submit> [flags]
@@ -6202,6 +6264,100 @@ struct CMUXCLI {
         }
     }
 
+    // MARK: - Gate 2 agent hook (orchestrator #65)
+
+    /// The payload keys the app's `AgentHookEvent` decoder actually reads.
+    /// Everything else in a Claude Code hook payload — `tool_input` above all,
+    /// which can be a whole file's contents — is dropped here rather than
+    /// pushed through a line-oriented socket on every tool call.
+    private static let agentHookForwardedKeys = [
+        "session_id", "hook_event_name", "transcript_path", "cwd", "tool_name", "workspace_id"
+    ]
+
+    /// Forwards one Claude Code hook payload to the app's `agent_hook` verb.
+    ///
+    /// This is the only live input to the Gate 2 agent-session authority, and
+    /// it runs inside Claude sessions that may have nothing to do with this
+    /// app, so the contract is strict and deliberately un-chatty:
+    ///
+    ///   * **Never fails.** No throw, no non-zero exit, no stdout. A hook that
+    ///     can error is a hook that can break an unrelated session.
+    ///   * **No binding, no work.** Without `CMUX_SURFACE_ID` there is nothing
+    ///     to attribute the event to; the app drops unbound events on purpose
+    ///     (no-heuristics principle), so sending one is pure cost.
+    ///   * **A dead socket is free.** Zero connect-retry window, and the write
+    ///     never waits for a reply.
+    private func runAgentHook(commandArgs: [String], socketPath: String) {
+        let verbose = hasFlag(commandArgs, name: "--verbose")
+        func trace(_ message: @autoclosure () -> String) {
+            guard verbose else { return }
+            FileHandle.standardError.write(Data("agent-hook: \(message())\n".utf8))
+        }
+
+        let env = ProcessInfo.processInfo.environment
+        let surfaceID = (optionValue(commandArgs, name: "--surface")
+            ?? env["CMUX_SURFACE_ID"]
+            ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !surfaceID.isEmpty else {
+            trace("no surface binding (CMUX_SURFACE_ID unset) — nothing to report")
+            return
+        }
+
+        let raw = FileHandle.standardInput.readDataToEndOfFile()
+        guard !raw.isEmpty,
+              let object = (try? JSONSerialization.jsonObject(with: raw)) as? [String: Any] else {
+            trace("stdin was not a JSON object")
+            return
+        }
+
+        var payload: [String: Any] = [:]
+        for key in Self.agentHookForwardedKeys {
+            if let value = object[key], !(value is NSNull) {
+                payload[key] = value
+            }
+        }
+        // The app requires both; without them the event cannot be applied, so
+        // spend nothing on the round trip.
+        guard payload["session_id"] is String, payload["hook_event_name"] is String else {
+            trace("payload has no session_id/hook_event_name")
+            return
+        }
+        payload["surface_id"] = surfaceID
+        payload["_source"] = (object["_source"] as? String) ?? "claude"
+        // `_ppid` must be the AGENT's pid. The shell that runs the hook knows
+        // it as $PPID and passes it in; getppid() here is only correct when the
+        // shell exec'd us, so it is a fallback, not the contract.
+        if let raw = optionValue(commandArgs, name: "--ppid"), let ppid = Int(raw), ppid > 0 {
+            payload["_ppid"] = ppid
+        } else {
+            payload["_ppid"] = Int(getppid())
+        }
+
+        guard JSONSerialization.isValidJSONObject(payload),
+              let data = try? JSONSerialization.data(withJSONObject: payload, options: []),
+              let line = String(data: data, encoding: .utf8) else {
+            trace("could not encode payload")
+            return
+        }
+
+        let client = SocketClient(path: socketPath, connectRetryWindow: 0)
+        do {
+            try client.connect()
+        } catch {
+            trace("app not reachable at \(socketPath) (\(error))")
+            return
+        }
+        defer { client.close() }
+
+        if verbose {
+            // Only the diagnostic path waits for the answer.
+            let response = (try? client.send(command: "agent_hook \(line)")) ?? "<no response>"
+            trace("sent \(payload["hook_event_name"] ?? "?") -> \(response)")
+            return
+        }
+        try? client.sendOneWay(command: "agent_hook \(line)")
+    }
+
     private func runClaudeHook(
         commandArgs: [String],
         client: SocketClient,
@@ -6995,6 +7151,7 @@ struct CMUXCLI {
           list-notifications
           clear-notifications
           claude-hook <session-start|stop|notification> [--workspace <id|ref>] [--surface <id|ref>]
+          agent-hook [--surface <id>] [--ppid <pid>] [--verbose]
 
           # sidebar metadata commands
           set-status <key> <value> [--icon <name>] [--color <#hex>] [--workspace <id|ref>]
