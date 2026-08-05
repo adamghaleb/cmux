@@ -239,7 +239,41 @@ final class AgentPresence {
     /// upstream: PR#6798 — observe-floor detection
     var onObservedSessions: (([ObservedAgentSession]) -> Void)?
 
+    /// Self-driving scan pump. See `startObserving()`.
+    private var pump: DispatchSourceTimer?
+
     private init() {}
+
+    /// Starts pumping the process-table scan on a fixed cadence, independent of
+    /// any view.
+    ///
+    /// The scan used to be kicked ONLY by `isAgentLive(surfaceID:)`, which is
+    /// called from the overlay's lifecycle poll. That made the observe floor —
+    /// the thing that binds an agent when no hooks are installed — conditional
+    /// on an overlay actually polling, which does not happen for a surface
+    /// whose window is not front, or before any overlay has mounted. Measured:
+    /// a live interactive `claude` in a surface produced no registry record at
+    /// all, because no scan had ever run.
+    ///
+    /// The floor is authority-layer infrastructure, not a view affordance, so
+    /// it now drives itself. Idempotent; one timer per process.
+    /// orchestrator #61
+    func startObserving() {
+        lock.lock()
+        let alreadyRunning = pump != nil
+        lock.unlock()
+        guard !alreadyRunning else { return }
+
+        let timer = DispatchSource.makeTimerSource(queue: .global(qos: .utility))
+        timer.schedule(deadline: .now(), repeating: rescanInterval, leeway: .milliseconds(500))
+        timer.setEventHandler { [weak self] in
+            self?.scheduleRefreshIfNeeded()
+        }
+        lock.lock()
+        pump = timer
+        lock.unlock()
+        timer.resume()
+    }
 
     /// True when a live agent process carries this surface's binding token.
     ///

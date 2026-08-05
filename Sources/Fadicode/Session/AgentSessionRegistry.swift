@@ -50,6 +50,19 @@ final class AgentSessionRegistry: ObservableObject {
     private var sessionIDsBySurfaceID: [String: Set<String>] = [:]
     private var versionBySessionID: [String: Int] = [:]
 
+    /// Binding-token aliases: a token an agent actually carries -> the real
+    /// surface it belongs to. Written ONLY by `assertBinding`, i.e. only ever
+    /// by the daemon that owns the mapping; never inferred here.
+    ///
+    /// This is what makes a daemon-owned session bindable at all. Its pane
+    /// carries `CMUX_SURFACE_ID=<fadid-session-id>-0`, minted before any
+    /// surface existed, so every hook event and every process-table row from
+    /// inside it is stamped with a token this app would otherwise have to
+    /// drop. With the alias asserted, those inputs re-key onto the real
+    /// surface and the whole Gate 2 machine works unchanged.
+    /// orchestrator #62
+    private var surfaceAliases: [String: String] = [:]
+
     /// Per-session process-exit watchers, tagged with the pid they watch.
     /// `DispatchSourceProcess` (`.exit`) fires exactly when the agent dies, so
     /// the session flips to `.ended` deterministically without a `SessionEnd`
@@ -81,6 +94,10 @@ final class AgentSessionRegistry: ObservableObject {
                 self?.applyObservedSessions(sessions)
             }
         }
+        // ...and pump it. The sink alone was not enough: the scan was only
+        // ever kicked by the overlay's lifecycle poll, so a surface whose
+        // overlay never polled had no floor at all. orchestrator #61
+        AgentPresence.shared.startObserving()
     }
 
     // MARK: - Reads
@@ -152,12 +169,17 @@ final class AgentSessionRegistry: ObservableObject {
     @discardableResult
     func noteHookEvent(_ event: AgentHookEvent) -> AgentSessionRecord {
         let sessionID = event.sessionID
-        let previous = records[sessionID] ?? adoptPendingRecord(for: event)
+        // A hook fired inside a daemon-owned session carries the token fadid
+        // injected, not a surface UUID. Resolve it through the asserted alias
+        // table before anything downstream sees it. orchestrator #62
+        let boundSurfaceKey = event.surfaceID.flatMap { $0.isEmpty ? nil : resolveSurfaceKey($0) }
+        let previous = records[sessionID]
+            ?? adoptPendingRecord(for: event, surfaceKey: boundSurfaceKey)
 
         var record = previous ?? AgentSessionRecord(
             sessionID: sessionID,
             agentKind: event.agentKind,
-            surfaceID: event.surfaceID?.uppercased(),
+            surfaceID: boundSurfaceKey,
             workspaceID: event.workspaceID?.uppercased(),
             workingDirectory: event.cwd,
             transcriptPath: nil,
@@ -169,8 +191,8 @@ final class AgentSessionRegistry: ObservableObject {
         // fields are fresher than the record's. Never keep a stale binding over
         // a present one.
         // upstream: PR#6798 — AgentChatSessionRecord.adoptBindings
-        if let surfaceID = event.surfaceID, !surfaceID.isEmpty {
-            record.surfaceID = surfaceID.uppercased()
+        if let boundSurfaceKey {
+            record.surfaceID = boundSurfaceKey
         }
         if let workspaceID = event.workspaceID, !workspaceID.isEmpty {
             record.workspaceID = workspaceID.uppercased()
@@ -205,8 +227,11 @@ final class AgentSessionRegistry: ObservableObject {
     /// before the agent's first hook fired. The first hook carries the real
     /// session id, so fold the pending record's bindings into it and retire it.
     /// upstream: PR#6798 — the pending-alias / canonicalization path.
-    private func adoptPendingRecord(for event: AgentHookEvent) -> AgentSessionRecord? {
-        guard let surfaceID = event.surfaceID?.uppercased() else { return nil }
+    private func adoptPendingRecord(
+        for event: AgentHookEvent,
+        surfaceKey: String?
+    ) -> AgentSessionRecord? {
+        guard let surfaceID = surfaceKey else { return nil }
         let pendingID = Self.pendingSessionID(surfaceKey: surfaceID)
         guard var pending = records[pendingID] else { return nil }
         removeRecord(sessionID: pendingID)
@@ -224,6 +249,115 @@ final class AgentSessionRegistry: ObservableObject {
             pid: pending.pid
         )
         return pending
+    }
+
+    // MARK: - Daemon-asserted bindings
+
+    /// Accepts a binding `fadid` asserts for a surface attached to a session it
+    /// supervises. Same standing as a hook-carried binding: it is the agent's
+    /// owner reporting identity, not this app inferring it.
+    ///
+    /// It asserts IDENTITY, never ACTIVITY. The daemon knows which process is
+    /// the agent; it does not know whether that agent is thinking. So a record
+    /// with no hook lifecycle yet gets the presence floor (`idle`, unproven),
+    /// and one that already has hook state keeps it — exactly the rule the
+    /// observe floor follows.
+    /// orchestrator #62
+    func assertBinding(_ binding: AssertedAgentBinding) {
+        let surfaceKey = binding.surfaceID.uppercased()
+
+        // The alias is the load-bearing half: it is the token the supervised
+        // agent actually carries, so every later hook and every process-table
+        // row from that session re-keys onto this surface instead of being
+        // dropped for having no resolvable binding.
+        if let alias = binding.surfaceAlias?.uppercased(),
+           !alias.isEmpty, alias != surfaceKey {
+            surfaceAliases[alias] = surfaceKey
+            rekeyRecords(fromSurfaceKey: alias, toSurfaceKey: surfaceKey)
+        }
+
+        // Prefer the agent's own session id. Until the daemon has discovered
+        // one, use this surface's pending id so the first real hook retires it
+        // through the ordinary canonicalization path.
+        let sessionID = binding.sessionID.flatMap { $0.isEmpty ? nil : $0 }
+            ?? Self.pendingSessionID(surfaceKey: surfaceKey)
+
+        // A record the observe floor already minted for the same live pid on
+        // this surface IS this session; adopt it rather than shadowing it.
+        let previous = records[sessionID]
+            ?? binding.agentPID.flatMap { boundRecord(surfaceKey: surfaceKey, pid: $0) }
+
+        var record = previous ?? AgentSessionRecord(
+            sessionID: sessionID,
+            agentKind: binding.agentKind,
+            surfaceID: surfaceKey,
+            state: .idle,
+            lastActivityAt: binding.assertedAt
+        )
+        if let previous, previous.sessionID != sessionID {
+            // Re-key an adopted record onto the asserted session id.
+            removeRecord(sessionID: previous.sessionID)
+            record = AgentSessionRecord(
+                sessionID: sessionID,
+                agentKind: previous.agentKind,
+                surfaceID: previous.surfaceID,
+                workspaceID: previous.workspaceID,
+                workingDirectory: previous.workingDirectory,
+                transcriptPath: previous.transcriptPath,
+                state: previous.state,
+                hasHookLifecycleState: previous.hasHookLifecycleState,
+                endedAt: previous.endedAt,
+                lastActivityAt: previous.lastActivityAt,
+                pid: previous.pid
+            )
+        }
+
+        record.surfaceID = surfaceKey
+        if let pid = binding.agentPID, pid > 0 { record.pid = pid }
+        if let workspaceID = binding.workspaceID, !workspaceID.isEmpty {
+            record.workspaceID = workspaceID.uppercased()
+        }
+        if let cwd = binding.cwd, !cwd.isEmpty { record.workingDirectory = cwd }
+        if let transcriptPath = binding.transcriptPath, !transcriptPath.isEmpty {
+            record.transcriptPath = transcriptPath
+        }
+        record.lastActivityAt = max(record.lastActivityAt, binding.assertedAt)
+
+        // The daemon proved the process is alive right now, so a record that
+        // had been ended under a predecessor pid is live again.
+        if record.state.isEnded {
+            record.setProcessObservedIdle()
+            record.endedAt = nil
+        } else if !record.hasHookLifecycleState {
+            record.setProcessObservedIdle()
+        }
+
+        storeRecord(record, replacing: records[sessionID], at: Date())
+    }
+
+    /// Resolves a binding token to a surface key, through the asserted alias
+    /// table. An unknown token is returned uppercased and unchanged — it is
+    /// either already a surface UUID or it will fail to parse as one later,
+    /// which is the loud drop we want.
+    private func resolveSurfaceKey(_ token: String) -> String {
+        let key = token.uppercased()
+        return surfaceAliases[key] ?? key
+    }
+
+    /// Moves every record parked on an alias key onto the real surface. Covers
+    /// the ordinary race where the observe floor saw the supervised agent
+    /// before the daemon's assertion arrived.
+    private func rekeyRecords(fromSurfaceKey alias: String, toSurfaceKey surfaceKey: String) {
+        guard let ids = sessionIDsBySurfaceID[alias] else { return }
+        for sessionID in ids {
+            update(sessionID: sessionID) { $0.surfaceID = surfaceKey }
+        }
+    }
+
+    /// The record on a surface currently bound to a given pid, if any.
+    private func boundRecord(surfaceKey: String, pid: Int) -> AgentSessionRecord? {
+        guard let ids = sessionIDsBySurfaceID[surfaceKey] else { return nil }
+        return ids.compactMap { records[$0] }.first { $0.pid == pid }
     }
 
     // MARK: - Explicit agent signals (OSC 7777 / 7778)
@@ -260,6 +394,35 @@ final class AgentSessionRegistry: ObservableObject {
             receivedAt: when
         )
         noteHookEvent(event)
+        fillMissingPID(sessionID: sessionID, surfaceKey: key)
+    }
+
+    /// An OSC-bound session carries no pid, because OSC 7777/7778 is a byte in
+    /// the terminal stream — it has no `$PPID` to fold in the way a hook
+    /// command does. Without a pid BOTH deterministic exit paths opt out
+    /// (`syncProcessExitWatch` arms nothing, and the observe-floor reap is
+    /// guarded on `pid != nil`), so `ended` could never fire for a session
+    /// that never saw a hook. ADR-0006 sells process-exit as the backstop that
+    /// replaced the 5-minute ACTIVE timeout precisely for the no-hooks case,
+    /// so that hole was in the exact configuration the backstop covers.
+    ///
+    /// The presence layer already answers "which pid is the agent on this
+    /// surface". Ask it — off the main actor, because it walks the process
+    /// table — and fill the gap.
+    /// orchestrator #60
+    private func fillMissingPID(sessionID: String, surfaceKey: String) {
+        guard let record = records[sessionID], record.pid == nil, !record.state.isEnded else {
+            return
+        }
+        Task.detached(priority: .utility) { [weak self] in
+            guard let pid = AgentPresence.shared.liveAgentPID(surfaceKey: surfaceKey) else { return }
+            await MainActor.run { [weak self] in
+                self?.update(sessionID: sessionID) { record in
+                    // Never overwrite a pid someone authoritative already set.
+                    if record.pid == nil { record.pid = pid }
+                }
+            }
+        }
     }
 
     /// Synthetic id for a session bound to a surface before any hook has named
@@ -287,10 +450,18 @@ final class AgentSessionRegistry: ObservableObject {
         var seenSurfaceKeys = Set<String>()
 
         for session in observed {
-            let surfaceKey = session.surfaceID.uppercased()
+            // A supervised agent's process environment carries the token fadid
+            // injected, not a surface UUID. Resolve it through the asserted
+            // alias table so the floor binds it too. orchestrator #62
+            let surfaceKey = resolveSurfaceKey(session.surfaceID)
             seenSurfaceKeys.insert(surfaceKey)
 
-            let sessionID = session.sessionID ?? Self.pendingSessionID(surfaceKey: surfaceKey)
+            // One live pid is one session: if this surface already has a record
+            // bound to this pid (the daemon asserted it, or an earlier scan
+            // minted it), refresh THAT rather than minting a rival pending one.
+            let sessionID = session.sessionID
+                ?? boundRecord(surfaceKey: surfaceKey, pid: session.pid)?.sessionID
+                ?? Self.pendingSessionID(surfaceKey: surfaceKey)
             let previous = records[sessionID]
 
             if var record = previous {
@@ -568,5 +739,9 @@ final class AgentSessionRegistry: ObservableObject {
                 + "hooks=\(record.hasHookLifecycleState ? 1 : 0) v\(record.version)"
         }
     }
+
+    /// Daemon-asserted binding aliases, as `alias -> surface`. Out-of-process
+    /// evidence that the #62 handshake actually landed.
+    var debugSurfaceAliases: [String: String] { surfaceAliases }
     #endif
 }

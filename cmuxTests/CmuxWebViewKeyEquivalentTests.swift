@@ -11,6 +11,10 @@ import UserNotifications
 @testable import cmux_DEV
 #elseif canImport(cmux)
 @testable import cmux
+#elseif canImport(fadicode_DEV)
+// This fork ships the Debug app as `fadicode DEV`, so the module is
+// `fadicode_DEV`. Kept last so upstream's own module names still win.
+@testable import fadicode_DEV
 #endif
 
 private var cmuxUnitTestInspectorAssociationKey: UInt8 = 0
