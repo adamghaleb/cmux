@@ -86,6 +86,7 @@
 					F3000000A1B2C3D4E5F60718 /* CJKIMEInputTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3000001A1B2C3D4E5F60718 /* CJKIMEInputTests.swift */; };
 					F4000000A1B2C3D4E5F60718 /* GhosttyConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4000001A1B2C3D4E5F60718 /* GhosttyConfigTests.swift */; };
 					F5000000A1B2C3D4E5F60718 /* SessionPersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5000001A1B2C3D4E5F60718 /* SessionPersistenceTests.swift */; };
+					F5000010A1B2C3D4E5F60718 /* AgentBindingAssertionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5000011A1B2C3D4E5F60718 /* AgentBindingAssertionTests.swift */; };
 					F6000000A1B2C3D4E5F60718 /* AppDelegateShortcutRoutingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6000001A1B2C3D4E5F60718 /* AppDelegateShortcutRoutingTests.swift */; };
 					F7000000A1B2C3D4E5F60718 /* WorkspaceContentViewVisibilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7000001A1B2C3D4E5F60718 /* WorkspaceContentViewVisibilityTests.swift */; };
 					F8000000A1B2C3D4E5F60718 /* SocketControlPasswordStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8000001A1B2C3D4E5F60718 /* SocketControlPasswordStoreTests.swift */; };
@@ -116,6 +117,17 @@
 		FC00001B /* PixelPetController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC10001B /* PixelPetController.swift */; };
 		FAD1AA03 /* NetworkRetry.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAD1AA04 /* NetworkRetry.swift */; };
 		FC00001C /* ShaderDirector.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC10001C /* ShaderDirector.swift */; };
+		FC0000F1 /* AgentPresence.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC1000F1 /* AgentPresence.swift */; };
+		FC0000F2 /* AgentSessionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC1000F2 /* AgentSessionState.swift */; };
+		FC0000F3 /* AgentHookEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC1000F3 /* AgentHookEvent.swift */; };
+		FC0000F4 /* AgentSessionRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC1000F4 /* AgentSessionRecord.swift */; };
+		FC0000F5 /* AgentSessionRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC1000F5 /* AgentSessionRegistry.swift */; };
+		FC0000F6 /* AgentTranscriptCorroborator.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC1000F6 /* AgentTranscriptCorroborator.swift */; };
+		FC0000F7 /* ObservedAgentSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC1000F7 /* ObservedAgentSession.swift */; };
+		FC0000F8 /* AgentHookIngest.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC1000F8 /* AgentHookIngest.swift */; };
+		FC0000FB /* FadiDaemonAttach.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC1000FB /* FadiDaemonAttach.swift */; };
+		FC0000FA /* AgentBindingAssertion.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC1000FA /* AgentBindingAssertion.swift */; };
+		FC0000F9 /* AgentSessionTabRail.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC1000F9 /* AgentSessionTabRail.swift */; };
 		FC000020 /* PixelPetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100020 /* PixelPetView.swift */; };
 		FC000021 /* PetAnimator.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100021 /* PetAnimator.swift */; };
 		FC000022 /* PetAnimation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC100022 /* PetAnimation.swift */; };
@@ -332,6 +344,7 @@
 				F3000001A1B2C3D4E5F60718 /* CJKIMEInputTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CJKIMEInputTests.swift; sourceTree = "<group>"; };
 				F4000001A1B2C3D4E5F60718 /* GhosttyConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhosttyConfigTests.swift; sourceTree = "<group>"; };
 				F5000001A1B2C3D4E5F60718 /* SessionPersistenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPersistenceTests.swift; sourceTree = "<group>"; };
+					F5000011A1B2C3D4E5F60718 /* AgentBindingAssertionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentBindingAssertionTests.swift; sourceTree = "<group>"; };
 				F6000001A1B2C3D4E5F60718 /* AppDelegateShortcutRoutingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegateShortcutRoutingTests.swift; sourceTree = "<group>"; };
 				F7000001A1B2C3D4E5F60718 /* WorkspaceContentViewVisibilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceContentViewVisibilityTests.swift; sourceTree = "<group>"; };
 				F8000001A1B2C3D4E5F60718 /* SocketControlPasswordStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocketControlPasswordStoreTests.swift; sourceTree = "<group>"; };
@@ -368,6 +381,17 @@
 		FC10001B /* PixelPetController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelPetController.swift; sourceTree = "<group>"; };
 		FAD1AA04 /* NetworkRetry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkRetry.swift; sourceTree = "<group>"; };
 		FC10001C /* ShaderDirector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShaderDirector.swift; sourceTree = "<group>"; };
+		FC1000F1 /* AgentPresence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentPresence.swift; sourceTree = "<group>"; };
+		FC1000F2 /* AgentSessionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentSessionState.swift; sourceTree = "<group>"; };
+		FC1000F3 /* AgentHookEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentHookEvent.swift; sourceTree = "<group>"; };
+		FC1000F4 /* AgentSessionRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentSessionRecord.swift; sourceTree = "<group>"; };
+		FC1000F5 /* AgentSessionRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentSessionRegistry.swift; sourceTree = "<group>"; };
+		FC1000F6 /* AgentTranscriptCorroborator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentTranscriptCorroborator.swift; sourceTree = "<group>"; };
+		FC1000F7 /* ObservedAgentSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObservedAgentSession.swift; sourceTree = "<group>"; };
+		FC1000F8 /* AgentHookIngest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentHookIngest.swift; sourceTree = "<group>"; };
+		FC1000FB /* FadiDaemonAttach.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FadiDaemonAttach.swift; sourceTree = "<group>"; };
+		FC1000FA /* AgentBindingAssertion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentBindingAssertion.swift; sourceTree = "<group>"; };
+		FC1000F9 /* AgentSessionTabRail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentSessionTabRail.swift; sourceTree = "<group>"; };
 		FC100020 /* PixelPetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelPetView.swift; sourceTree = "<group>"; };
 		FC100021 /* PetAnimator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetAnimator.swift; sourceTree = "<group>"; };
 		FC100022 /* PetAnimation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetAnimation.swift; sourceTree = "<group>"; };
@@ -671,6 +695,7 @@
 					F3000001A1B2C3D4E5F60718 /* CJKIMEInputTests.swift */,
 					F4000001A1B2C3D4E5F60718 /* GhosttyConfigTests.swift */,
 					F5000001A1B2C3D4E5F60718 /* SessionPersistenceTests.swift */,
+					F5000011A1B2C3D4E5F60718 /* AgentBindingAssertionTests.swift */,
 					F6000001A1B2C3D4E5F60718 /* AppDelegateShortcutRoutingTests.swift */,
 					F7000001A1B2C3D4E5F60718 /* WorkspaceContentViewVisibilityTests.swift */,
 					F8000001A1B2C3D4E5F60718 /* SocketControlPasswordStoreTests.swift */,
@@ -680,6 +705,23 @@
 				path = cmuxTests;
 				sourceTree = "<group>";
 			};
+		FC200007 /* Session */ = {
+			isa = PBXGroup;
+			children = (
+				FC1000F2 /* AgentSessionState.swift */,
+				FC1000F3 /* AgentHookEvent.swift */,
+				FC1000F4 /* AgentSessionRecord.swift */,
+				FC1000F5 /* AgentSessionRegistry.swift */,
+				FC1000F6 /* AgentTranscriptCorroborator.swift */,
+				FC1000F7 /* ObservedAgentSession.swift */,
+				FC1000F8 /* AgentHookIngest.swift */,
+				FC1000FB /* FadiDaemonAttach.swift */,
+				FC1000FA /* AgentBindingAssertion.swift */,
+				FC1000F9 /* AgentSessionTabRail.swift */,
+			);
+			path = Session;
+			sourceTree = "<group>";
+		};
 		FC200000 /* Fadicode */ = {
 			isa = PBXGroup;
 			children = (
@@ -703,6 +745,7 @@
 				FC200005 /* AppIntents */,
 				FC200006 /* Observatory */,
 				FAD1AA05 /* Helpers */,
+				FC200007 /* Session */,
 			);
 			path = Fadicode;
 			sourceTree = "<group>";
@@ -731,6 +774,7 @@
 				FC10001A /* QuestionDetectionController.swift */,
 				FC10001B /* PixelPetController.swift */,
 				FC10001C /* ShaderDirector.swift */,
+				FC1000F1 /* AgentPresence.swift */,
 			);
 			path = Overlay;
 			sourceTree = "<group>";
@@ -1068,6 +1112,17 @@
 				FC00001B /* PixelPetController.swift in Sources */,
 				FAD1AA03 /* NetworkRetry.swift in Sources */,
 				FC00001C /* ShaderDirector.swift in Sources */,
+				FC0000F1 /* AgentPresence.swift in Sources */,
+				FC0000F2 /* AgentSessionState.swift in Sources */,
+				FC0000F3 /* AgentHookEvent.swift in Sources */,
+				FC0000F4 /* AgentSessionRecord.swift in Sources */,
+				FC0000F5 /* AgentSessionRegistry.swift in Sources */,
+				FC0000F6 /* AgentTranscriptCorroborator.swift in Sources */,
+				FC0000F7 /* ObservedAgentSession.swift in Sources */,
+				FC0000F8 /* AgentHookIngest.swift in Sources */,
+				FC0000FB /* FadiDaemonAttach.swift in Sources */,
+				FC0000FA /* AgentBindingAssertion.swift in Sources */,
+				FC0000F9 /* AgentSessionTabRail.swift in Sources */,
 				FC000020 /* PixelPetView.swift in Sources */,
 				FC000021 /* PetAnimator.swift in Sources */,
 				FC000022 /* PetAnimation.swift in Sources */,
@@ -1181,6 +1236,7 @@
 					F3000000A1B2C3D4E5F60718 /* CJKIMEInputTests.swift in Sources */,
 					F4000000A1B2C3D4E5F60718 /* GhosttyConfigTests.swift in Sources */,
 					F5000000A1B2C3D4E5F60718 /* SessionPersistenceTests.swift in Sources */,
+					F5000010A1B2C3D4E5F60718 /* AgentBindingAssertionTests.swift in Sources */,
 					F6000000A1B2C3D4E5F60718 /* AppDelegateShortcutRoutingTests.swift in Sources */,
 					F7000000A1B2C3D4E5F60718 /* WorkspaceContentViewVisibilityTests.swift in Sources */,
 					F8000000A1B2C3D4E5F60718 /* SocketControlPasswordStoreTests.swift in Sources */,

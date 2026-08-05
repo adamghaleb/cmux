@@ -10,23 +10,32 @@ public struct PixelPetView: View {
     private let tintColor: NSColor?
     private let colorizeConfig: ColorizeConfig
 
+    /// The surface's authoritative agent state. When present it, not the
+    /// sprite, decides the status glyph — in particular it is the only thing
+    /// that can show `needsInput`.
+    /// upstream: PR#6798
+    private let agentState: AgentSessionState?
+
     public init(
         animator: PetAnimator,
         displaySize: CGFloat = 64,
         showIndicator: Bool = true,
         tintColor: NSColor? = nil,
-        colorizeConfig: ColorizeConfig = .default
+        colorizeConfig: ColorizeConfig = .default,
+        agentState: AgentSessionState? = nil
     ) {
         self.animator = animator
         self.displaySize = displaySize
         self.showIndicator = showIndicator
         self.tintColor = tintColor
         self.colorizeConfig = colorizeConfig
+        self.agentState = agentState
     }
 
     public var body: some View {
         VStack(spacing: 0) {
-            if showIndicator, let indicator = PetStatusIndicator.indicator(for: animator.state) {
+            if showIndicator,
+               let indicator = PetStatusIndicator.indicator(for: agentState, petState: animator.state) {
                 Text(indicator.rawValue)
                     .font(.system(size: displaySize * 0.3))
                     .transition(.scale.combined(with: .opacity))

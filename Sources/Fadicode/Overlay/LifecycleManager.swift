@@ -1,28 +1,78 @@
 import Foundation
 import Combine
 
-/// Hub of the hub-and-spoke architecture. Manages 3 lifecycle states
-/// and emits events via the EffectBus. Content polling lives here.
+/// Hub of the hub-and-spoke architecture. Owns the three overlay lifecycle
+/// states and emits events on the EffectBus.
+///
+/// # What changed in Gate 2 (upstream: PR#6798)
+///
+/// This class used to DECIDE whether Claude was working by polling terminal
+/// TEXT at 10Hz, hashing it, and pattern-matching spinner glyphs and tool
+/// banners. Every state transition in the overlay — border glow, shaders, the
+/// pixel pet, the completion popup — hung off that guess. It fired on ordinary
+/// shell output (a big paste, `ls`, a scroll) and, once ACTIVE, could only
+/// leave via an OSC 7777 signal or a five-minute safety timeout. It lied in
+/// both directions, which is what made the pet untrustworthy.
+///
+/// That entire path is gone. `AgentSessionRegistry` is now the authority:
+/// agent hook events decide the state, process exit ends it deterministically,
+/// and the transcript corroborates. This class SUBSCRIBES to that state and
+/// translates it into the fork's three-phase overlay vocabulary:
+///
+///     AgentSessionState.working     -> .active
+///     AgentSessionState.needsInput  -> .active + `needsInput` published
+///     AgentSessionState.idle        -> .completing (if we were active) -> .idle
+///     AgentSessionState.ended       -> .idle
+///
+/// Terminal text is still READ, but only for presentation: the activity-badge
+/// phrase and, when the deterministic state already says `needsInput`, the
+/// option labels for the question pill. Text no longer decides *whether*
+/// anything is happening, only *what to render* about something we already
+/// know is happening.
 final class LifecycleManager: ObservableObject {
 
     @Published private(set) var state: LifecycleState = .idle
 
+    /// True when the deterministic authority says the agent is blocked on the
+    /// user. Never inferred from text.
+    /// upstream: PR#6798 — ChatAgentState.needsAttention
+    @Published private(set) var needsInput: Bool = false
+
+    /// The bound surface's authoritative session state, republished so views
+    /// (the pixel pet, the activity badge) render the real four-state model
+    /// rather than the overlay's three-phase approximation of it.
+    /// upstream: PR#6798 — ChatAgentState
+    @Published private(set) var agentState: AgentSessionState?
+
     let bus: EffectBus
 
-    /// Closure to read terminal content — set by FadiCodeOverlaySystem.
+    /// Closure to read terminal content. Presentation only — see the class
+    /// comment. Nothing in this file may derive lifecycle STATE from it.
     var readContent: (() -> String)?
 
-    // Content hashing for change detection
-    private var lastContentHash: Int = 0
-    private var lastRawContentHash: Int = 0
-    private var lastContentLength: Int = 0
+    /// Deterministic gate: is a real agent process alive and bound to this
+    /// surface? Set by `FadiCodeOverlayHost` once `surfaceId` is known.
+    ///
+    /// nil means "unknown" and is treated as permissive, so a surface that
+    /// never got a binding key behaves as it did before.
+    /// upstream: PR#6798
+    var agentPresent: (() -> Bool)?
+
+    /// True when we have no binding information (permissive) or an agent is live.
+    private var isAgentPresent: Bool { agentPresent?() ?? true }
 
     // Activity tracking
     private(set) var activityStartTime: Date?
     private(set) var activitySummary: String?
 
-    // Safety timers
-    private var activeTimeoutWork: DispatchWorkItem?
+    /// The surface this manager speaks for, once bound.
+    private(set) var boundSurfaceID: UUID?
+    private var registryCancellable: AnyCancellable?
+    private var lastAgentState: AgentSessionState?
+
+    // Safety timer for the completing -> idle hop only. The old 5-minute
+    // "active timeout" is deleted: `ended` is now delivered deterministically
+    // by the process-exit watcher, so nothing can strand us in `.active`.
     private var completingTimeoutWork: DispatchWorkItem?
 
     // Auto mode (disable from debug HUD)
@@ -31,41 +81,115 @@ final class LifecycleManager: ObservableObject {
     // Debounce rapid transitions
     private var lastTransitionTime: Date = .distantPast
 
+    /// Last question rendered, so the pill is not rebuilt on every refresh.
+    private var lastQuestion: ClaudeQuestion?
+
     init(bus: EffectBus) {
         self.bus = bus
     }
 
-    // MARK: - Public Transition Methods
+    // MARK: - Binding
 
-    /// IDLE -> ACTIVE. Called when content polling detects Claude working,
-    /// or when an OSC 7778 start signal arrives.
-    func onPromptSubmitted(hint: ShaderHint? = nil, promptText: String? = nil) {
-        guard state.isIdle else { return }
-
-        // Debounce: ignore if we just transitioned
-        let now = Date()
-        guard now.timeIntervalSince(lastTransitionTime) > 0.5 else { return }
-        lastTransitionTime = now
-
-        activityStartTime = now
-        state = .active(since: now)
-
-        // Start safety timeout (5 min)
-        startActiveTimeout()
-
-        bus.emit(.lifecycleActive(LifecycleActivePayload(
-            hint: hint,
-            promptText: promptText,
-            resuming: false
-        )))
+    /// Binds this manager to a surface's deterministic session state.
+    ///
+    /// From this point the overlay's lifecycle is a pure function of what the
+    /// registry says about the agent — there is no other input.
+    /// upstream: PR#6798
+    @MainActor
+    func bind(surfaceID: UUID) {
+        guard boundSurfaceID != surfaceID else { return }
+        boundSurfaceID = surfaceID
+        registryCancellable = AgentSessionRegistry.shared.$stateBySurfaceID
+            .map { $0[surfaceID] }
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] agentState in
+                self?.applyAgentState(agentState)
+            }
     }
 
-    /// ACTIVE -> COMPLETING. Called when OSC 7777 (claude-done) fires.
-    /// Also accepts from IDLE (claude-done can arrive before polling detects activity).
+    @MainActor
+    func unbind() {
+        registryCancellable = nil
+        boundSurfaceID = nil
+        lastAgentState = nil
+    }
+
+    /// Translates the authoritative agent state into the overlay's phases.
+    ///
+    /// Only the transitions the overlay actually renders are acted on; a
+    /// re-publication of the same state is a no-op, which is what removes the
+    /// flicker the text heuristic produced.
+    private func applyAgentState(_ agentState: AgentSessionState?) {
+        self.agentState = agentState
+        guard autoMode else { return }
+        defer { lastAgentState = agentState }
+        guard let agentState else {
+            // No agent has ever been bound here. Nothing to render.
+            if !state.isIdle { forceReset() }
+            needsInput = false
+            return
+        }
+
+        switch agentState {
+        case .working(let since):
+            needsInput = false
+            if state.isCompleting { cancelCompletingTimeout() }
+            if !state.isActive {
+                enterActive(since: since, resuming: state.isCompleting, hint: currentShaderHint())
+            }
+
+        case .needsInput:
+            // Blocked on the user is still a live session: keep the overlay
+            // active so the surface reads as "yours to answer", and surface the
+            // pill. Upstream ranks needsInput above working for attention.
+            needsInput = true
+            if !state.isActive {
+                enterActive(since: agentState.since ?? Date(), resuming: false, hint: nil)
+            }
+            refreshQuestionPill()
+
+        case .idle:
+            needsInput = false
+            dismissQuestionPill()
+            if state.isActive {
+                // A working -> idle edge is a completed turn: run the fork's
+                // celebration path, tiered by how long the turn took.
+                let duration = activityStartTime.map { Date().timeIntervalSince($0) } ?? 0
+                enterCompleting(tier: TaskTier.from(duration: duration), duration: duration)
+            }
+
+        case .ended:
+            needsInput = false
+            dismissQuestionPill()
+            if !state.isIdle { forceReset() }
+        }
+    }
+
+    // MARK: - Public Transition Methods
+
+    /// IDLE -> ACTIVE.
+    ///
+    /// Retained for the debug simulators and for an OSC 7778 `start` that
+    /// arrives before the registry has published. The registry is still the
+    /// authority; this only fast-paths the visual.
+    func onPromptSubmitted(hint: ShaderHint? = nil, promptText: String? = nil) {
+        guard state.isIdle else { return }
+        let now = Date()
+        guard now.timeIntervalSince(lastTransitionTime) > 0.5 else { return }
+        // Deterministic gate: no live agent bound to this surface means nothing
+        // is allowed to claim one is working. Bypassed when `autoMode` is off,
+        // which is how the debug HUD drives the overlay by hand.
+        // upstream: PR#6798
+        guard !autoMode || isAgentPresent else { return }
+        enterActive(since: now, resuming: false, hint: hint, promptText: promptText)
+    }
+
+    /// ACTIVE -> COMPLETING. Called when OSC 7777 (claude-done) fires with an
+    /// explicit tier, which is better information than the duration heuristic.
     func onResponseComplete(tier: String) {
         guard state.isActive || state.isIdle else { return }
 
-        // If idle, briefly activate so controllers get proper lifecycle events
         if state.isIdle {
             let now = Date()
             activityStartTime = now
@@ -77,22 +201,11 @@ final class LifecycleManager: ObservableObject {
 
         let taskTier = TaskTier(rawValue: tier) ?? .short
         let duration = activityStartTime.map { Date().timeIntervalSince($0) } ?? 0
-        let content = readContent?() ?? ""
-
-        lastTransitionTime = Date()
-        state = .completing(tier: taskTier, since: Date())
-
-        cancelActiveTimeout()
-        startCompletingTimeout()
-
-        bus.emit(.lifecycleCompleting(LifecycleCompletingPayload(
-            tier: taskTier,
-            duration: duration,
-            terminalContent: content
-        )))
+        enterCompleting(tier: taskTier, duration: duration)
     }
 
-    /// COMPLETING -> IDLE. Called after completion popup dismissed or timeout.
+    /// COMPLETING -> IDLE. Called after the completion popup is dismissed or
+    /// the completing timeout fires.
     func onCompletionDone() {
         guard state.isCompleting else { return }
 
@@ -102,7 +215,6 @@ final class LifecycleManager: ObservableObject {
         state = .idle
 
         cancelCompletingTimeout()
-
         bus.emit(.lifecycleIdle)
     }
 
@@ -127,190 +239,130 @@ final class LifecycleManager: ObservableObject {
 
     /// Emit question dismissed event.
     func onQuestionDismissed() {
+        lastQuestion = nil
         bus.emit(.questionDismissed)
     }
 
-    /// Emergency reset — used by debug HUD or error recovery.
+    /// Emergency reset — used by the debug HUD, error recovery, and the
+    /// `ended` edge.
     func forceReset() {
-        cancelActiveTimeout()
         cancelCompletingTimeout()
         activityStartTime = nil
         activitySummary = nil
-        lastContentHash = 0
-        lastRawContentHash = 0
-        lastContentLength = 0
+        lastQuestion = nil
+        needsInput = false
         state = .idle
         bus.emit(.lifecycleIdle)
     }
 
-    // MARK: - Content Polling
+    // MARK: - Presentation refresh
 
-    /// Called every 100ms by the poll timer. Reads terminal content and drives state transitions.
+    /// Refreshes what the overlay SAYS about the current state. Never changes
+    /// the state itself.
+    ///
+    /// The 10Hz content-hash poll this replaced is documented in the class
+    /// comment. This runs at 1Hz and only while the deterministic authority
+    /// already says something is happening, so a quiet terminal costs nothing.
     func poll() {
         guard autoMode else { return }
+        guard state.isActive else { return }
         guard let readContent else { return }
         let content = readContent()
-        let hash = ContentDetection.stableContentHash(content)
-        let rawHash = content.hashValue
 
-        // Spinner-only change (content stable, raw hash differs = braille spinner animating)
-        let isSpinnerChange = hash == lastContentHash && rawHash != lastRawContentHash
-        let isContentChange = hash != lastContentHash
-
-        lastRawContentHash = rawHash
-
-        switch state {
-        case .idle:
-            pollIdle(content: content, hash: hash, isSpinnerChange: isSpinnerChange, isContentChange: isContentChange)
-
-        case .active:
-            pollActive(content: content, hash: hash, isContentChange: isContentChange)
-
-        case .completing:
-            pollCompleting(content: content, isContentChange: isContentChange)
-        }
-
-        if isContentChange {
-            lastContentHash = hash
-            lastContentLength = content.count
-        }
-    }
-
-    // MARK: - Poll Handlers
-
-    private func pollIdle(content: String, hash: Int, isSpinnerChange: Bool, isContentChange: Bool) {
-        // Spinner change always takes priority — definitive signal Claude is working
-        if isSpinnerChange {
-            if ContentDetection.isClaudeCodePresent(in: content) {
-                let hint = classifyActivity(content)
-                onPromptSubmitted(hint: hint)
-                fetchHeuristicSummary(content)
-            }
-            return
-        }
-
-        // Strict active-work check also takes priority over waiting-for-user
-        if isContentChange && ContentDetection.isClaudeActivelyWorking(in: content) {
-            let hint = classifyActivity(content)
-            onPromptSubmitted(hint: hint)
-            fetchHeuristicSummary(content)
-            detectQuestion(content)
-            return
-        }
-
-        // Only now check if waiting for user — no active work signals present
-        if ContentDetection.isWaitingForUser(content) { return }
-
-        if isContentChange {
-            let smallChange = abs(content.count - lastContentLength) < 30
-
-            if !smallChange {
-                // Large content change — Claude likely started
-                if ContentDetection.isClaudeCodePresent(in: content) {
-                    let hint = classifyActivity(content)
-                    onPromptSubmitted(hint: hint)
-                    fetchHeuristicSummary(content)
-                }
-            }
-
-            // Check for questions
-            detectQuestion(content)
-        }
-    }
-
-    private func pollActive(content: String, hash: Int, isContentChange: Bool) {
-        // Check for questions while active
-        if isContentChange {
-            detectQuestion(content)
-        }
-
-        // Update activity summary periodically
-        if isContentChange {
-            fetchHeuristicSummary(content)
-
-            // Emit activity update with duration
-            let duration = activityStartTime.map { Date().timeIntervalSince($0) } ?? 0
-            bus.emit(.activityUpdate(ActivityUpdatePayload(
-                summary: activitySummary,
-                detail: nil,
-                sessionDuration: duration
-            )))
-        }
-    }
-
-    private func pollCompleting(content: String, isContentChange: Bool) {
-        // If new activity detected during completion, re-activate
-        if isContentChange && ContentDetection.isClaudeActivelyWorking(in: content) {
-            cancelCompletingTimeout()
-            let now = Date()
-            lastTransitionTime = now
-            activityStartTime = now
-            state = .active(since: now)
-            startActiveTimeout()
-
-            bus.emit(.lifecycleActive(LifecycleActivePayload(
-                hint: classifyActivity(content),
-                promptText: nil,
-                resuming: true
-            )))
-        }
-    }
-
-    // MARK: - Heuristic Summary
-
-    private func fetchHeuristicSummary(_ content: String) {
-        let lines = content.components(separatedBy: "\n")
-        let tail = lines.suffix(80).joined(separator: "\n")
-        if let heuristic = ClaudeActivitySummary.shared.heuristicSummary(tail) {
-            activitySummary = heuristic
-        }
-    }
-
-    // MARK: - Question Detection
-
-    private func detectQuestion(_ content: String) {
-        if content.contains("Enter to select") || content.contains("to navigate")
-            || content.contains("Would you like to proceed") {
-            if let question = ClaudeQuestion.parse(from: content) {
-                onQuestionDetected(question)
-                return
+        if let heuristic = ClaudeActivitySummary.shared.heuristicSummary(
+            content.components(separatedBy: "\n").suffix(80).joined(separator: "\n")
+        ) {
+            if heuristic != activitySummary {
+                activitySummary = heuristic
+                let duration = activityStartTime.map { Date().timeIntervalSince($0) } ?? 0
+                bus.emit(.activityUpdate(ActivityUpdatePayload(
+                    summary: heuristic,
+                    detail: nil,
+                    sessionDuration: duration
+                )))
             }
         }
-        // No question visible — dismiss if one was showing
+
+        if needsInput { refreshQuestionPill(content: content) }
+    }
+
+    // MARK: - Question pill (presentation only)
+
+    /// Builds the tappable option list for the question pill.
+    ///
+    /// WHETHER a question is pending is decided upstream-style, by the
+    /// `needsInput` state that came from an `AskUserQuestion` /
+    /// `PermissionRequest` / `ExitPlanMode` / `Notification` hook. This only
+    /// answers WHAT the options are, which is not carried on the fork's ingest
+    /// today, so it is scraped from the rendered prompt. Guarded by the
+    /// deterministic state so it can never invent a question the way the old
+    /// `detectQuestion` did on any terminal that happened to print
+    /// "Enter to select".
+    private func refreshQuestionPill(content: String? = nil) {
+        guard needsInput else { return }
+        let text = content ?? readContent?() ?? ""
+        guard !text.isEmpty else { return }
+        guard let question = ClaudeQuestion.parse(from: text) else { return }
+        guard question != lastQuestion else { return }
+        lastQuestion = question
+        onQuestionDetected(question)
+    }
+
+    private func dismissQuestionPill() {
+        guard lastQuestion != nil else { return }
         onQuestionDismissed()
     }
 
-    // MARK: - Activity Classification
+    // MARK: - Internal transitions
 
-    /// Classify terminal content into a shader hint.
-    /// Delegates to `ActivityCategory.classify(_:)` for the single shared implementation.
-    private func classifyActivity(_ content: String) -> ShaderHint? {
-        ActivityCategory.classify(content).shaderHint
+    private func enterActive(
+        since: Date,
+        resuming: Bool,
+        hint: ShaderHint?,
+        promptText: String? = nil
+    ) {
+        let now = Date()
+        lastTransitionTime = now
+        activityStartTime = since
+        state = .active(since: since)
+        bus.emit(.lifecycleActive(LifecycleActivePayload(
+            hint: hint,
+            promptText: promptText,
+            resuming: resuming
+        )))
     }
 
-    // MARK: - Safety Timers
+    private func enterCompleting(tier: TaskTier, duration: TimeInterval) {
+        let content = readContent?() ?? ""
+        lastTransitionTime = Date()
+        state = .completing(tier: tier, since: Date())
+        cancelCompletingTimeout()
+        startCompletingTimeout()
+        bus.emit(.lifecycleCompleting(LifecycleCompletingPayload(
+            tier: tier,
+            duration: duration,
+            terminalContent: content
+        )))
+    }
 
-    private func startActiveTimeout() {
-        cancelActiveTimeout()
-        let work = DispatchWorkItem { [weak self] in
-            guard let self, self.state.isActive else { return }
-            NSLog("[LifecycleManager] Active timeout (5min) — forcing idle")
-            self.forceReset()
+    /// Shader hint for the current turn, from the last summary phrase rather
+    /// than a fresh scrape of the screen.
+    private func currentShaderHint() -> ShaderHint? {
+        guard let activitySummary else { return nil }
+        switch ContentDetection.phaseFromSummary(activitySummary) {
+        case .thinking: return .planning
+        case .writing: return .coding
+        case .reading, .searching: return .researching
+        default: return nil
         }
-        activeTimeoutWork = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 300.0, execute: work)
     }
 
-    private func cancelActiveTimeout() {
-        activeTimeoutWork?.cancel()
-        activeTimeoutWork = nil
-    }
+    // MARK: - Safety timer
 
     private func startCompletingTimeout() {
         cancelCompletingTimeout()
         let work = DispatchWorkItem { [weak self] in
             guard let self, self.state.isCompleting else { return }
-            NSLog("[LifecycleManager] Completing timeout (5s) — transitioning to idle")
             self.onCompletionDone()
         }
         completingTimeoutWork = work
@@ -323,18 +375,18 @@ final class LifecycleManager: ObservableObject {
     }
 
     deinit {
-        cancelActiveTimeout()
-        cancelCompletingTimeout()
+        completingTimeoutWork?.cancel()
     }
 
     // MARK: - Debug
 
     /// Debug state for the HUD.
     var debugStateLabel: String {
+        let agent = lastAgentState?.label ?? "unbound"
         switch state {
-        case .idle: return "idle"
-        case .active: return "active"
-        case .completing(let tier, _): return "completing/\(tier.rawValue)"
+        case .idle: return "idle (agent: \(agent))"
+        case .active: return needsInput ? "active/needsInput (agent: \(agent))" : "active (agent: \(agent))"
+        case .completing(let tier, _): return "completing/\(tier.rawValue) (agent: \(agent))"
         }
     }
 }

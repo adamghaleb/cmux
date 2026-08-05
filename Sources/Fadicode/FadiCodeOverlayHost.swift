@@ -16,11 +16,18 @@ final class FadiCodeOverlayHost: NSView {
 
     let overlaySystem = FadiCodeOverlaySystem()
     private var hostingView: NSHostingView<AnyView>?
-    private var pollTimer: Timer?
 
-    /// Idle backoff: tracks consecutive unchanged polls to reduce CPU when terminal is quiet.
-    private var idlePollCount: Int = 0
-    private var lastContentHash: Int = 0
+    /// Presentation refresh. NOT a state poll.
+    ///
+    /// This used to be a 100ms timer that hashed the whole terminal screen and
+    /// drove every lifecycle transition off the diff, with an idle backoff
+    /// bolted on to make the cost bearable. The state now arrives from
+    /// `AgentSessionRegistry` (see LifecycleManager), so this timer only
+    /// refreshes what the badge SAYS while the agent is already known to be
+    /// working — and `LifecycleManager.poll()` returns immediately when it is
+    /// not. 1Hz, no hashing, no backoff bookkeeping.
+    /// upstream: PR#6798
+    private var presentationTimer: Timer?
 
     /// Pet animator — created once, driven by PixelPetController mood changes.
     private let petAnimator: PetAnimator? = PetAnimator.bundledDefault()
@@ -53,7 +60,31 @@ final class FadiCodeOverlayHost: NSView {
     private let projectBadgeState = ProjectBadgeState()
 
     /// The surface ID this overlay host is attached to (for scoped notifications).
-    var surfaceId: UUID?
+    ///
+    /// This is also the deterministic agent-binding key: the same UUID is
+    /// injected into every shell this surface spawns as `CMUX_SURFACE_ID`
+    /// (GhosttyTerminalView.swift), so any `claude` running here inherits it.
+    /// upstream: PR#6798
+    var surfaceId: UUID? {
+        didSet {
+            guard let surfaceId else {
+                overlaySystem.lifecycle.agentPresent = nil
+                Task { @MainActor [weak self] in self?.overlaySystem.lifecycle.unbind() }
+                return
+            }
+            overlaySystem.lifecycle.agentPresent = {
+                AgentPresence.shared.isAgentLive(surfaceID: surfaceId)
+            }
+            // Subscribe this surface's overlay to the deterministic session
+            // state. Everything the overlay renders follows from here.
+            // upstream: PR#6798
+            Task { @MainActor [weak self] in
+                self?.overlaySystem.lifecycle.bind(surfaceID: surfaceId)
+                // Idempotent; the first surface to appear starts the rail.
+                AgentSessionTabRail.shared.start()
+            }
+        }
+    }
 
     /// Closure to read terminal content for the lifecycle manager's content polling.
     var readTerminalContent: (() -> String)? {
@@ -177,29 +208,9 @@ final class FadiCodeOverlayHost: NSView {
 
         self.hostingView = hosting
 
-        // Start content polling with idle backoff.
-        // Polls at 100ms when active, backs off to 500ms after 30 unchanged polls (~3s idle),
-        // and to 1s after 100 unchanged polls (~50s+ idle). Resets to fast polling on any change.
-        pollTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
-            guard let self else { return }
-
-            // Check if content changed to manage backoff
-            let content = self.overlaySystem.lifecycle.readContent?() ?? ""
-            let hash = content.hashValue
-            if hash == self.lastContentHash {
-                self.idlePollCount += 1
-            } else {
-                self.idlePollCount = 0
-                self.lastContentHash = hash
-            }
-
-            // Skip poll ticks when idle to reduce CPU usage
-            // After 30 unchanged polls: only poll every 5th tick (500ms)
-            // After 100 unchanged polls: only poll every 10th tick (1s)
-            if self.idlePollCount > 100 && self.idlePollCount % 10 != 0 { return }
-            if self.idlePollCount > 30 && self.idlePollCount % 5 != 0 { return }
-
-            self.overlaySystem.lifecycle.poll()
+        // Presentation refresh only — see `presentationTimer`.
+        presentationTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            self?.overlaySystem.lifecycle.poll()
         }
 
         // Listen for debug overlay toggle notification
@@ -270,12 +281,25 @@ final class FadiCodeOverlayHost: NSView {
 
     // MARK: - OSC Signal Handlers
 
+    // OSC 7777 / 7778 are EXPLICIT agent-emitted signals, not inferences, so
+    // Gate 2 keeps them — but routes them through the same authority as hooks
+    // instead of poking the overlay directly. `AgentSessionRegistry` maps
+    // 7778;start onto UserPromptSubmit and 7777 / 7778;stop onto Stop, which
+    // means the registry's reducer, its version counter and its exit watcher
+    // all see them. The direct lifecycle call is kept only as the visual
+    // fast-path for the completion tier, which OSC knows and hooks do not.
+    // upstream: PR#6798
+
     /// Called when OSC 7777 task completion signal arrives.
     func handleTaskCompletion(tier: String) {
         DispatchQueue.main.async { [weak self] in
-            self?.overlaySystem.lifecycle.onResponseComplete(tier: tier)
+            guard let self else { return }
+            if let surfaceId = self.surfaceId {
+                AgentSessionRegistry.shared.noteExplicitWorkingStopped(surfaceID: surfaceId)
+            }
+            self.overlaySystem.lifecycle.onResponseComplete(tier: tier)
             // Drive pet celebration
-            if let animator = self?.petAnimator {
+            if let animator = self.petAnimator {
                 switch tier {
                 case "long": animator.playOrQueue(.celebratingLong)
                 case "medium": animator.playOrQueue(.celebratingMedium)
@@ -288,14 +312,11 @@ final class FadiCodeOverlayHost: NSView {
     /// Called when OSC 7778 working state signal arrives.
     func handleWorkingState(action: String) {
         DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
+            guard let self, let surfaceId = self.surfaceId else { return }
             if action == "start" {
-                self.overlaySystem.lifecycle.onPromptSubmitted()
+                AgentSessionRegistry.shared.noteExplicitWorkingStarted(surfaceID: surfaceId)
             } else if action == "stop" {
-                // Treat stop as a short completion if we're active
-                if self.overlaySystem.lifecycle.state.isActive {
-                    self.overlaySystem.lifecycle.onResponseComplete(tier: "short")
-                }
+                AgentSessionRegistry.shared.noteExplicitWorkingStopped(surfaceID: surfaceId)
             }
         }
     }
@@ -327,7 +348,7 @@ final class FadiCodeOverlayHost: NSView {
     }
 
     deinit {
-        pollTimer?.invalidate()
+        presentationTimer?.invalidate()
         NotificationCenter.default.removeObserver(self)
     }
 }
@@ -454,6 +475,7 @@ private struct FadiCodeOverlayView: View {
             if lifecycle.state.isActive || lifecycle.state.isCompleting {
                 ActivityBadgeView(
                     state: lifecycle.state,
+                    agentState: lifecycle.agentState,
                     summary: lifecycle.activitySummary
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
@@ -504,7 +526,8 @@ private struct FadiCodeOverlayView: View {
                     animator: animator,
                     displaySize: 96,
                     showIndicator: true,
-                    tintColor: accentNSColor
+                    tintColor: accentNSColor,
+                    agentState: lifecycle.agentState
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
                 .padding(.trailing, 16)
@@ -544,13 +567,17 @@ private struct FadiCodeOverlayView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
             .padding(.bottom, 8)
 
-            // Debug overlay (toggled with Cmd+Shift+D)
+            // Debug overlay (toggled with Cmd+Shift+D).
+            // DebugStateOverlay.swift is entirely `#if DEBUG`, so the call site
+            // must be guarded too or Release builds fail to compile.
+            #if DEBUG
             if projectBadgeState.debugOverlayVisible {
                 DebugStateOverlay(
                     overlaySystem: system,
                     onClose: { projectBadgeState.debugOverlayVisible = false }
                 )
             }
+            #endif
 
             // Terminal inspector (toggled via right-click menu)
             if projectBadgeState.inspectorVisible {
@@ -830,6 +857,9 @@ private struct RecallButton: View {
 
 private struct ActivityBadgeView: View {
     let state: LifecycleState
+    /// Authoritative session state; drives the dot colour so "blocked on you"
+    /// is visually distinct from "working". upstream: PR#6798
+    let agentState: AgentSessionState?
     let summary: String?
 
     var body: some View {
@@ -859,6 +889,7 @@ private struct ActivityBadgeView: View {
     }
 
     private var dotColor: Color {
+        if agentState?.needsAttention == true { return .orange }
         switch state {
         case .idle: return .gray
         case .active: return .green

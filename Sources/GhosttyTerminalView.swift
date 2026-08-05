@@ -5763,6 +5763,16 @@ final class GhosttySurfaceScrollView: NSView {
 
     func attachSurface(_ terminalSurface: TerminalSurface) {
         surfaceView.attachSurface(terminalSurface)
+        // The overlay is built in `init`, which runs from `TerminalSurface.init`
+        // BEFORE `attachSurface` links the view to its surface — so the
+        // `overlay.surfaceId = surfaceView.terminalSurface?.id` there always
+        // evaluated to nil and was never revisited. That left the Pixel Pet
+        // permanently unbound from the Gate 2 authority. Bind it here, where
+        // the surface identity actually exists.
+        // upstream: PR#6798 (binding is the whole point of the gate)
+        if fadicodeOverlay?.surfaceId != terminalSurface.id {
+            fadicodeOverlay?.surfaceId = terminalSurface.id
+        }
     }
 
     func setFocusHandler(_ handler: (() -> Void)?) {

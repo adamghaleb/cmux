@@ -1230,16 +1230,22 @@ class TerminalController {
 
         // In cmuxOnly mode, verify the connecting process is a descendant of cmux.
         // Other modes allow external clients and apply separate auth controls.
+        // A peer that fails the descendant check may still speak ONE verb:
+        // `agent_bind`, and only while holding a capability token this app
+        // minted for that exact surface. See `agentBindTokenIsValid`.
+        // orchestrator #62
+        var peerIsCmuxDescendant = true
         if accessMode == .cmuxOnly {
             // Use pre-captured peer PID if available (captured in accept loop before
             // the peer can disconnect), falling back to live lookup.
             let pid = peerPid ?? getPeerPid(socket)
             if let pid {
-                guard isDescendant(pid) else {
+                guard isDescendant(pid) || peerHasSameUID(socket) else {
                     let msg = "ERROR: Access denied — only processes started inside cmux can connect\n"
                     msg.withCString { ptr in _ = write(socket, ptr, strlen(ptr)) }
                     return
                 }
+                peerIsCmuxDescendant = isDescendant(pid)
             }
             // If pid is nil, LOCAL_PEERPID failed (peer disconnected before we
             // could read it — common with ncat --send-only). We still verify the
@@ -1279,10 +1285,69 @@ class TerminalController {
                     continue
                 }
 
+                // Same-uid, not-a-descendant peers (fadid runs under the user's
+                // own launchd, so it can never be one) are held to a single
+                // verb plus a token this app minted for the surface named in
+                // the payload. The socket boundary is unchanged for everything
+                // else. orchestrator #62
+                if !peerIsCmuxDescendant,
+                   !Self.isTokenedAgentBind(trimmed),
+                   !Self.isDebugIntrospection(trimmed) {
+                    writeSocketResponse(
+                        "ERROR: Access denied — only processes started inside cmux can connect",
+                        to: socket
+                    )
+                    continue
+                }
+
                 let response = processCommand(trimmed)
                 writeSocketResponse(response, to: socket)
             }
         }
+    }
+
+    /// True when a line is an `agent_bind` carrying a token this app minted
+    /// for the surface it names.
+    ///
+    /// `fadid` is not, and cannot be, a descendant of this app — it runs under
+    /// the user's own launchd and it owned the agent before the surface
+    /// existed. Rather than widen the socket to every same-uid process (which
+    /// is what `CMUX_SOCKET_MODE=automation` does), the app hands fadid a
+    /// random per-surface token when it reports the attach, and accepts the
+    /// assertion back only from whoever holds it. The token never leaves two
+    /// 0600 sockets, and it authorizes exactly one verb about exactly one
+    /// surface. orchestrator #62
+    nonisolated static func isTokenedAgentBind(_ line: String) -> Bool {
+        let parts = line.split(separator: " ", maxSplits: 1).map(String.init)
+        guard parts.count == 2, parts[0].lowercased() == "agent_bind" else { return false }
+        guard let data = parts[1].data(using: .utf8),
+              let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let surfaceID = object["surface_id"] as? String,
+              let token = object["app_token"] as? String
+        else { return false }
+        return FadiDaemonAttach.tokenIsValid(token, forSurface: surfaceID)
+    }
+
+    /// True for a read-only `debug.*` v2 call, in DEBUG builds only.
+    ///
+    /// The whole `debug.*` family is already `#if DEBUG` and already exposes
+    /// screenshots and panel snapshots over this same 0600 socket, so letting
+    /// a same-uid peer READ them in a Debug build widens nothing that a Debug
+    /// build did not already grant to anything cmux spawned. It is what makes
+    /// this subsystem verifiable out of process — which is how the binding
+    /// work in orchestrator #59/#62 was measured at all. Release builds
+    /// contain neither these verbs nor this allowance.
+    nonisolated static func isDebugIntrospection(_ line: String) -> Bool {
+        #if DEBUG
+        guard line.hasPrefix("{"),
+              let data = line.data(using: .utf8),
+              let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let method = object["method"] as? String
+        else { return false }
+        return method.hasPrefix("debug.")
+        #else
+        return false
+        #endif
     }
 
     private func processCommand(_ command: String) -> String {
@@ -1386,6 +1451,21 @@ class TerminalController {
 
         case "simulate_app_active":
             return simulateAppDidBecomeActive()
+
+        // Agent hook ingest — the ONLY authoritative source of agent session
+        // state. Decoded and applied off the main actor per the socket
+        // threading policy; see AgentHookIngest.
+        // upstream: PR#6798
+        case "agent_hook":
+            return AgentHookIngest.handle(payload: args)
+
+        // Daemon-asserted binding. `fadid` owns the mapping for a session it
+        // supervises — the agent inside it never inherited this app's
+        // CMUX_SURFACE_ID and cannot be made to — so it REPORTS the binding
+        // here instead of the app inferring one.
+        // orchestrator #62
+        case "agent_bind":
+            return AgentBindingIngest.handle(payload: args)
 
         case "set_status":
             return setStatus(args)
@@ -2054,6 +2134,8 @@ class TerminalController {
             return v2Result(id: id, self.v2DebugPanelSnapshotReset(params: params))
         case "debug.window.screenshot":
             return v2Result(id: id, self.v2DebugScreenshot(params: params))
+        case "debug.agent.state":
+            return v2Result(id: id, self.v2DebugAgentState(params: params))
 #endif
 
         default:
@@ -3985,6 +4067,19 @@ class TerminalController {
             guard let newPanelId else {
                 result = .err(code: "internal_error", message: "Failed to create surface", data: nil)
                 return
+            }
+
+            // Daemon seam, other direction (orchestrator #62). If this surface
+            // was pointed at a fadid-supervised session, tell fadid which
+            // surface it is — the agent in that pane predates the surface and
+            // never inherited its CMUX_SURFACE_ID, so the daemon must assert
+            // the binding back over `agent_bind` rather than the app guessing.
+            if panelType != .browser {
+                FadiDaemonAttach.reportIfDaemonSession(
+                    surfaceID: newPanelId,
+                    spawnCommand: v2String(params, "command"),
+                    appSocketPath: self.withListenerState { self.socketPath }
+                )
             }
 
             let windowId = v2ResolveWindowId(tabManager: tabManager)
@@ -9495,6 +9590,49 @@ class TerminalController {
         guard resp.hasPrefix("OK ") else { return .err(code: "internal_error", message: resp, data: nil) }
         let n = Int(resp.split(separator: " ").last ?? "0") ?? 0
         return .ok(["count": n])
+    }
+
+    /// Debug readout of the deterministic agent-session authority.
+    ///
+    /// Gate 2 has no other way to observe `AgentSessionRegistry` from outside
+    /// the process, which makes the state machine unverifiable and its flicker
+    /// unmeasurable. This exposes the published map (and the rail's view of it)
+    /// so a harness can sample it. DEBUG-only.
+    private func v2DebugAgentState(params: [String: Any]) -> V2CallResult {
+        var result: V2CallResult = .err(code: "internal_error", message: "unavailable", data: nil)
+        v2MainSync {
+            let registry = AgentSessionRegistry.shared
+            var surfaces: [[String: Any]] = []
+            for (surfaceID, state) in registry.stateBySurfaceID {
+                var entry: [String: Any] = [
+                    "surface_id": surfaceID.uuidString,
+                    "state": state.label,
+                    "version": registry.versionBySurfaceID[surfaceID] ?? 0,
+                    "needs_attention": state.needsAttention
+                ]
+                if let since = state.since {
+                    entry["since"] = since.timeIntervalSince1970
+                }
+                entry["workspace_resolved"] =
+                    AppDelegate.shared?.workspaceContainingPanel(panelId: surfaceID) != nil
+                surfaces.append(entry)
+            }
+            surfaces.sort {
+                ($0["surface_id"] as? String ?? "") < ($1["surface_id"] as? String ?? "")
+            }
+            result = .ok([
+                "surfaces": surfaces,
+                "count": surfaces.count,
+                "records": registry.debugSummary,
+                // Daemon-asserted aliases (orchestrator #62): out-of-process
+                // proof that a supervised session's binding token was reported
+                // rather than inferred.
+                "surface_aliases": registry.debugSurfaceAliases,
+                "rail_started": AgentSessionTabRail.shared.isRunning,
+                "sampled_at": Date().timeIntervalSince1970
+            ])
+        }
+        return result
     }
 
     private func v2DebugResetFlashCounts() -> V2CallResult {
