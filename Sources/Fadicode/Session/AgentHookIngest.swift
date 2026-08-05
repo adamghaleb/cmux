@@ -33,6 +33,25 @@ import Foundation
 // The app keeps `~/.local/bin/cmux` pointed at its bundled CLI on launch
 // (`CmuxCLIPathInstaller.installUserPathLinkIfNeeded`).
 //
+// # Supervised panes (orchestrator #67)
+//
+// A `claude` inside a daemon-owned `tmux -L fadi` pane runs the same hook line
+// and reaches the same verb, but neither of its two preconditions can be met
+// the ordinary way:
+//
+//   * it is not an app descendant (the tmux server has PPID 1), so the control
+//     socket's `cmuxOnly` check refuses it; and
+//   * `CMUX_SOCKET_PATH` cannot be put in its environment, because a pane's
+//     environment is fixed when the pane is created and the app's socket is
+//     not known until a surface attaches, which is strictly later.
+//
+// So `fadid` gives the pane a socket it CAN know at spawn: a per-session
+// listener of its own, at a path derived from the session id. It accepts this
+// one verb there, stamps on the surface alias and the #62 capability token it
+// already holds, and forwards to this app. `isTokenedAgentHook` is what lets
+// that land — the same narrowness as `agent_bind`, and the token never enters
+// a pane environment, so there is no durable secret to go stale.
+//
 // That keeps the binding deterministic — never a title, never an mtime.
 // An event that arrives with no binding is dropped loudly (upstream principle 3:
 // "no unreliable fallback"), because guessing which surface it belongs to is

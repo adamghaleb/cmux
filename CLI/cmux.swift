@@ -5060,6 +5060,12 @@ struct CMUXCLI {
             Example (the settings.json hook command):
               [ -n "$CMUX_SURFACE_ID" ] && [ -S "$CMUX_SOCKET_PATH" ] && \\
                 /path/to/cmux agent-hook --ppid "$PPID" >/dev/null 2>&1; exit 0
+
+            Inside a daemon-supervised pane (`tmux -L fadi`), CMUX_SOCKET_PATH
+            points at fadid's per-session relay rather than at the app: the
+            pane is not an app descendant and its environment is fixed before
+            any surface exists. That socket speaks agent_hook and nothing else
+            — pass --socket explicitly for other commands.
             """
         case "claude-hook":
             return """
