@@ -2061,6 +2061,8 @@ class TerminalController {
             return v2Result(id: id, self.v2DebugPanelSnapshotReset(params: params))
         case "debug.window.screenshot":
             return v2Result(id: id, self.v2DebugScreenshot(params: params))
+        case "debug.agent.state":
+            return v2Result(id: id, self.v2DebugAgentState(params: params))
 #endif
 
         default:
@@ -9502,6 +9504,45 @@ class TerminalController {
         guard resp.hasPrefix("OK ") else { return .err(code: "internal_error", message: resp, data: nil) }
         let n = Int(resp.split(separator: " ").last ?? "0") ?? 0
         return .ok(["count": n])
+    }
+
+    /// Debug readout of the deterministic agent-session authority.
+    ///
+    /// Gate 2 has no other way to observe `AgentSessionRegistry` from outside
+    /// the process, which makes the state machine unverifiable and its flicker
+    /// unmeasurable. This exposes the published map (and the rail's view of it)
+    /// so a harness can sample it. DEBUG-only.
+    private func v2DebugAgentState(params: [String: Any]) -> V2CallResult {
+        var result: V2CallResult = .err(code: "internal_error", message: "unavailable", data: nil)
+        v2MainSync {
+            let registry = AgentSessionRegistry.shared
+            var surfaces: [[String: Any]] = []
+            for (surfaceID, state) in registry.stateBySurfaceID {
+                var entry: [String: Any] = [
+                    "surface_id": surfaceID.uuidString,
+                    "state": state.label,
+                    "version": registry.versionBySurfaceID[surfaceID] ?? 0,
+                    "needs_attention": state.needsAttention
+                ]
+                if let since = state.since {
+                    entry["since"] = since.timeIntervalSince1970
+                }
+                entry["workspace_resolved"] =
+                    AppDelegate.shared?.workspaceContainingPanel(panelId: surfaceID) != nil
+                surfaces.append(entry)
+            }
+            surfaces.sort {
+                ($0["surface_id"] as? String ?? "") < ($1["surface_id"] as? String ?? "")
+            }
+            result = .ok([
+                "surfaces": surfaces,
+                "count": surfaces.count,
+                "records": registry.debugSummary,
+                "rail_started": AgentSessionTabRail.shared.isRunning,
+                "sampled_at": Date().timeIntervalSince1970
+            ])
+        }
+        return result
     }
 
     private func v2DebugResetFlashCounts() -> V2CallResult {

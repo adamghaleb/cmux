@@ -31,6 +31,11 @@ final class AgentSessionTabRail {
 
     private init() {}
 
+    /// Whether `start()` has taken effect. Read by the DEBUG state readout so a
+    /// verification harness can tell "the rail is quiet" from "the rail was
+    /// never started".
+    var isRunning: Bool { cancellable != nil }
+
     /// Begins mirroring. Idempotent.
     func start() {
         guard cancellable == nil else { return }

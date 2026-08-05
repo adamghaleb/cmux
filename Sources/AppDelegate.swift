@@ -1642,6 +1642,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         let isRunningUnderXCTest = isRunningUnderXCTest(env)
         let telemetryEnabled = TelemetrySettings.enabledForCurrentLaunch
 
+        // The session rail mirrors an app-level authority onto app-level
+        // chrome, so it starts with the app. It used to be started as a side
+        // effect of a surface's overlay binding, which meant a single broken
+        // binding took the whole rail down with it — and did.
+        // upstream: PR#6798
+        AgentSessionTabRail.shared.start()
+
 #if DEBUG
         // UI tests run on a shared VM user profile, so persisted shortcuts can drift and make
         // key-equivalent routing flaky. Force defaults for deterministic tests.
