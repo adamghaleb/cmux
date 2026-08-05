@@ -1689,7 +1689,12 @@ final class Workspace: Identifiable, ObservableObject {
     /// so the surface tint, pixel pet tint, terminal accent color, and other overlays
     /// match the workspace color.
     private func propagateOverlayColor(_ hex: String?) {
-        for (_, panelId) in surfaceIdToPanelId {
+        // Walk every panel, not `surfaceIdToPanelId`. That map is keyed by TAB
+        // and holds one panel per tab, so splitting a tab left every pane but
+        // the first unreachable: they never received a workspace colour and sat
+        // on the shader's startup default for the life of the surface. This was
+        // the "shader colour never updates" report.
+        for panelId in panels.keys {
             guard let panel = panels[panelId] as? TerminalPanel else { continue }
             panel.surface.hostedView.fadicodeOverlay?.projectColorHex = hex
             // Push accent color to Ghostty renderer for Claude CLI orange recoloring
